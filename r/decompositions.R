@@ -32,16 +32,19 @@ CausalExplanation_TV <- function(data, X, W, Z, Y, x0, x1,
   int.data2 <- int.data
   int.data2[[X]] <- factor(x0, levels = levels(data[[X]]))
   
-  y <- as.numeric(data[[Y]]) - is.factor(data[[Y]])
+  y <- as.numeric(data[[Y]]) - is.factor(data[[Y]]) # need to check (!)
   
-  # nested ctf
-  form <- as.formula(paste(Y, "~", paste(c(X, W, Z), collapse = "+")))
-  yx1wx0 <- c_eff(form, data, int.data, ...)
-  
-  # total ctf
+  # total
   form <- as.formula(paste(Y, "~", paste(c(X, Z), collapse = "+")))
   yx0 <- c_eff(form, data, int.data2, ...)
   yx1 <- c_eff(form, data, int.data, ...)
+  
+  # nested
+  form <- as.formula(paste(Y, "~", paste(c(X, W, Z), collapse = "+")))
+  yx1wx0 <- c_eff(form, data, int.data, ...)
+  
+  form <- as.formula(paste(Y, "~", paste(c(X, W, Z), collapse = "+")))
+  yx0wx1 <- c_eff(form, data, int.data, ...)
   
   # subsamples
   boots <- lapply(
@@ -70,15 +73,13 @@ CausalExplanation_TV <- function(data, X, W, Z, Y, x0, x1,
     c(mean(ms), sd(ms))
     
   }
-  
-  
    
   # get TV
   tv <- msd(y, "id1", y, "id0")
 
   # get DE
-  de <- msd(yx1wx0, "id0", y, "id0")
-  nde <- msd(yx1wx0, "all", y, "id0")
+  ctfde <- msd(yx1wx0, "id0", yx0, "id0") # updated (!)
+  nde <- msd(yx1wx0, "all", yx0, "all") # updated (!)
 
   # get SE
 
@@ -90,12 +91,8 @@ CausalExplanation_TV <- function(data, X, W, Z, Y, x0, x1,
   ett <- msd(yx1, "id0", y, "id0") # pyx1_x0 - py_x0
   te <- msd(yx1, "all", yx0, "all") # pyx1 - pyx0
   
-  nie <- nde - te
-  nie[2L] <- sqrt(nde[2L]^2 + te[2L]^2)
-  
-  ie <- de - ett
-  ie[2L] <- sqrt(de[2L]^2 + ett[2L]^2)
-  #if (length(Z) == 0L) se <- expse_x1 <- expse_x0 <- NA_real_
+  nie <- msd(yx1, "all", yx1wx0, "all")
+  ctfie <- msd(yx1, "id0", yx1wx0, "id0")
 
   cef <- list(TV = tv, DE = de, SE = se, ETT = ett, IE = ie,
               TE = te, NDE = nde, NIE = nie, ExpSE_x1 = expse_x1,
