@@ -24,7 +24,7 @@ c_eff <- function(form, data, int.data, ...) {
 }
 
 CausalExplanation_TV <- function(data, X, W, Z, Y, x0, x1, 
-                                 nboot = 100, ...) {
+                                 nboot = 100, model = "ranger", ...) {
   
   idx <- data[[X]] == x0
   int.data <- data
@@ -35,18 +35,24 @@ CausalExplanation_TV <- function(data, X, W, Z, Y, x0, x1,
   y <- as.numeric(data[[Y]]) - is.factor(data[[Y]]) # need to check (!)
   
   # total
-  form <- as.formula(paste(Y, "~", paste(c(X, Z), collapse = "+")))
-  yx0 <- c_eff(form, data, int.data2, ...)
-  yx1 <- c_eff(form, data, int.data, ...)
+  #form <- as.formula(paste(Y, "~", paste(c(X, Z), collapse = "+")))
+  #yx0 <- c_eff(form, data, int.data2, ...)
+  #yx1 <- c_eff(form, data, int.data, ...)
   
   # nested
-  form <- as.formula(paste(Y, "~", paste(c(X, W, Z), collapse = "+")))
-  yx1wx0 <- c_eff(form, data, int.data, ...)
+  #form <- as.formula(paste(Y, "~", paste(c(X, W, Z), collapse = "+")))
+  #yx1wx0 <- c_eff(form, data, int.data, ...)
   
-  form <- as.formula(paste(Y, "~", paste(c(X, W, Z), collapse = "+")))
-  yx0wx1 <- c_eff(form, data, int.data, ...)
+  #form <- as.formula(paste(Y, "~", paste(c(X, W, Z), collapse = "+")))
+  #yx0wx1 <- c_eff(form, data, int.data, ...)
   
-  # subsamples
+  est <- doubly_robust(data[[X]], data[, Z], data[, W], data[[Y]],
+                       model = model)
+  yx0 <- est[[1]]
+  yx1 <- est[[2]]
+  yx1wx0 <- est[[4]]
+  
+  # bootstrap subsamples
   boots <- lapply(
     seq_len(nboot),
     function(i) {
@@ -63,12 +69,12 @@ CausalExplanation_TV <- function(data, X, W, Z, Y, x0, x1,
   
   msd <- function(x1, t1, x2, t2) {
     
-    ms <- vapply(boots, 
-                 function(ids) {
-                   mean(x1[ids[[t1]]]) - mean(x2[ids[[t2]]])
-                 }, 
-                 numeric(1L)
-          )
+    ms <- vapply(
+      boots, 
+      function(ids) {
+        mean(x1[ids[[t1]]], na.rm = TRUE) -  mean(x2[ids[[t2]]], na.rm = TRUE)
+      }, numeric(1L)
+    )
     
     c(mean(ms), sd(ms))
     
@@ -94,7 +100,7 @@ CausalExplanation_TV <- function(data, X, W, Z, Y, x0, x1,
   nie <- msd(yx1, "all", yx1wx0, "all")
   ctfie <- msd(yx1, "id0", yx1wx0, "id0")
 
-  cef <- list(TV = tv, DE = de, SE = se, ETT = ett, IE = ie,
+  cef <- list(TV = tv, DE = ctfde, SE = se, ETT = ett, IE = ctfie,
               TE = te, NDE = nde, NIE = nie, ExpSE_x1 = expse_x1,
               ExpSE_x0 = expse_x0)
 

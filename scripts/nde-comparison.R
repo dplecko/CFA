@@ -6,44 +6,20 @@ library(ggplot2)
 library(latex2exp)
 library(stringr)
 library(grf)
+library(assertthat)
 
 root <- rprojroot::find_root(rprojroot::is_git_root)
 r_dir <- file.path(root, "r")
 invisible(lapply(list.files(r_dir, full.names = TRUE), source))
 
-pos_est_de <- function(n, seed) {
+pos_est_de <- function(n, f0, f1, seed = 2022, model = "ranger") {
   
   set.seed(seed)
   
-  test_scm <- function(n, f0, f1) {
-    
-    expit <- function(x) exp(x) / (1 + exp(x))
-    
-    Z <- replicate(3, runif(n, -1, 1))
-    
-    X <- rbinom(n, size = 1, prob = expit(rowMeans(Z)))
-    
-    W1 <- rnorm(n) + X * rowMeans(Z[, c(1, 2)])
-    W2 <- rnorm(n) + W1^2 / 2 - 1 + X * rowMeans((Z^2)[, c(2, 3)])
-    W3 <- rnorm(n) + W1 * W2 / 6 + rnorm(n) + X * Z[, 1] / 4
-    
-    Y <- f0(cbind(Z, W1, W2, W3)) + X * f1(cbind(Z, W1, W2, W3)) + 
-         rnorm(n, sd = 1/2)
-    
-    dat <- data.frame(cbind(X, Z, W1, W2, W3, Y))
-    names(dat) <- c("X", paste0("Z", seq_len(ncol(Z))),
-                    "W1", "W2", "W3", "Y")
-    
-    dat
-    
-  }
-
   x1 <- 1
   x0 <- 0
   
-  f0 <- function(x) rowSums(x)
-  f1 <- function(x) rowSums((x^2)[, c(T, F)])
-  dat <- test_scm(n, f0, f1)
+  dat <- test_scm(n, f0, f1, type = "dat")
   dat0 <- dat1 <- dat
   
   dat0$X <- x0
@@ -61,23 +37,40 @@ pos_est_de <- function(n, seed) {
     x = dat[, c("Z1", "Z2", "Z3")]
   )
   
-  c(mean(mu1) - mean(mu0), res$results["effect", "dir.treat"])
-    
+  res_my <- CausalExplanation_TV(dat, X = "X", Z = c("Z1", "Z2", "Z3"),
+                                 W = c("W1", "W2", "W3"), Y = "Y", x0 = x0,
+                                 x1 = x1, model = model)
   
+  c(mean(mu1) - mean(mu0), res$results["effect", "dir.treat"],
+    res_my$NDE[1])
+    
 }
 
+# pick the SCM functions
+f0 <- \(x) rowMeans(abs(x))
+f1 <- \(x) rowSums((x^2 * max(1, log(abs(x))))[, c(T, F)])
+
+# get ground truth
+g_truth <- test_scm(n = 1000000, f0, f1, type = "nde")
+
+# choose sample size and model
+nsamp <- 2000L
+nboot <- 5L
+model <- "ranger"
+
+# estimate over 50 bootstrap repetitions
 est <- list()
-for(i in seq_len(100)) {
+for(i in seq_len(nboot)) {
   
-  est[[i]] <- pos_est_de(n = 2000, seed = i)
+  est[[i]] <- pos_est_de(n = nsamp, f0, f1, seed = i, model = model)
   cat("Boot run", i, "finished; ")
 }
 
 est <- data.frame(Reduce(rbind, est))
-names(est) <- c("RF", "Double Robust Mediated")
+names(est) <- c("RF", "Double Robust Mediated", "DML own")
 
 ggplot(reshape2::melt(est), aes(x = value, fill = variable)) +
   geom_density(alpha = 0.5) +
-  geom_vline(xintercept = 2.4, color = "red", linetype = "dashed") +
+  geom_vline(xintercept = g_truth, color = "red", linetype = "dashed") +
   theme_bw() + xlab("Natural Direct Effect (NDE) estimate") +
   ylab("Density")

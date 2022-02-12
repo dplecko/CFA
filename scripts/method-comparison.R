@@ -5,6 +5,7 @@ library(ggplot2)
 library(latex2exp)
 library(stringr)
 library(grf)
+library(zeallot)
 
 root <- rprojroot::find_root(rprojroot::is_git_root)
 r_dir <- file.path(root, "r")

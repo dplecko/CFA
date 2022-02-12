@@ -4,6 +4,7 @@ library(ranger)
 library(ggplot2)
 library(latex2exp)
 library(stringr)
+library(assertthat)
 
 root <- rprojroot::find_root(rprojroot::is_git_root)
 r_dir <- file.path(root, "r")
@@ -19,13 +20,14 @@ dat <- get_data(dataset)
 mdat <- get_metadata(dataset)
 
 # Step 3 - decompose Total Variation
-tvd <- CausalExplanation_TV(dat, mdat[["X"]], mdat[["W"]], mdat[["Z"]], 
-                            mdat[["Y"]], mdat[["x0"]], mdat[["x1"]])
+tvd <- CausalExplanation_TV(dat, X = mdat[["X"]], W = mdat[["W"]], 
+                            Z = mdat[["Z"]], Y = mdat[["Y"]], x0 = mdat[["x0"]],
+                            x1 = mdat[["x1"]])
 
 # Step 4 - decompose Equality of odds (if classification)
-eod <- CausalExplanation_EO(dat, mdat[["X"]], mdat[["W"]], mdat[["Z"]], 
-                            mdat[["Y"]], mdat[["x0"]], mdat[["x1"]], 
-                            mdat[["ylvl"]])
+eod <- CausalExplanation_EO(dat, X = mdat[["X"]], W = mdat[["W"]], 
+                            Z = mdat[["Z"]], Y = mdat[["Y"]], x0 = mdat[["x0"]],
+                            x1 = mdat[["x1"]], mdat[["ylvl"]])
 
 # Step 5 - visualize the results
 {
@@ -33,10 +35,11 @@ eod <- CausalExplanation_EO(dat, mdat[["X"]], mdat[["W"]], mdat[["Z"]],
   df <- data.frame(names(tvd), unlist(tvd))
   names(df) <- c("Measure", "Value")
   
-  x_tikz <- c(TeX("DE_{x_0, x_1}(y | x_0)", "text"), 
-              TeX("ETT_{x_0, x_1}(y)", "text"), 
-              TeX("IE_{x_1, x_0}(y | x_0)", "text"),
-              TeX("SE_{x_1, x_0}(y)", "text"), TeX("TV_{x_0, x_1}(y)", "text"))
+  x_tikz <- c(TeX("DE_{x_0, x_1}(y | x_0)", output = "character"), 
+              TeX("ETT_{x_0, x_1}(y)", output = "character"), 
+              TeX("IE_{x_1, x_0}(y | x_0)", output = "character"),
+              TeX("SE_{x_1, x_0}(y)", output = "character"), 
+              TeX("TV_{x_0, x_1}(y)", output = "character"))
   
   tv_plot <- ggplot(df, aes(x = Measure, y = Value, fill = Measure)) + geom_col() +
     theme_minimal() + 
