@@ -2,3 +2,5 @@ paper
 US-Census*
 misc
 data
+*.pdf
+.DS_Store
