@@ -26,8 +26,8 @@ ex_med <- function(n, type = "dat", seed = 2022) {
   W2_1 <- eps_w2 + W1^2 / 2 - 1 + 1 * rowMeans((Z^2)[, c(2, 3)])
   W3_1 <- eps_w3 + W1 * W2 / 6 + rnorm(n) + 1 * Z[, 1] / 4
   
-  f0 <- \(x) rowMeans(abs(x))
-  f1 <- \(x) rowSums((x^2 * max(1, log(abs(x))))[, c(T, F)])
+  f0 <- function(x) rowMeans(abs(x))
+  f1 <- function(x) rowSums((x^2 * max(1, log(abs(x))))[, c(T, F)])
   
   if (type == "dat") {
     Y <- f0(cbind(Z, W1, W2, W3)) + X * f1(cbind(Z, W1, W2, W3)) + 
