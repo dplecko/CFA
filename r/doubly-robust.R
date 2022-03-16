@@ -2,6 +2,12 @@
 
 regr <- function(y, x, model = "ranger") {
   
+  # Z set empty -> x equals NULL -> return just the mean
+  if (is.null(unlist(x))) {
+    if (!is.logical(y) & !is.numeric(y)) browser()
+    return(mean(y))
+  }
+   
   if (setequal(unique(y), c(0, 1))) {
     
     # probability case
@@ -25,8 +31,12 @@ regr <- function(y, x, model = "ranger") {
 }
 
 pred <- function(mod, x) {
-
-  if (inherits(mod, "glm")) {
+  
+  if (is.numeric(mod)) {
+    assert_that(is.null(unlist(x)))
+    return(rep(mod, nrow(x)))
+  }
+  else if (inherits(mod, "glm")) {
     
     return(predict(mod, x, type = "response"))
     
@@ -54,7 +64,11 @@ model_based <- function() {
 doubly_robust <- function(x, z, w, y, K = 5, model = "ranger", 
                           extrm_prob = 0.01) {
   
-  if (is.factor(x)) x <- as.integer(x) - 1
+  if (is.factor(x)) x <- as.integer(x) - 1L
+  if (is.factor(y)) {
+    assert_that(length(unique(y)) == 2L)
+    y <- as.integer(y) - 1L
+  }
   assert_that(is.vector(x) | is.factor(x), is.vector(y) | is.factor(y),
               msg = "Attribute or outcome is not a vector. Disallowed.")
   if (is.vector(z)) z <- as.matrix(z)
