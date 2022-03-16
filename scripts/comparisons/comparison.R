@@ -6,7 +6,7 @@
 #BSUB -o CFA_benchmark.out
 
 root <- rprojroot::find_root(rprojroot::is_git_root)
-r_dir <- file.path(root, "R")
+r_dir <- file.path(root, "r")
 invisible(lapply(list.files(r_dir, full.names = TRUE), source))
 
 #'* synthetic data experiments *

@@ -202,7 +202,8 @@ method_cmp <- function(measure = c("DE", "ETT", "ETU", "ExpSE_x0", "ExpSE_x1",
     cbook <- fairness_cookbook(ex$dat, ex$X, ex$W, ex$Z, ex$Y, 0, 1,
                                model = model)
     cb <- data.frame(measure = names(cbook$measures),
-                     value = vapply(cbook$measures, \(x) x[1], numeric(1L)),
+                     value = vapply(cbook$measures, 
+                                    function(x) x[1], numeric(1L)),
                      method = "faircause")
 
     # apply causal forest
