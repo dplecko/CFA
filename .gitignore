@@ -4,3 +4,4 @@ misc
 data
 *.pdf
 .DS_Store
+.Rhistory

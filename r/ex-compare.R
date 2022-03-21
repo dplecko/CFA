@@ -22,7 +22,7 @@ ex_med <- function(n, type = "dat", seed = 2022) {
   
   W1 <- fW1(X, Z, eps_w1) 
   W2 <- fW2(X, Z, W1, eps_w2) 
-  W3 <- fW2(X, Z, W1, W2, eps_w3)
+  W3 <- fW3(X, Z, W1, W2, eps_w3)
   
   f0 <- function(x) rowMeans(abs(x))
   f1 <- function(x) rowSums((x^2 * max(1, 1/2 * log(abs(x))))[, c(T, F)])
@@ -36,11 +36,11 @@ ex_med <- function(n, type = "dat", seed = 2022) {
     # potential outcomes
     W1_0 <- fW1(0, Z, eps_w1) 
     W2_0 <- fW2(0, Z, W1_0, eps_w2) 
-    W3_0 <- fW2(0, Z, W1_0, W2_0, eps_w3)
+    W3_0 <- fW3(0, Z, W1_0, W2_0, eps_w3)
     
     W1_1 <- fW1(1, Z, eps_w1) 
     W2_1 <- fW2(1, Z, W1_1, eps_w2) 
-    W3_1 <- fW2(1, Z, W1_1, W2_1, eps_w3)
+    W3_1 <- fW3(1, Z, W1_1, W2_1, eps_w3)
     
     y <- f0(cbind(Z, W1, W2, W3)) + X * f1(cbind(Z, W1, W2, W3))
     yx1wx0 <- f0(cbind(Z, W1_0, W2_0, W3_0)) + 
@@ -252,6 +252,15 @@ method_cmp <- function(measure = c("CtfDE", "ETT", "ExpSE_x0", "ExpSE_x1",
 
 cforest <- function(ex) {
   
+  if (ncol(ex$dat[, ex$Z]) == 0L) {
+    te <- mean(ex$dat[[ex$Y]][ex$dat[[ex$X]] == 1]) - 
+      mean(ex$dat[[ex$Y]][ex$dat[[ex$X]] == 0])
+    qnt <- c(te, te, te)
+    return(data.frame(
+      measure = c("TE", "ETT", "ETU"), value = qnt, method = "causal_forest"
+    ))
+  }
+  
   crf <- causal_forest(
     X = ex$dat[, ex$Z],
     Y = ex$dat[[ex$Y]],
@@ -273,12 +282,22 @@ cforest <- function(ex) {
 
 cweight <- function(ex) {
   
-  cwg <- medDML(
-    y = ex$dat[[ex$Y]],
-    d = ex$dat[[ex$X]],
-    m = ex$dat[, ex$W],
-    x = ex$dat[, ex$Z]
-  )
+  if (ncol(ex$dat[, ex$Z]) == 0L) {
+    x <- cbind(z1 = rnorm(nrow(ex$dat)), z2 = rnorm(nrow(ex$dat)))
+    cwg <- medDML(
+      y = ex$dat[[ex$Y]],
+      d = ex$dat[[ex$X]],
+      m = ex$dat[, ex$W],
+      x = x
+    )
+  } else {
+    cwg <- medDML(
+      y = ex$dat[[ex$Y]],
+      d = ex$dat[[ex$X]],
+      m = ex$dat[, ex$W],
+      x = ex$dat[, ex$Z]
+    )
+  }
 
   data.frame(
     measure = c("TE", "NDE", "NIE"), 
@@ -290,6 +309,15 @@ cweight <- function(ex) {
 }
 
 dre <- function(ex) {
+  
+  if (ncol(ex$dat[, ex$Z]) == 0L) {
+    te <- mean(ex$dat[[ex$Y]][ex$dat[[ex$X]] == 1]) - 
+      mean(ex$dat[[ex$Y]][ex$dat[[ex$X]] == 0])
+    qnt <- c(te)
+    return(data.frame(
+      measure = c("TE"), value = qnt, method = "causal_forest"
+    ))
+  }
   
   dat0 <- dat1 <- dat <- ex$dat
   dat0$X <- 0

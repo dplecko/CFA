@@ -21,8 +21,11 @@ exmp <- list(
   compas = list(
     example = "compas", nboot = 100, nsamp = 2000,
     model = c("linear", "ranger")
+  ),
+  berkeley = list(
+    example = "berkeley", nboot = 100, nsamp = 2000,
+    model = c("linear", "ranger")
   )
-  # Berkeley comparison -> need to handle Z empty
   # Census -> need to handle mixed-variable W & Z
 )
 
@@ -43,4 +46,4 @@ save(exmp, file = "CFA_benchmark.rda")
 ## constraints
 # check_constraints(exmp[["compas"]][["res"]])
 
-# method_cmp(example = "berkeley", nboot = 2, nsamp = 100, model = "ranger")
+method_cmp(example = "berkeley", nboot = 2, nsamp = 100, model = "ranger")

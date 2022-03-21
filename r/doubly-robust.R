@@ -2,7 +2,7 @@
 
 regr <- function(y, x, model = "ranger") {
   
-  if (is.vector(x)) x <- as.matrix(x)
+  if (is.vector(x)) x <- data.frame(x = x)
   
   # Z set empty -> x equals NULL -> return just the mean
   if (is.null(unlist(x))) {
@@ -34,7 +34,7 @@ regr <- function(y, x, model = "ranger") {
 
 pred <- function(mod, x) {
   
-  if (is.vector(x)) x <- as.matrix(x)
+  if (is.vector(x)) x <- data.frame(x = x)
   
   if (is.numeric(mod)) {
     assert_that(is.null(unlist(x)))
@@ -75,8 +75,8 @@ doubly_robust <- function(x, z, w, y, K = 5, model = "ranger",
   }
   assert_that(is.vector(x) | is.factor(x), is.vector(y) | is.factor(y),
               msg = "Attribute or outcome is not a vector. Disallowed.")
-  if (is.vector(z)) z <- as.matrix(z)
-  if (is.vector(w)) w <- as.matrix(w)
+  if (is.vector(z)) z <- data.frame(z = z)
+  if (is.vector(w)) w <- data.frame(w = w)
   folds <- as.integer(cut(seq_along(x), breaks = K))
   y0 <- y1 <- y0w1 <- y1w0 <- px_z <- px_zw <- rep(NA_real_, length(x))
   
@@ -91,11 +91,13 @@ doubly_robust <- function(x, z, w, y, K = 5, model = "ranger",
     px_z_tr <- regr(x[tr], z[tr, ], model = model)
     
     # regress Y on Z for each level
-    y_z0_tr <- regr(y[tr & x == 0], cbind(z[tr & x == 0, ]), model = model)
-    y_z1_tr <- regr(y[tr & x == 1], cbind(z[tr & x == 1, ]), model = model)
+    y_z0_tr <- regr(y[tr & x == 0], cbind(z[tr & x == 0, , drop = FALSE]), 
+                    model = model)
+    y_z1_tr <- regr(y[tr & x == 1], cbind(z[tr & x == 1, , drop = FALSE]), 
+                    model = model)
 
     # make predictions on the target partition
-    px_z_ts <- pred(px_z_tr, z[ts, ])
+    px_z_ts <- pred(px_z_tr, z[ts, , drop = FALSE])
     px_z[ts] <- px_z_ts
 
     y_z0_ts <- pred(y_z0_tr, cbind(z[ts, ]))
@@ -107,10 +109,10 @@ doubly_robust <- function(x, z, w, y, K = 5, model = "ranger",
                 y_z1_ts
     
     # regress X on Z + W
-    px_zw_tr <- regr(x[tr], cbind(z, w)[tr, ], model = model)
+    px_zw_tr <- regr(x[tr], cbind(z, w)[tr, , drop = FALSE], model = model)
     
     # predict the regression on target partition
-    px_zw_ts <- pred(px_zw_tr, cbind(z, w)[ts, ])
+    px_zw_ts <- pred(px_zw_tr, cbind(z, w)[ts, , drop = FALSE])
     px_zw[ts] <- px_zw_ts
     
     # split complement into two equal parts
@@ -120,27 +122,35 @@ doubly_robust <- function(x, z, w, y, K = 5, model = "ranger",
     ns <- tr & !mu
     
     # regress Y ~ Z + W for each level of x
-    y_zw0_mu <- regr(y[mu & x == 0], cbind(z[mu & x == 0, ], w[mu & x == 0, ]), 
+    y_zw0_mu <- regr(y[mu & x == 0], cbind(z[mu & x == 0, , drop = FALSE], 
+                                           w[mu & x == 0, , drop = FALSE]), 
                      model = model)
-    y_zw1_mu <- regr(y[mu & x == 1], cbind(z[mu & x == 1, ], w[mu & x == 1, ]), 
+    y_zw1_mu <- regr(y[mu & x == 1], cbind(z[mu & x == 1, , drop = FALSE], 
+                                           w[mu & x == 1, , drop = FALSE]), 
                      model = model)
     
     # part 2: learn nested mean
     
     # predict on nested partition using mu
-    y_zw0_ns <- pred(y_zw0_mu, cbind(z[ns, ], w[ns, ]))
-    y_zw1_ns <- pred(y_zw1_mu, cbind(z[ns, ], w[ns, ]))
+    y_zw0_ns <- pred(y_zw0_mu, cbind(z[ns, , drop = FALSE], 
+                                     w[ns, , drop = FALSE]))
+    y_zw1_ns <- pred(y_zw1_mu, cbind(z[ns, , drop = FALSE], 
+                                     w[ns, , drop = FALSE]))
     
     # learn the nested mean function on nested partition
-    ey_zw1_0_ns <- regr(y_zw1_ns[x[ns] == 0], z[ns & x == 0, ], model = model)
-    ey_zw0_1_ns <- regr(y_zw0_ns[x[ns] == 1], z[ns & x == 1, ], model = model)
+    ey_zw1_0_ns <- regr(y_zw1_ns[x[ns] == 0], z[ns & x == 0, , drop = FALSE], 
+                        model = model)
+    ey_zw0_1_ns <- regr(y_zw0_ns[x[ns] == 1], z[ns & x == 1, , drop = FALSE], 
+                        model = model)
     
     # part 3: compute the mean / nested mean on target partition
-    y_zw0_ts <- pred(y_zw0_mu, cbind(z[ts, ], w[ts, ]))
-    ey_zw0_1_ts <- pred(ey_zw0_1_ns, z[ts, ])
+    y_zw0_ts <- pred(y_zw0_mu, cbind(z[ts, , drop = FALSE], 
+                                     w[ts, , drop = FALSE]))
+    ey_zw0_1_ts <- pred(ey_zw0_1_ns, z[ts, , drop = FALSE])
     
-    y_zw1_ts <- pred(y_zw1_mu, cbind(z[ts, ], w[ts, ]))
-    ey_zw1_0_ts <- pred(ey_zw1_0_ns, z[ts, ])
+    y_zw1_ts <- pred(y_zw1_mu, cbind(z[ts, , drop = FALSE], 
+                                     w[ts, , drop = FALSE]))
+    ey_zw1_0_ts <- pred(ey_zw1_0_ns, z[ts, , drop = FALSE])
     
     # part 4: compute the formula
     
