@@ -11,19 +11,19 @@ invisible(lapply(list.files(r_dir, full.names = TRUE), source))
 
 exmp <- list(
   nomed = list(
-    example = "nomed", nboot = 100, nsamp = 2000, 
+    example = "nomed", nboot = 2, nsamp = 200, 
     model = c("linear", "ranger")
   ),
   med = list(
-    example = "med", nboot = 100, nsamp = 2000, 
+    example = "med", nboot = 2, nsamp = 200, 
     model = c("linear", "ranger")
   ),
   compas = list(
-    example = "compas", nboot = 100, nsamp = 2000,
+    example = "compas", nboot = 2, nsamp = 2000,
     model = c("linear", "ranger")
   ),
   berkeley = list(
-    example = "berkeley", nboot = 100, nsamp = 2000,
+    example = "berkeley", nboot = 2, nsamp = 2000,
     model = c("linear", "ranger")
   )
   # Census -> need to handle mixed-variable W & Z

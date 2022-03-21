@@ -1,33 +1,54 @@
-
-c_eff <- function(form, data, int.data, ...) {
-
-  rf <- ranger(form, data = data, keep.inbag = T, importance = "impurity", ...)
-  assertthat::assert_that(rf$treetype %in% c("Regression",
-                                             "Probability estimation"))
-
-  if (rf$treetype == "Probability estimation") {
-
-    p2 <- predict(rf, int.data, predict.all = T)$predictions[, 2, ]
-
-  } else {
-
-    p2 <- predict(rf, int.data, predict.all = T)$predictions
-
-  }
-
-  oob.matrix <- Reduce(cbind, lapply(rf$inbag.counts, function(x=i) x == 0))
-
-  p2 <- rowSums(p2 * oob.matrix) / rowSums(oob.matrix)
-
-  p2
-
-}
-
-fairness_cookbook <- function(data, X, W, Z, Y, x0, x1, 
+#' fairness_cookbook
+#'
+#' Implementation of Fairness Cookbook in Causal Fairness Analysis
+#' (Plecko & Bareinboim 2022). Uses only plain \code{R}.
+#'
+#' The procedure takes the training and testing data as an input, together with
+#' the causal graph given by an adjacency matrix and the list of resolving
+#' variables, which should be kept fixed during the adaptation procedure. The
+#' procedure then calculates a fair representation of the data, after which
+#' any classification method can be used. There are, however, several valid
+#' training options yielding fair predictions, and the best of them can be
+#' chosen with cross-validation. For more details we refer the user to the
+#' original paper. Most of the running time is due to the quantile regression
+#' step using the ranger package.
+#'
+#' @param data Object of class \code{data.frame} containing the dataset.
+#' @param X A \code{character} scalar giving the name of the
+#' protected attribute. Must be one of the entries of \code{names(data)}.
+#' @param W A \code{character} vector giving the names of all mediators.
+#' @param Z A \code{character} vector giving the names of all confounders.
+#' @param Y A \code{character} scalar giving the name of the outcome.
+#' @param x0,x1 Scalar values giving the two levels of the binary protected
+#' attribute.
+#' @param nboot An \code{integer} scalar determining the number of bootstrap
+#' repetitions used when constructing confidence intervals of the estimates.
+#' @param model A \code{character} scalar determining the model used in
+#' estimation. Current options are \code{"ranger"} (default) which uses random
+#' forests and \code{"linear"} which uses (generalized) linear models.
+#'
+#' @return An object of class \code{faircause}, containing estimates of the
+#' causal fairness measures, together with some meta information.
+#'
+#' @examples
+#' data <- faircause:::get_data_berkeley()
+#'
+#' FCB <- fairness_cookbook(data, X = "gender", W = "dept", Z = character(0L),
+#'                          Y = "admit", x0 = "Male", x1 = "Female")
+#' FCB
+#'
+#' @author Drago Plecko
+#' @references
+#' Plecko, D. & Meinshausen, N. (2019).
+#' Fair Data Adaptation with Quantile Preservation \cr
+#' @import stats
+#' @importFrom assertthat assert_that
+#' @export
+fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
                               nboot = 100, model = "ranger", ...) {
-  
+
   y <- as.numeric(data[[Y]]) - is.factor(data[[Y]]) # need to check (!)
-  
+
   # model_based approach
   if (model == "model_based") {
     idx <- data[[X]] == x0
@@ -37,11 +58,11 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
     }
     int.data0[[X]] <- factor(x0, levels = c(x0, x1))
     int.data1[[X]] <- factor(x1, levels = c(x0, x1))
-    
+
     form <- as.formula(paste(Y, "~", paste(c(X, Z), collapse = "+")))
     yx0 <- c_eff(form, data, int.data0, ...)
     yx1 <- c_eff(form, data, int.data1, ...)
-    
+
     # nested
     form <- as.formula(paste(Y, "~", paste(c(X, W, Z), collapse = "+")))
     yx1wx0 <- c_eff(form, data, int.data1, ...)
@@ -50,37 +71,37 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
                          model = model)
     yx0 <- est[[1]]
     yx1 <- est[[2]]
-    yx1wx0 <- est[[4]] 
+    yx1wx0 <- est[[4]]
   }
-  
+
   # bootstrap subsamples
   boots <- lapply(
     seq_len(nboot),
     function(i) {
-      
+
       ind <- sample.int(nrow(data), replace = TRUE)
       is0 <- data[[X]][ind] == x0
       ind0 <- ind[is0]
       ind1 <- ind[!is0]
-      
+
       list(all = ind, id0 = ind0, id1 = ind1)
-      
+
     }
   )
-  
+
   msd <- function(x1, t1, x2, t2) {
-    
+
     ms <- vapply(
-      boots, 
+      boots,
       function(ids) {
         mean(x1[ids[[t1]]], na.rm = TRUE) -  mean(x2[ids[[t2]]], na.rm = TRUE)
       }, numeric(1L)
     )
-    
+
     c(mean(ms), sd(ms))
-    
+
   }
-   
+
   # get TV
   tv <- msd(y, "id1", y, "id0")
 
@@ -90,13 +111,13 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
 
   # get SE
   ctfse <- msd(yx1, "id0", y, "id1") # Ctf-SE_{x_1, x_0}(y) = pyx1_x0 - py_x1
-  expse_x1 <- msd(y, "id1", yx1, "all") # py_x1 - pyx1 
+  expse_x1 <- msd(y, "id1", yx1, "all") # py_x1 - pyx1
   expse_x0 <- msd(y, "id0", yx0, "all") # py_x0 - pyx0
 
   # get ETT
   ett <- msd(yx1, "id0", y, "id0") # pyx1_x0 - py_x0
   te <- msd(yx1, "all", yx0, "all") # pyx1 - pyx0
-  
+
   nie <- msd(yx1wx0, "all", yx1, "all") # NIE_{x_1, x_0}(y)
   ctfie <- msd(yx1wx0, "id0", yx1, "id0") # Ctf-IE_{x_1, x_0}(y | x_0)
 
@@ -105,7 +126,7 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
       TV = tv, CtfDE = ctfde, CtfSE = ctfse, ETT = ett, CtfIE = ctfie,
       TE = te, NDE = nde, NIE = nie, ExpSE_x1 = expse_x1,
       ExpSE_x0 = expse_x0
-    ), x0 = x0, x1 = x0, model = model, X = X, W = W, Z = Z, Y = Y, 
+    ), x0 = x0, x1 = x0, model = model, X = X, W = W, Z = Z, Y = Y,
     cl = match.call()),
     class = "faircause"
   )
@@ -175,5 +196,29 @@ DoubleRobustCausalExpTV <- function(data, X, W, Z, Y, x0, x1, ...) {
   ett <- pyx1_x0 - mean(data[[Y]][idx])
 
   cef <- list(TV = tv, DE = de, SE = se, ETT = ett, IE = de - ett)
+
+}
+
+c_eff <- function(form, data, int.data, ...) {
+
+  rf <- ranger(form, data = data, keep.inbag = T, importance = "impurity", ...)
+  assertthat::assert_that(rf$treetype %in% c("Regression",
+                                             "Probability estimation"))
+
+  if (rf$treetype == "Probability estimation") {
+
+    p2 <- predict(rf, int.data, predict.all = T)$predictions[, 2, ]
+
+  } else {
+
+    p2 <- predict(rf, int.data, predict.all = T)$predictions
+
+  }
+
+  oob.matrix <- Reduce(cbind, lapply(rf$inbag.counts, function(x=i) x == 0))
+
+  p2 <- rowSums(p2 * oob.matrix) / rowSums(oob.matrix)
+
+  p2
 
 }
