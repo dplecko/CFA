@@ -14,7 +14,7 @@ regr <- function(y, x, model = "ranger") {
     
     # probability case
     if (model == "ranger") {
-      return(ranger(y = y, x = x, probability = TRUE))
+      return(ranger(y = y, x = x, probability = TRUE, num.threads = n_cores()))
     } else if (model == "linear") {
       return(glm(y ~ ., data = cbind(y, x), family = "binomial"))
     }
@@ -52,9 +52,9 @@ pred <- function(mod, x) {
     
     preds <- predict(mod, x)
     if (mod$treetype == "Probability estimation") {
-      return(predict(mod, x)$predictions[, 2])
+      return(predict(mod, x, num.threads = n_cores())$predictions[, 2])
     } else {
-      return(predict(mod, x)$predictions)
+      return(predict(mod, x, num.threads = n_cores())$predictions)
     }
     
   }
@@ -169,17 +169,20 @@ doubly_robust <- function(x, z, w, y, K = 5, model = "ranger",
 
 model_mean <- function(form, data, int.data, ...) {
 
-  rf <- ranger(form, data = data, keep.inbag = T, importance = "impurity", ...)
+  rf <- ranger(form, data = data, keep.inbag = T, importance = "impurity", 
+               num.threads = n_cores(), ...)
   assertthat::assert_that(rf$treetype %in% c("Regression",
                                              "Probability estimation"))
 
   if (rf$treetype == "Probability estimation") {
 
-    p2 <- predict(rf, int.data, predict.all = T)$predictions[, 2, ]
+    p2 <- predict(rf, int.data, predict.all = T,
+                  num.threads = n_cores())$predictions[, 2, ]
 
   } else {
 
-    p2 <- predict(rf, int.data, predict.all = T)$predictions
+    p2 <- predict(rf, int.data, predict.all = T,
+                  num.threads = n_cores())$predictions
 
   }
 
@@ -194,7 +197,7 @@ model_propensity <- function(form, data, xlvl, ...) {
   assertthat::assert_that(length(xlvl) == 1L)
 
   rf <- ranger(form, data = data, keep.inbag = TRUE, importance = "impurity", 
-               probability = TRUE, ...)
+               probability = TRUE, num.threads = n_cores(), ...)
   assertthat::assert_that(rf$treetype == "Probability estimation")
 
   rf$predictions[, xlvl]

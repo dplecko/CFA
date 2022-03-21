@@ -1,4 +1,10 @@
 
+n_cores <- function() {
+  as.integer(
+    Sys.getenv("LSB_DJOB_NUMPROC", unset = parallel::detectCores() / 2L)
+  )
+}
+
 RejectOption <- function(prob, cl) {
   
   rate_cl <- tapply(prob, cl, function(x) mean(x > 0.5))

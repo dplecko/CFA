@@ -255,7 +255,8 @@ cforest <- function(ex) {
   crf <- causal_forest(
     X = ex$dat[, ex$Z],
     Y = ex$dat[[ex$Y]],
-    W = ex$dat[[ex$X]]
+    W = ex$dat[[ex$X]],
+    num.threads = n_cores()
   )
   
   qnt <- c(

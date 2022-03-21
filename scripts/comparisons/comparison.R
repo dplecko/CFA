@@ -38,9 +38,9 @@ save(exmp, file = "CFA_benchmark.rda")
 #'* visual analysis *
 
 # ## comparisons
-vis_diff(subset(exmp[["compas"]][["res"]], method != "faircause_model_based"))
+# vis_diff(exmp[["compas"]][["res"]])
 
 ## constraints
-check_constraints(exmp[["compas"]][["res"]])
+# check_constraints(exmp[["compas"]][["res"]])
 
-method_cmp(example = "berkeley", nboot = 2, nsamp = 100, model = "ranger")
+# method_cmp(example = "berkeley", nboot = 2, nsamp = 100, model = "ranger")
