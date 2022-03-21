@@ -2,6 +2,8 @@
 
 regr <- function(y, x, model = "ranger") {
   
+  if (is.vector(x)) x <- as.matrix(x)
+  
   # Z set empty -> x equals NULL -> return just the mean
   if (is.null(unlist(x))) {
     if (!is.logical(y) & !is.numeric(y)) browser()
@@ -31,6 +33,8 @@ regr <- function(y, x, model = "ranger") {
 }
 
 pred <- function(mod, x) {
+  
+  if (is.vector(x)) x <- as.matrix(x)
   
   if (is.numeric(mod)) {
     assert_that(is.null(unlist(x)))

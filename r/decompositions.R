@@ -26,31 +26,32 @@ c_eff <- function(form, data, int.data, ...) {
 fairness_cookbook <- function(data, X, W, Z, Y, x0, x1, 
                               nboot = 100, model = "ranger", ...) {
   
-  idx <- data[[X]] == x0
-  int.data <- data
-  int.data[[X]] <- factor(x1, levels = levels(data[[X]]))
-  int.data2 <- int.data
-  int.data2[[X]] <- factor(x0, levels = levels(data[[X]]))
-  
   y <- as.numeric(data[[Y]]) - is.factor(data[[Y]]) # need to check (!)
   
-  # total
-  #form <- as.formula(paste(Y, "~", paste(c(X, Z), collapse = "+")))
-  #yx0 <- c_eff(form, data, int.data2, ...)
-  #yx1 <- c_eff(form, data, int.data, ...)
-  
-  # nested
-  #form <- as.formula(paste(Y, "~", paste(c(X, W, Z), collapse = "+")))
-  #yx1wx0 <- c_eff(form, data, int.data, ...)
-  
-  #form <- as.formula(paste(Y, "~", paste(c(X, W, Z), collapse = "+")))
-  #yx0wx1 <- c_eff(form, data, int.data, ...)
-  
-  est <- doubly_robust(data[[X]], data[, Z], data[, W], data[[Y]],
-                       model = model)
-  yx0 <- est[[1]]
-  yx1 <- est[[2]]
-  yx1wx0 <- est[[4]]
+  # model_based approach
+  if (model == "model_based") {
+    idx <- data[[X]] == x0
+    int.data0 <- int.data1 <- data
+    if (!is.factor(data[[X]])) {
+      data[[X]] <- factor(data[[X]], levels = c(x0, x1))
+    }
+    int.data0[[X]] <- factor(x0, levels = c(x0, x1))
+    int.data1[[X]] <- factor(x1, levels = c(x0, x1))
+    
+    form <- as.formula(paste(Y, "~", paste(c(X, Z), collapse = "+")))
+    yx0 <- c_eff(form, data, int.data0, ...)
+    yx1 <- c_eff(form, data, int.data1, ...)
+    
+    # nested
+    form <- as.formula(paste(Y, "~", paste(c(X, W, Z), collapse = "+")))
+    yx1wx0 <- c_eff(form, data, int.data1, ...)
+  } else {
+    est <- doubly_robust(data[[X]], data[, Z], data[, W], data[[Y]],
+                         model = model)
+    yx0 <- est[[1]]
+    yx1 <- est[[2]]
+    yx1wx0 <- est[[4]] 
+  }
   
   # bootstrap subsamples
   boots <- lapply(
@@ -84,25 +85,24 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
   tv <- msd(y, "id1", y, "id0")
 
   # get DE
-  ctfde <- msd(yx1wx0, "id0", yx0, "id0") # updated (!)
-  nde <- msd(yx1wx0, "all", yx0, "all") # updated (!)
+  nde <- msd(yx1wx0, "all", yx0, "all") # NDE_{x_0, x_1}(y)
+  ctfde <- msd(yx1wx0, "id0", y, "id0") # Ctf-DE_{x_0, x_1}(y | x_0)
 
   # get SE
-
-  se <- msd(yx1, "id0", y, "id1") # pyx1_x0 - py_x1
-  expse_x1 <- msd(yx1, "all", y, "id1") # pyx1 - py_x1
-  expse_x0 <- msd(yx0, "all", y, "id0") # pyx0 - py_x0
+  ctfse <- msd(yx1, "id0", y, "id1") # Ctf-SE_{x_1, x_0}(y) = pyx1_x0 - py_x1
+  expse_x1 <- msd(y, "id1", yx1, "all") # py_x1 - pyx1 
+  expse_x0 <- msd(y, "id0", yx0, "all") # py_x0 - pyx0
 
   # get ETT
   ett <- msd(yx1, "id0", y, "id0") # pyx1_x0 - py_x0
   te <- msd(yx1, "all", yx0, "all") # pyx1 - pyx0
   
-  nie <- msd(yx1, "all", yx1wx0, "all")
-  ctfie <- msd(yx1, "id0", yx1wx0, "id0")
+  nie <- msd(yx1wx0, "all", yx1, "all") # NIE_{x_1, x_0}(y)
+  ctfie <- msd(yx1wx0, "id0", yx1, "id0") # Ctf-IE_{x_1, x_0}(y | x_0)
 
   structure(
     list(measures = list(
-      TV = tv, DE = ctfde, SE = se, ETT = ett, IE = ctfie,
+      TV = tv, CtfDE = ctfde, CtfSE = ctfse, ETT = ett, CtfIE = ctfie,
       TE = te, NDE = nde, NIE = nie, ExpSE_x1 = expse_x1,
       ExpSE_x0 = expse_x0
     ), x0 = x0, x1 = x0, model = model, X = X, W = W, Z = Z, Y = Y, 
@@ -177,8 +177,3 @@ DoubleRobustCausalExpTV <- function(data, X, W, Z, Y, x0, x1, ...) {
   cef <- list(TV = tv, DE = de, SE = se, ETT = ett, IE = de - ett)
 
 }
-
-TV_family <- function(tvd, dataset) {
-  
-}
-

@@ -8,26 +8,24 @@ ex_med <- function(n, type = "dat", seed = 2022) {
   Z <- replicate(3, runif(n, -1, 1))
   colnames(Z) <- paste0("Z", 1:3)
   
-  X <- rbinom(n, size = 1, prob = expit(rowMeans(abs(Z))))
+  X <- rbinom(n, size = 1, prob = expit(0.8 * rowMeans(Z)))
+  
+  fW1 <- function(X, Z, eps) X * (rowMeans(Z[, c(1, 2)]) + 1) + eps
+  fW2 <- function(X, Z, W1, eps) W1^2 / 2 - 1 + 
+                                 X * (rowMeans((Z^2)[, c(2, 3)])+1) + 
+                                 eps
+  fW3 <- function(X, Z, W1, W2, eps) W1 * W2 / 6 + X * (Z[, 1] / 4 + 2) + eps
   
   eps_w1 <- rnorm(n)
   eps_w2 <- rnorm(n)
   eps_w3 <- rnorm(n)
   
-  W1 <- eps_w1 + X * rowMeans(Z[, c(1, 2)])
-  W2 <- eps_w2 + W1^2 / 2 - 1 + X * rowMeans((Z^2)[, c(2, 3)])
-  W3 <- eps_w3 + W1 * W2 / 6 + rnorm(n) + X * Z[, 1] / 4
-  
-  W1_0 <- eps_w1 + 0 * rowMeans(Z[, c(1, 2)])
-  W2_0 <- eps_w2 + W1^2 / 2 - 1 + 0 * rowMeans((Z^2)[, c(2, 3)])
-  W3_0 <- eps_w3 + W1 * W2 / 6 + rnorm(n) + 0 * Z[, 1] / 4
-  
-  W1_1 <- eps_w1 + 1 * rowMeans(Z[, c(1, 2)])
-  W2_1 <- eps_w2 + W1^2 / 2 - 1 + 1 * rowMeans((Z^2)[, c(2, 3)])
-  W3_1 <- eps_w3 + W1 * W2 / 6 + rnorm(n) + 1 * Z[, 1] / 4
+  W1 <- fW1(X, Z, eps_w1) 
+  W2 <- fW2(X, Z, W1, eps_w2) 
+  W3 <- fW2(X, Z, W1, W2, eps_w3)
   
   f0 <- function(x) rowMeans(abs(x))
-  f1 <- function(x) rowSums((x^2 * max(1, log(abs(x))))[, c(T, F)])
+  f1 <- function(x) rowSums((x^2 * max(1, 1/2 * log(abs(x))))[, c(T, F)])
   
   if (type == "dat") {
     Y <- f0(cbind(Z, W1, W2, W3)) + X * f1(cbind(Z, W1, W2, W3)) + 
@@ -35,28 +33,35 @@ ex_med <- function(n, type = "dat", seed = 2022) {
     dat <- data.frame(cbind(X, Z, W1, W2, W3, Y))
     return(dat)
   } else if (type == "gtruth") {
+    # potential outcomes
+    W1_0 <- fW1(0, Z, eps_w1) 
+    W2_0 <- fW2(0, Z, W1_0, eps_w2) 
+    W3_0 <- fW2(0, Z, W1_0, W2_0, eps_w3)
     
-    de <- f1(cbind(Z, W1, W2, W3))
-    ie <- f0(cbind(Z, W1_0, W2_0, W3_0)) - f0(cbind(Z, W1_1, W2_1, W3_1)) +
-      f1(cbind(Z, W1_0, W2_0, W3_0)) - f1(cbind(Z, W1_1, W2_1, W3_1))
-    
-    te <- de - ie
+    W1_1 <- fW1(1, Z, eps_w1) 
+    W2_1 <- fW2(1, Z, W1_1, eps_w2) 
+    W3_1 <- fW2(1, Z, W1_1, W2_1, eps_w3)
     
     y <- f0(cbind(Z, W1, W2, W3)) + X * f1(cbind(Z, W1, W2, W3))
-    y_1 <- f0(cbind(Z, W1_1, W2_1, W3_1)) + 1 * f1(cbind(Z, W1_1, W2_1, W3_1))
-    y_0 <- f0(cbind(Z, W1_0, W2_0, W3_0)) + 0 * f1(cbind(Z, W1_0, W2_0, W3_0))
+    yx1wx0 <- f0(cbind(Z, W1_0, W2_0, W3_0)) + 
+              1 * f1(cbind(Z, W1_0, W2_0, W3_0))
+    yx1 <- f0(cbind(Z, W1_1, W2_1, W3_1)) + 1 * f1(cbind(Z, W1_1, W2_1, W3_1))
+    yx0 <- f0(cbind(Z, W1_0, W2_0, W3_0)) + 0 * f1(cbind(Z, W1_0, W2_0, W3_0))
+    
+    de <- yx1wx0 - yx0
+    ie <- yx1wx0 - yx1
     
     return(
       list(
         NDE = mean(de),
-        DE = mean(de[X == 0]),
-        TE = mean(de - ie),
+        CtfDE = mean(de[X == 0]),
+        TE = mean(yx1 - yx0),
         NIE = mean(ie),
-        IE = mean(ie[X == 0]),
-        ETT = mean((de-ie)[X == 0]),
-        SE = mean(y[X == 1]) - mean(y_1[X == 0]),
-        ExpSE_x1 = mean(y[X == 1]) - mean(y_1),
-        ExpSE_x0 = mean(y[X == 0]) - mean(y_0),
+        CtfIE = mean(ie[X == 0]),
+        ETT = mean((yx1 - yx0)[X == 0]),
+        CtfSE = mean(yx1[X == 0]) - mean(y[X == 1]),
+        ExpSE_x1 = mean(y[X == 1]) - mean(yx1),
+        ExpSE_x0 = mean(y[X == 0]) - mean(yx0),
         TV = mean(y[X == 1]) - mean(y[X == 0])
       )
     )
@@ -75,7 +80,7 @@ ex_nomed <- function(n, type = "dat", seed = 2022) {
   Z <- replicate(3, runif(n, -1, 1))
   colnames(Z) <- paste0("Z", seq_len(3))
   
-  X <- rbinom(n, size = 1, prob = expit(1 / 3 * rowSums(Z)))
+  X <- rbinom(n, size = 1, prob = expit(1 / 2 * rowSums(Z)))
   
   Y <- f0(Z) + X * f1(Z) + rnorm(n, sd = 1/2)
   
@@ -89,18 +94,18 @@ ex_nomed <- function(n, type = "dat", seed = 2022) {
     y <- f0(Z) + X * f1(Z)
     y_1 <- f0(Z) + f1(Z)
     y_0 <- f0(Z)
-    te <- de <- y_1 - y_0
+    te <- de <- y_1 - y_0    
     ie <- rep(0, length(de))
     
     return(
       list(
         NDE = mean(de),
-        DE = mean(de[X == 0]),
+        CtfDE = mean(de[X == 0]),
         TE = mean(de - ie),
         NIE = mean(ie),
-        IE = mean(ie[X == 0]),
+        CtfIE = mean(ie[X == 0]),
         ETT = mean((de-ie)[X == 0]),
-        SE = mean(y[X == 1]) - mean(y_1[X == 0]),
+        CtfSE = mean(y_1[X == 0]) - mean(y[X == 1]),
         ExpSE_x1 = mean(y[X == 1]) - mean(y_1),
         ExpSE_x0 = mean(y[X == 0]) - mean(y_0),
         TV = mean(y[X == 1]) - mean(y[X == 0])
@@ -110,7 +115,8 @@ ex_nomed <- function(n, type = "dat", seed = 2022) {
   
 }
 
-vis_diff <- function(res, measure = c("TE", "NDE", "NIE")) {
+vis_diff <- function(res, measure = c("CtfDE", "ETT", "ExpSE_x0", "ExpSE_x1", 
+                                      "CtfIE", "NDE", "NIE", "CtfSE", "TE")) {
   
   res <- res[res$measure %in% measure, ]
   
@@ -121,7 +127,7 @@ vis_diff <- function(res, measure = c("TE", "NDE", "NIE")) {
       legend.position = "bottom",
       legend.box.background = element_rect(),
     ) +
-    facet_grid(rows = "measure", scales = "free")
+    facet_grid(rows = "measure", scales = "free_y")
   
   if ("ground_truth" %in% names(res)) {
     p <- p + geom_vline(aes(xintercept = ground_truth), color = "red", 
@@ -130,16 +136,17 @@ vis_diff <- function(res, measure = c("TE", "NDE", "NIE")) {
   p
 }
 
-check_constraints <- function(x) {
+check_constraints <- function(x, mthd = "faircause_ranger") {
   
   x <- as.data.table(x)
-  x <- x[method == "faircause"]
+  x <- x[method == mthd]
   
   # constraint 1: TE = NDE + NIE
-  c1 <- x[measure %in% c("TE", "NDE", "NIE"), c("value", "measure", "boot_num"),
+  c1 <- x[measure %in% c("TE", "NDE", "NIE"), 
+          c("value", "measure", "boot_num"),
           with = F]
   c1 <- dcast(c1, boot_num ~ measure)
-  c1[, TE_tot := NDE / TE + NIE / TE]
+  c1[, TE_tot := NDE / TE - NIE / TE]
   
   # constraint 2: TV = TE + ExpSE_x1 - ExpSE_x0
   c2 <- x[measure %in% c("TV", "TE", "ExpSE_x1", "ExpSE_x0"), 
@@ -149,41 +156,43 @@ check_constraints <- function(x) {
   c2[, TV_tot := TE/TV + ExpSE_x1/TV - ExpSE_x0/TV]
   
   # constraint 3: ETT = DE + IE
-  c3 <- x[measure %in% c("ETT", "DE", "IE"), c("value", "measure", "boot_num"),
+  c3 <- x[measure %in% c("ETT", "CtfDE", "CtfIE"), 
+          c("value", "measure", "boot_num"),
           with = F]
   c3 <- dcast(c3, boot_num ~ measure)
-  c3[, ETT_tot := DE / ETT + IE / ETT]
+  c3[, ETT_tot := CtfDE / ETT - CtfIE / ETT]
   
   # constraint 4: TV = ETT - Ctf-SE
-  c4 <- x[measure %in% c("TV", "ETT", "SE"), c("value", "measure", "boot_num"),
+  c4 <- x[measure %in% c("TV", "ETT", "CtfSE"), 
+          c("value", "measure", "boot_num"),
           with = F]
   c4 <- dcast(c4, boot_num ~ measure)
-  c4[, TV2_tot := ETT / TV - SE / TV]
+  c4[, TV2_tot := ETT / TV - CtfSE / TV]
   
   dat <- cbind(c1$TE_tot, c2$TV_tot, c3$ETT_tot, c4$TV2_tot, c1$boot_num)
   dat <- data.table(dat)
-  names(dat) <- c(
-    paste("Normalized", 
-          c("TE = NDE + NIE", "TV = TE + ExpSE_x1 - ExpSE_x0",
-            "ETT = Ctf-DE + Ctf-IE", "TV = ETT - Ctf-SE")),
-    "boot_num"
-  )
+  names(dat) <- c("TE = NDE + NIE", "TV = TE + ExpSE_x1 - ExpSE_x0",
+                  "ETT = Ctf-DE + Ctf-IE", "TV = ETT - Ctf-SE", "boot_num")
+  
   dat <- melt(dat, id.vars = "boot_num")
   dat$value <- dat$value + rnorm(length(dat$value), sd = 0.01)
   
   ggplot(dat, aes(x = value, fill = factor(variable))) +
-    geom_density() +
+    geom_density(alpha = 0.8) +
     theme_bw() +
     scale_fill_discrete(name = "Constraint") +
     theme(
       legend.position = c(0.8, 0.8),
       legend.box.background = element_rect()
-    )
+    ) + 
+    geom_vline(xintercept = 1, color = "red", linetype = "dashed", size = 1.5)
+  
+  #' * TeX(paste(phi_poly, "=", theta_poly)) *
   
 }
 
-method_cmp <- function(measure = c("DE", "ETT", "ETU", "ExpSE_x0", "ExpSE_x1", 
-                                   "IE", "NDE", "NIE", "SE", "TE", "TV"), 
+method_cmp <- function(measure = c("CtfDE", "ETT", "ExpSE_x0", "ExpSE_x1", 
+                                   "CtfIE", "NDE", "NIE", "CtfSE", "TE"), 
                        example = "med", nboot, nsamp, model) {
   
   if (example == "nomed") {
@@ -199,12 +208,19 @@ method_cmp <- function(measure = c("DE", "ETT", "ETU", "ExpSE_x0", "ExpSE_x1",
     ex <- get_ex(example, nsamp = nsamp, boot_num = i)
     
     # apply the cookbook
-    cbook <- fairness_cookbook(ex$dat, ex$X, ex$W, ex$Z, ex$Y, 0, 1,
-                               model = model)
-    cb <- data.frame(measure = names(cbook$measures),
-                     value = vapply(cbook$measures, 
-                                    function(x) x[1], numeric(1L)),
-                     method = "faircause")
+    cb <- c()
+    for (mod in model) {
+      cbook <- fairness_cookbook(ex$dat, ex$X, ex$W, ex$Z, ex$Y, 0, 1,
+                                 model = mod)
+      cb <- rbind(
+        cb,
+        data.frame(measure = names(cbook$measures),
+                   value = vapply(cbook$measures, 
+                                  function(x) x[1], numeric(1L)),
+                   method = paste0("faircause_", mod))
+      )
+    }
+    
 
     # apply causal forest
     if (any(c("TE", "ETT") %in% measure)) {
@@ -262,11 +278,12 @@ cweight <- function(ex) {
     m = ex$dat[, ex$W],
     x = ex$dat[, ex$Z]
   )
-  
+
   data.frame(
-    measure = c("NDE", "NIE"), 
-    value = c(cwg$results["effect", "dir.treat"], 
-              cwg$results["effect", "indir.treat"]),
+    measure = c("TE", "NDE", "NIE"), 
+    value = c(cwg$results["effect", "total"], 
+              cwg$results["effect", "dir.treat"], 
+              cwg$results["effect", "indir.control"]),
     method = "causalweight"
   )
 }
@@ -278,17 +295,23 @@ dre <- function(ex) {
   dat1$X <- 1
   n <- nrow(dat)
   
-  mu1 <- model_mean(as.formula(paste0("Y ~ X + ", paste0(ex$Z, collapse = "+"))), 
-                    dat, dat1, probability = length(unique(ex$dat[[ex$Y]])) == 2L)
-  mu0 <- model_mean(as.formula(paste0("Y ~ X + ", paste0(ex$Z, collapse = "+"))), 
-                    dat, dat0, probability = length(unique(ex$dat[[ex$Y]])) == 2L)
+  mu1 <- model_mean(as.formula(paste0("Y ~ X + ", 
+                                      paste0(ex$Z, collapse = "+"))), 
+                    dat, dat1, 
+                    probability = length(unique(ex$dat[[ex$Y]])) == 2L)
+  mu0 <- model_mean(as.formula(paste0("Y ~ X + ", 
+                                      paste0(ex$Z, collapse = "+"))), 
+                    dat, dat0, 
+                    probability = length(unique(ex$dat[[ex$Y]])) == 2L)
   
   prop1 <- model_propensity(
     as.formula(paste0("X ~ ", paste0(ex$Z, collapse = "+"))), ex$dat, xlvl = 1)
   
   idx <- ex$dat[[ex$X]] == 1
-  dr_mu1 <- 1 / n * sum( (ex$dat[[ex$Y]] - mu1)[idx] / prop1[idx]  ) + mean(mu1)
-  dr_mu0 <- 1 / n * sum((ex$dat[[ex$Y]] - mu0)[!idx] / (1 - prop1[!idx])) + mean(mu0) 
+  dr_mu1 <- 1 / n * sum( (ex$dat[[ex$Y]] - mu1)[idx] / prop1[idx]  ) + 
+    mean(mu1)
+  dr_mu0 <- 1 / n * sum((ex$dat[[ex$Y]] - mu0)[!idx] / (1 - prop1[!idx])) + 
+    mean(mu0) 
   DR_ATE <- dr_mu1 - dr_mu0
   
   data.frame(measure = "TE", value = DR_ATE, method = "DR")
@@ -319,6 +342,18 @@ get_ex <- function(example, nsamp = 1000, boot_num = 1L, gtruth = FALSE) {
     
     dat <- get_data("census")
     dat$sex <- as.integer(dat$sex) - 1L
+    
+  } else if (example == "berkeley") {
+    
+    dat <- get_data("berkeley")
+    meta <- get_metadata("berkeley")
+    dat$admit <- as.integer(dat$admit) - 1L
+    dat$dept <- as.integer(dat$dept)
+    dat$gender <- as.integer(dat$gender) - 1L
+    
+    dat <- setnames(dat, meta$X, "X")
+    dat <- setnames(dat, meta$Y, "Y")
+    dat <- setnames(dat, meta$W, "W")
     
   }
   
