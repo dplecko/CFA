@@ -9,41 +9,21 @@ root <- rprojroot::find_root(rprojroot::is_git_root)
 r_dir <- file.path(root, "r")
 invisible(lapply(list.files(r_dir, full.names = TRUE), source))
 
-exmp <- list(
-  nomed = list(
-    example = "nomed", nboot = 100, nsamp = 2000,
-    model = c("linear", "ranger")
-  ),
-  med = list(
-    example = "med", nboot = 100, nsamp = 2000,
-    model = c("linear", "ranger")
-  ),
-  compas = list(
-    example = "compas", nboot = 100, nsamp = 2000,
-    model = c("linear", "ranger")
-  ),
-  berkeley = list(
-    example = "berkeley", nboot = 100, nsamp = 2000,
-    model = c("linear", "ranger")
-  )
-  # Census -> need to handle mixed-variable W & Z
-)
+exmp <- c("nomed", "med", "berkeley", "compas")
+# Census -> need to handle mixed-variable W & Z
 
+res <- list()
 for (i in seq_along(exmp)) {
-  exmp[[i]][["res"]] <- method_cmp(example = exmp[[i]][["example"]],
-                                   nboot = exmp[[i]][["nboot"]],
-                                   nsamp = exmp[[i]][["nsamp"]],
-                                   model = exmp[[i]][["model"]])
+  res[[i]] <- method_cmp(example = exmp[i], nboot = 100, nsamp = 2000,
+                       model = c("linear", "ranger"))
 }
 
 save(exmp, file = "CFA_benchmark.rda")
 
 #'* visual analysis *
-
+# load("CFA_benchmark.rda")
 # ## comparisons
-# vis_diff(exmp[["compas"]][["res"]])
+# vis_diff(exmp[["berkeley"]][["res"]])
 
 ## constraints
 # check_constraints(exmp[["compas"]][["res"]])
-
-method_cmp(example = "berkeley", nboot = 2, nsamp = 100, model = "ranger")

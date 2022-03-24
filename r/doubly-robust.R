@@ -77,7 +77,7 @@ doubly_robust <- function(x, z, w, y, K = 5, model = "ranger",
               msg = "Attribute or outcome is not a vector. Disallowed.")
   if (is.vector(z) | is.factor(w)) z <- data.frame(z = z)
   if (is.vector(w) | is.factor(w)) w <- data.frame(w = w)
-  folds <- as.integer(cut(seq_along(x), breaks = K))
+  folds <- sample(as.integer(cut(seq_along(x), breaks = K)), replace = FALSE)
   y0 <- y1 <- y0w1 <- y1w0 <- px_z <- px_zw <- rep(NA_real_, length(x))
 
   for (k in seq_len(K)) {

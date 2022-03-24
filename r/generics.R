@@ -45,14 +45,15 @@ autoplot.faircause <- function(x, decompose = "general", dataset = "", ...) {
     NDE = TeX("NDE_{x_0, x_1}(y)"),
     NIE = TeX("NIE_{x_1, x_0}(y)"),
     ETT = TeX("ETT_{x_0, x_1}(y | x_0)"),
-    DE = TeX("DE_{x_0, x_1}(y | x_0)"),
-    IE = TeX("IE_{x_1, x_0}(y | x_0)"),
-    SE = TeX("SE_{x_1, x_0}(y)")
+    CtfDE = TeX("Ctf-DE_{x_0, x_1}(y | x_0)"),
+    CtfIE = TeX("Ctf-IE_{x_1, x_0}(y | x_0)"),
+    CtfSE = TeX("Ctf-SE_{x_1, x_0}(y)")
   )
+
   if (decompose %in% c("general", "both")) {
     inc_meas <- c(inc_meas, "NDE", "NIE", "ExpSE_x0", "ExpSE_x1")
   } else if (decompose %in% c("xspec")) {
-    inc_meas <- c(inc_meas, "DE", "IE", "SE")
+    inc_meas <- c(inc_meas, "CtfDE", "CtfIE", "CtfSE")
   } else inc_meas <- names(rename)
 
   df$Measure <- factor(df$Measure, levels = names(rename))
@@ -74,6 +75,6 @@ autoplot.faircause <- function(x, decompose = "general", dataset = "", ...) {
       title = element_text(size = 20)
     ) + scale_x_discrete(labels = xlabz) +
     xlab("Causal Fairness Measure") +
-    ggtitle(TeX(paste0("TV_{x_0, x_1}(y) decomposed for",
+    ggtitle(TeX(paste0("TV_{x_0, x_1}(y) decomposed for ",
                        str_to_title(dataset), " dataset")))
 }

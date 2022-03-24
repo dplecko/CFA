@@ -120,7 +120,7 @@ vis_diff <- function(res, measure = c("CtfDE", "ETT", "ExpSE_x0", "ExpSE_x1",
 
   res <- res[res$measure %in% measure, ]
 
-  p <- ggplot(res, aes(x = value, fill = method)) +
+  p <- ggplot(res, aes(x = jitter(value), fill = method)) +
     geom_density(alpha = 0.5) +
     theme_bw() + xlab("Estimate") +
     ylab("Density") + theme(
@@ -318,7 +318,7 @@ dre <- function(ex) {
       mean(ex$dat[[ex$Y]][ex$dat[[ex$X]] == 0])
     qnt <- c(te)
     return(data.frame(
-      measure = c("TE"), value = qnt, method = "causal_forest"
+      measure = c("TE"), value = qnt, method = "DR"
     ))
   }
 
@@ -340,13 +340,14 @@ dre <- function(ex) {
     as.formula(paste0("X ~ ", paste0(ex$Z, collapse = "+"))), ex$dat, xlvl = 1)
 
   idx <- ex$dat[[ex$X]] == 1
-  dr_mu1 <- 1 / n * sum( (ex$dat[[ex$Y]] - mu1)[idx] / prop1[idx]  ) +
-    mean(mu1)
-  dr_mu0 <- 1 / n * sum((ex$dat[[ex$Y]] - mu0)[!idx] / (1 - prop1[!idx])) +
-    mean(mu0)
-  DR_ATE <- dr_mu1 - dr_mu0
+  y1 <- (ex$dat[[ex$Y]] - mu1) * idx / prop1 + mu1
+  y0 <- (ex$dat[[ex$Y]] - mu0) * (!idx) / (1 - prop1) + mu0
 
-  data.frame(measure = "TE", value = DR_ATE, method = "DR")
+  DR_ATE <- mean((y1 - y0))
+  DR_ETT <- mean((y1 - y0)[!idx])
+  DR_ETU <- mean((y1 - y0)[idx])
+  data.frame(measure = c("TE", "ETT", "ETU"),
+             value = c(DR_ATE, DR_ETT, DR_ETU), method = "DR")
 }
 
 get_ex <- function(example, nsamp = 1000, boot_num = 1L, gtruth = FALSE) {
