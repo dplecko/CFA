@@ -15,15 +15,16 @@ exmp <- c("nomed", "med", "berkeley", "compas")
 res <- list()
 for (i in seq_along(exmp)) {
   res[[i]] <- method_cmp(example = exmp[i], nboot = 100, nsamp = 2000,
-                       model = c("linear", "ranger"))
+                         model = c("linear", "ranger"))
 }
 
-save(exmp, file = "CFA_benchmark.rda")
+names(res) <- exmp
+save(exmp, res, file = "CFA_benchmark.rda")
 
 #'* visual analysis *
 # load("CFA_benchmark.rda")
 # ## comparisons
-# vis_diff(exmp[["berkeley"]][["res"]])
+# vis_diff(res[["med"]])
 
 ## constraints
 # check_constraints(exmp[["compas"]][["res"]])

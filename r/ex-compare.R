@@ -5,10 +5,10 @@ ex_med <- function(n, type = "dat", seed = 2022) {
 
   expit <- function(x) exp(x) / (1 + exp(x))
 
-  Z <- replicate(3, runif(n, -1, 1))
+  Z <- replicate(3, rnorm(n))
   colnames(Z) <- paste0("Z", 1:3)
 
-  X <- rbinom(n, size = 1, prob = expit(0.8 * rowMeans(Z)))
+  X <- rbinom(n, size = 1, prob = expit(0.5 * rowMeans(Z)))
 
   fW1 <- function(X, Z, eps) X * (rowMeans(Z[, c(1, 2)]) + 1) + eps
   fW2 <- function(X, Z, W1, eps) W1^2 / 2 - 1 +
@@ -24,8 +24,8 @@ ex_med <- function(n, type = "dat", seed = 2022) {
   W2 <- fW2(X, Z, W1, eps_w2)
   W3 <- fW3(X, Z, W1, W2, eps_w3)
 
-  f0 <- function(x) rowMeans(abs(x))
-  f1 <- function(x) rowSums((x^2 * max(1, 1/2 * log(abs(x))))[, c(T, F)])
+  f0 <- function(x) 1 / 2 * rowMeans(abs(x))
+  f1 <- function(x) rowSums((1 / 3 * x^2 * max(1, 1/2 * log(abs(x))))[, c(T, F)])
 
   if (type == "dat") {
     Y <- f0(cbind(Z, W1, W2, W3)) + X * f1(cbind(Z, W1, W2, W3)) +
@@ -119,7 +119,11 @@ vis_diff <- function(res, measure = c("CtfDE", "ETT", "ExpSE_x0", "ExpSE_x1",
                                       "CtfIE", "NDE", "NIE", "CtfSE", "TE")) {
 
   res <- res[res$measure %in% measure, ]
-
+  res <- as.data.table(res)
+  res[, faircause_rng := mean(value[method == "faircause_ranger"]),
+      by = "measure"]
+  res[, faircause_lnr := mean(value[method == "faircause_linear"]),
+      by = "measure"]
   p <- ggplot(res, aes(x = jitter(value), fill = method)) +
     geom_density(alpha = 0.5) +
     theme_bw() + xlab("Estimate") +
@@ -127,12 +131,25 @@ vis_diff <- function(res, measure = c("CtfDE", "ETT", "ExpSE_x0", "ExpSE_x1",
       legend.position = "bottom",
       legend.box.background = element_rect(),
     ) +
-    facet_grid(rows = "measure", scales = "free_y")
+    facet_wrap(vars(measure), scales = "free", ncol = 1L,
+               strip.position = "right")
+
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length = n + 1)
+    hcl(h = hues, l = 65, c = 100)[1:n]
+  }
+  mthd <- sort(unique(res$method))
+  clrs <- gg_color_hue(length(mthd))
 
   if ("ground_truth" %in% names(res)) {
     p <- p + geom_vline(aes(xintercept = ground_truth), color = "red",
-                        linetype = "dashed")
+                        linetype = "dashed", size = 1)
   }
+  p <- p + geom_vline(aes(xintercept = faircause_rng),
+                      color = clrs[mthd == "faircause_ranger"])
+  p <- p + geom_vline(aes(xintercept = faircause_lnr),
+                      color = clrs[mthd == "faircause_linear"])
+
   p
 }
 
@@ -306,7 +323,7 @@ cweight <- function(ex) {
     measure = c("TE", "NDE", "NIE"),
     value = c(cwg$results["effect", "total"],
               cwg$results["effect", "dir.treat"],
-              cwg$results["effect", "indir.control"]),
+              -cwg$results["effect", "indir.control"]),
     method = "causalweight"
   )
 }
