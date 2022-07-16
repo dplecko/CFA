@@ -15,7 +15,8 @@ regr <- function(y, x, model = "ranger") {
     # probability case
     if (model == "ranger") {
       #cat("First value", y[1], "\n")
-      mod <- ranger(y = y, x = x, probability = TRUE, num.threads = n_cores())
+      mod <- ranger::ranger(y = y, x = x, probability = TRUE,
+                            num.threads = n_cores())
       if (y[1] == max(y)) {
         attr(mod, "targ_col") <- 1L
       } else {
@@ -30,7 +31,7 @@ regr <- function(y, x, model = "ranger") {
 
     # regression case
     if (model == "ranger") {
-      return(ranger(y = y, x = x))
+      return(ranger::ranger(y = y, x = x))
     } else if (model == "linear") {
       return(lm(y ~ ., data = cbind(y, x)))
     }
@@ -196,8 +197,8 @@ doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger",
 
 model_mean <- function(form, data, int.data, Y, ...) {
 
-  rf <- ranger(form, data = data, keep.inbag = T, importance = "impurity",
-               num.threads = n_cores(), ...)
+  rf <- ranger::ranger(form, data = data, keep.inbag = T,
+                       importance = "impurity", num.threads = n_cores(), ...)
   assertthat::assert_that(rf$treetype %in% c("Regression",
                                              "Probability estimation"))
 
@@ -231,8 +232,8 @@ model_propensity <- function(form, data, Y, xlvl, ...) {
   assertthat::assert_that(is.factor(data[[Y]]),
                           msg = "Attribute needs to be a factor.")
 
-  rf <- ranger(form, data = data, keep.inbag = TRUE, importance = "impurity",
-               probability = TRUE, num.threads = n_cores(), ...)
+  rf <- ranger::ranger(form, data = data, keep.inbag = TRUE,
+                       importance = "impurity", probability = TRUE, num.threads = n_cores(), ...)
   assertthat::assert_that(rf$treetype == "Probability estimation")
 
   rf$predictions[, xlvl]

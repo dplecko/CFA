@@ -1,3 +1,10 @@
 ^CFA\.Rproj$
 ^\.Rproj\.user$
 ^misc$
+^scripts$
+^fairness-examples$
+^paper$
+^py$
+README.Rmd
+^LICENSE\.md$
+^raw-data$

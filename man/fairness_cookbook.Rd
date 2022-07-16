@@ -27,6 +27,8 @@ repetitions used when constructing confidence intervals of the estimates.}
 \item{model}{A \code{character} scalar determining the model used in
 estimation. Current options are \code{"ranger"} (default) which uses random
 forests and \code{"linear"} which uses (generalized) linear models.}
+
+\item{...}{Further arguments passed to downstream model fitting functions.}
 }
 \value{
 An object of class \code{faircause}, containing estimates of the
@@ -48,16 +50,19 @@ original paper. Most of the running time is due to the quantile regression
 step using the ranger package.
 }
 \examples{
+\dontrun{
 data <- faircause:::get_data_berkeley()
 
 FCB <- fairness_cookbook(data, X = "gender", W = "dept", Z = character(0L),
                          Y = "admit", x0 = "Male", x1 = "Female")
 FCB
+}
+
 
 }
 \references{
-Plecko, D. & Meinshausen, N. (2019).
-Fair Data Adaptation with Quantile Preservation \cr
+Plecko, D. & Bareinboim, E. (2022).
+Causal Fairness Analysis \cr
 }
 \author{
 Drago Plecko

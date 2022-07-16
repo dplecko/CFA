@@ -8,30 +8,31 @@ print.faircause <- function(x, ...) {
 }
 
 #' @export
-summary.faircause <- function(x, decompose = "general", ...) {
+summary.faircause <- function(object, decompose = "general", ...) {
   cat("faircause object summary: \n")
-  cat("\nCall:\n", paste(deparse(x$cl), sep = "\n", collapse = "\n"),
+  cat("\nCall:\n", paste(deparse(object$cl), sep = "\n", collapse = "\n"),
       "\n\n", sep = "")
 
-  cat("Total Variation (TV):", x$measures$TV[1], "\n")
+  cat("Total Variation (TV):", object$measures$TV[1], "\n")
 
   cat("TV decomposition(s) :\n\n")
   if (decompose %in% c("general", "both")) {
-    cat("TV_x0x1(y) (", x$measures$TV[1], ") = NDE_x0x1(y) (", x$measures$NDE[1],
-        ") - NIE_x1x0(y) (", x$measures$NIE[1], ") + ExpSE_x0(y) (",
-        x$measures$ExpSE_x0[1], ") - ExpSE_x1(y) (", x$measures$ExpSE_x1[1], ")\n",
-        sep = "")
+    cat("TV_x0x1(y) (", object$measures$TV[1], ") = NDE_x0x1(y) (",
+        object$measures$NDE[1], ") - NIE_x1x0(y) (", object$measures$NIE[1],
+        ") + ExpSE_x0(y) (", object$measures$ExpSE_x0[1], ") - ExpSE_x1(y) (",
+        object$measures$ExpSE_x1[1], ")\n", sep = "")
   }
   if (decompose %in% c("xspec", "both")) {
-    cat("TV_x0x1(y) (", x$measures$TV[1], ") = CtfDE_x0x1(y) (", x$measures$DE[1],
-        ") - CtfIE_x1x0(y) (", x$measures$IE[1], ") - CtfSE_x1x0(y) (",
-        x$measures$SE[1], ")\n", sep = "")
+    cat("TV_x0x1(y) (", object$measures$TV[1], ") = CtfDE_x0x1(y) (",
+        object$measures$DE[1], ") - CtfIE_x1x0(y) (", object$measures$IE[1],
+        ") - CtfSE_x1x0(y) (", object$measures$SE[1], ")\n", sep = "")
   }
 }
 
 #' @importFrom ggplot2 autoplot ggplot aes geom_density ggtitle
 #' @importFrom ggplot2 scale_fill_discrete xlab scale_y_continuous
 #' @importFrom ggplot2 geom_bar geom_text theme_minimal position_fill theme
+#' @importFrom latex2exp TeX
 #' @export
 autoplot.faircause <- function(x, decompose = "general", dataset = "", ...) {
   df <- data.frame(names(x$measures), Reduce(rbind, x$measures))

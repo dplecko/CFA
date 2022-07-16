@@ -26,16 +26,20 @@
 #' @param model A \code{character} scalar determining the model used in
 #' estimation. Current options are \code{"ranger"} (default) which uses random
 #' forests and \code{"linear"} which uses (generalized) linear models.
+#' @param ... Further arguments passed to downstream model fitting functions.
 #'
 #' @return An object of class \code{faircause}, containing estimates of the
 #' causal fairness measures, together with some meta information.
 #'
 #' @examples
+#' \dontrun{
 #' data <- faircause:::get_data_berkeley()
 #'
 #' FCB <- fairness_cookbook(data, X = "gender", W = "dept", Z = character(0L),
 #'                          Y = "admit", x0 = "Male", x1 = "Female")
 #' FCB
+#' }
+#'
 #'
 #' @author Drago Plecko
 #' @references
@@ -160,42 +164,42 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
 
 }
 
-CausalExplanation_EO <- function(data, X, W, Z, Y, x0, x1, ylvl, ...) {
-
-  idx <- data[[X]] == x0
-  int.data <- data
-  int.data[[X]] <- factor(x1, levels = levels(data[[X]]))
-
-  y_idx <- data[[Y]] == ylvl
-
-  form <- as.formula(paste(
-    Y, "~", X, "+", paste(W, collapse = "+"),
-    "+", paste(Z, collapse = "+")
-  ))
-
-  y_hat <- ranger(form, data = data, classification = T)$predictions
-
-  # get EO
-  eo <- mean(y_hat[!idx & y_idx]) - mean(y_hat[idx & y_idx])
-
-
-  # get DE
-
-  pyhat_x1x0_dir <- c_eff(form, data, int.data, idx & y_idx, ...)
-  de <- pyhat_x1x0_dir - c_eff(form, data, data, idx & y_idx, ...)
-
-  # get SE
-  form <- as.formula(paste(
-    Y, "~", X, "+", paste(Z, collapse = "+")
-  ))
-
-  se <- pyhat_x1x0_dir - c_eff(form, data, int.data, !idx & y_idx, ...)
-
-  ie <- eo - de + se
-
-  list(er = eo, ers = se, erd = de, eri = ie)
-
-}
+# CausalExplanation_EO <- function(data, X, W, Z, Y, x0, x1, ylvl, ...) {
+#
+#   idx <- data[[X]] == x0
+#   int.data <- data
+#   int.data[[X]] <- factor(x1, levels = levels(data[[X]]))
+#
+#   y_idx <- data[[Y]] == ylvl
+#
+#   form <- as.formula(paste(
+#     Y, "~", X, "+", paste(W, collapse = "+"),
+#     "+", paste(Z, collapse = "+")
+#   ))
+#
+#   y_hat <- ranger(form, data = data, classification = T)$predictions
+#
+#   # get EO
+#   eo <- mean(y_hat[!idx & y_idx]) - mean(y_hat[idx & y_idx])
+#
+#
+#   # get DE
+#
+#   pyhat_x1x0_dir <- c_eff(form, data, int.data, idx & y_idx, ...)
+#   de <- pyhat_x1x0_dir - c_eff(form, data, data, idx & y_idx, ...)
+#
+#   # get SE
+#   form <- as.formula(paste(
+#     Y, "~", X, "+", paste(Z, collapse = "+")
+#   ))
+#
+#   se <- pyhat_x1x0_dir - c_eff(form, data, int.data, !idx & y_idx, ...)
+#
+#   ie <- eo - de + se
+#
+#   list(er = eo, ers = se, erd = de, eri = ie)
+#
+# }
 
 DoubleRobustCausalExpTV <- function(data, X, W, Z, Y, x0, x1, ...) {
 
@@ -228,7 +232,8 @@ DoubleRobustCausalExpTV <- function(data, X, W, Z, Y, x0, x1, ...) {
 
 c_eff <- function(form, data, int.data, ...) {
 
-  rf <- ranger(form, data = data, keep.inbag = T, importance = "impurity", ...)
+  rf <- ranger::ranger(form, data = data, keep.inbag = T,
+                       importance = "impurity", ...)
   assertthat::assert_that(rf$treetype %in% c("Regression",
                                              "Probability estimation"))
 

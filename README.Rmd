@@ -1,0 +1,89 @@
+---
+output:
+  github_document:
+    html_preview: false
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# [fairadapt](https://dplecko.github.io/fairadapt/)
+
+<!-- badges: start 
+[![Lifecycle](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
+[![R build status](https://github.com/dplecko/fairadapt/workflows/build/badge.svg)](https://github.com/dplecko/fairadapt/actions?query=workflow%3Abuild)
+[![R check status](https://github.com/dplecko/fairadapt/workflows/check/badge.svg)](https://github.com/dplecko/fairadapt/actions?query=workflow%3Acheck)
+[![pkgdown build status](https://github.com/dplecko/fairadapt/workflows/pkgdown/badge.svg)](https://github.com/dplecko/fairadapt/actions?query=workflow%3Apkgdown)
+[![covr status](https://github.com/dplecko/fairadapt/workflows/coverage/badge.svg)](https://github.com/dplecko/fairadapt/actions?query=workflow%3Acoverage)
+[![Codecov test coverage](https://codecov.io/gh/dplecko/fairadapt/branch/main/graph/badge.svg?token=8A0EL5N4RE)](https://app.codecov.io/gh/dplecko/fairadapt)
+<!-- badges: end -->
+
+The R-package `faircause` can be used for performing Causal Fairness Analysis and implements the methods described in the paper [Causal Fairness Analysis (Plecko & Bareinboim, 2022)](fairness.causalai.net). We refer you to the manuscript for full theoretical details and the methodology. Below we offer quick installation instructions and show a worked example that can help the user get started.
+
+## Installation
+
+You can install `faircause` from this Github repository by using the [devtools](cran.devtools.com) package:
+
+```{r, eval = FALSE}
+devtools::install_github("dplecko/faircause")
+```
+
+Please note that `faircause` is currently at its first version `0.0.0.9000`, meaning that is has not yet been thoroughly tested. Any issues and bug reports would therefore be much appreciated.
+
+## Example
+
+<!-- example could be expanded to show bias before correction -->
+<!-- add plot of adj.mat? visualization of how data changed? -->
+
+We show an example of how to use the `faircause` package on the US Government Census 2018 dataset collected by [American Community Survey](). The dataset contains information on 204,309 employees of the US government, including demographic information $Z$ (age, race, location, citizenship), education and work related information $W$, and the yearly earnings $Y$. The protected attribute $X$ we consider in this case is sex ($x_1$ male, $x_0$ female).
+
+A data scientist analyzing the Census dataset observes the following:
+```{r tv-measure}
+library(faircause)
+
+census <- head(fairadapt::gov_census, n = 1000L) # should change this to faircause
+TV <- mean(census$salary[census$sex == "male"]) -
+  mean(census$salary[census$sex == "female"])
+
+TV
+```
+
+In the first step the data scientist computed that the average disparity in the yearly salary measured by the TV is
+
+$$ E[Y \mid x_1] - E[Y \mid x_0] = \$ 14011.$$
+
+The data scientist has read the Causal Fairness Analysis paper and now wants to understand how this observed disparity relates to the underlying causal mechanisms that generated it. To this end, he constructs the Standard Fairness Model (see [Plecko & Bareinboim, Definition 4]()) associated with this dataset:
+
+```{r census-sfm}
+X <- "sex" # protected attribute
+Z <- c("age", "race", "hispanic_origin", "citizenship", "nativity", 
+       "economic_region") # confounders
+W <- c("marital", "family_size", "children", "education_level", "english_level", 
+       "hours_worked", "weeks_worked", "occupation", "industry") # mediators
+Y <- "salary" # outcome
+```
+
+Based on this causal structure of the variables, the data scientist now performs
+Causal Fairness Analysis by using the `fairness_cookbook()` function exported
+from the `faircause` package:
+
+```{r CFA}
+# decompose the total variation measure
+tvd <- fairness_cookbook(data = census, X = X, W = W, Z = Z, Y = Y, 
+                         x0 = "female", x1 = "male")
+
+# visualize the x-specific measures of direct, indirect, and spurious effect
+autoplot(tvd, decompose = "xspec", dataset = dataset)
+```
+
+The data scientist concludes that there is a substantial cancellation of the 
+direct, indirect, and spurious effects. In particular, the dataset might show
+evidence of disparate treatment, which male employees are given higher salaries.

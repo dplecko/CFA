@@ -1,5 +1,5 @@
 Package: faircause
-Title: Causal Fairness Analysis (One Line, Title Case)
+Title: Causal Fairness Analysis
 Version: 0.0.0.9000
 Authors@R: c(
     person(given = "Drago",
@@ -8,21 +8,17 @@ Authors@R: c(
            email = "drago.plecko@stat.math.ethz.ch")
     )
 Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+License: GPL (>= 3)
 Encoding: UTF-8
-https://github.com/dplecko/fairadapt/issues
+https: //github.com/dplecko/fairadapt/issues
 Depends:
     R (>= 4.0.0)
 Imports:
     ranger (>= 0.13.1),
     assertthat,
-    quantreg,
-    qrnn,
-    igraph,
     ggplot2,
     cowplot,
-    scales
+    latex2exp
 Suggests:
     testthat (>= 3.0.3),
     knitr,
@@ -33,6 +29,10 @@ Suggests:
     mvtnorm,
     magick,
     ggraph,
-    pdftools
+    pdftools,
+    quantreg,
+    qrnn,
+    igraph,
+    scales
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
