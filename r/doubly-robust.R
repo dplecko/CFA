@@ -14,7 +14,14 @@ regr <- function(y, x, model = "ranger") {
 
     # probability case
     if (model == "ranger") {
-      return(ranger(y = y, x = x, probability = TRUE, num.threads = n_cores()))
+      #cat("First value", y[1], "\n")
+      mod <- ranger(y = y, x = x, probability = TRUE, num.threads = n_cores())
+      if (y[1] == max(y)) {
+        attr(mod, "targ_col") <- 1L
+      } else {
+        attr(mod, "targ_col") <- 2L
+      }
+      return(mod)
     } else if (model == "linear") {
       return(glm(y ~ ., data = cbind(y, x), family = "binomial"))
     }
@@ -50,9 +57,11 @@ pred <- function(mod, x) {
 
   } else if (inherits(mod, "ranger")) {
 
-    preds <- predict(mod, x)
+    #preds <- predict(mod, x)
     if (mod$treetype == "Probability estimation") {
-      return(predict(mod, x, num.threads = n_cores())$predictions[, 2])
+      preds <- predict(mod, x,
+                     num.threads = n_cores())$predictions[, attr(mod, "targ_col")]
+      return(preds)
     } else {
       return(predict(mod, x, num.threads = n_cores())$predictions)
     }
@@ -65,8 +74,8 @@ model_based <- function() {
   return(NULL)
 }
 
-doubly_robust <- function(x, z, w, y, K = 5, model = "ranger",
-                          extrm_prob = 0.01) {
+doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger",
+                              extrm_prob = 0.01) {
 
   if (is.factor(x)) x <- as.integer(x) - 1L
   if (is.factor(y)) {
@@ -88,7 +97,7 @@ doubly_robust <- function(x, z, w, y, K = 5, model = "ranger",
     # total effects
 
     # regress X on Z
-    px_z_tr <- regr(x[tr], z[tr, ], model = model)
+    px_z_tr <- regr(x[tr], z[tr, , drop = FALSE], model = model)
 
     # regress Y on Z for each level
     y_z0_tr <- regr(y[tr & x == 0], cbind(z[tr & x == 0, , drop = FALSE]),
@@ -100,8 +109,8 @@ doubly_robust <- function(x, z, w, y, K = 5, model = "ranger",
     px_z_ts <- pred(px_z_tr, z[ts, , drop = FALSE])
     px_z[ts] <- px_z_ts
 
-    y_z0_ts <- pred(y_z0_tr, cbind(z[ts, ]))
-    y_z1_ts <- pred(y_z1_tr, cbind(z[ts, ]))
+    y_z0_ts <- pred(y_z0_tr, cbind(z[ts, , drop = FALSE]))
+    y_z1_ts <- pred(y_z1_tr, cbind(z[ts, , drop = FALSE]))
 
     y0[ts] <- (y[ts] - y_z0_ts) * (x[ts] == 0) / (1 - px_z_ts) +
                 y_z0_ts
@@ -155,29 +164,37 @@ doubly_robust <- function(x, z, w, y, K = 5, model = "ranger",
     # part 4: compute the formula
 
     y0w1[ts] <-
-      (px_zw_ts) * (x[ts]==0) / ((1 - px_zw_ts) * px_z_ts) *
+      (px_zw_ts) * (x[ts] == 0) / ((1 - px_zw_ts) * px_z_ts) *
         (y[ts] - y_zw0_ts) +
-      (x[ts]==1) / (1 - px_z_ts) * (y_zw0_ts - ey_zw0_1_ts) +
+      (x[ts] == 1) / (1 - px_z_ts) * (y_zw0_ts - ey_zw0_1_ts) +
       ey_zw0_1_ts
 
     y1w0[ts] <-
-      (1 - px_zw_ts) * (x[ts]==1) / ((px_zw_ts) * (1 - px_z_ts)) *
+      (1 - px_zw_ts) * (x[ts] == 1) / ((px_zw_ts) * (1 - px_z_ts)) *
       (y[ts] - y_zw1_ts) +
-      (x[ts]==0) / (px_z_ts) * (y_zw1_ts - ey_zw1_0_ts) +
+      (x[ts] == 0) / (px_z_ts) * (y_zw1_ts - ey_zw1_0_ts) +
       ey_zw1_0_ts
   }
 
   # trim the extreme probabilities
-  extrm_idx <- (px_zw < extrm_prob) | (1 - px_zw < extrm_prob) |
-               (px_z < extrm_prob) | (1 - px_z < extrm_prob)
+  extrm_pxz <- (px_z < extrm_prob) | (1 - px_z < extrm_prob)
+  extrm_pxzw <-  (px_zw < extrm_prob) | (1 - px_zw < extrm_prob)
+  extrm_idx <- extrm_pxz | extrm_pxzw
+
   y0[extrm_idx] <- y1[extrm_idx] <- y0w1[extrm_idx] <- y1w0[extrm_idx] <- NA
+
+  if (mean(extrm_idx) > 0.02) {
+    message(100 * mean(extrm_idx),
+            "% of extreme P(x | z) or P(x | z, w) probabilities.\n",
+            "NDE, NIE, Ctf-DE, Ctf-IE estimates likely biased.")
+  }
 
   return(list(y0, y1, y0w1, y1w0))
 
 }
 
 
-model_mean <- function(form, data, int.data, ...) {
+model_mean <- function(form, data, int.data, Y, ...) {
 
   rf <- ranger(form, data = data, keep.inbag = T, importance = "impurity",
                num.threads = n_cores(), ...)
@@ -186,8 +203,14 @@ model_mean <- function(form, data, int.data, ...) {
 
   if (rf$treetype == "Probability estimation") {
 
+    if (is.factor(data[[Y]])) {
+      targ_col <- as.character(levels(data[[Y]])[2])
+    } else if (is.numeric(data[[Y]])) {
+      targ_col <- 2L - (data[[Y]][1] == max(data[[Y]]))
+    }
+
     p2 <- predict(rf, int.data, predict.all = T,
-                  num.threads = n_cores())$predictions[, 2, ]
+                  num.threads = n_cores())$predictions[, targ_col, ]
 
   } else {
 
@@ -202,9 +225,11 @@ model_mean <- function(form, data, int.data, ...) {
 
 }
 
-model_propensity <- function(form, data, xlvl, ...) {
+model_propensity <- function(form, data, Y, xlvl, ...) {
 
   assertthat::assert_that(length(xlvl) == 1L)
+  assertthat::assert_that(is.factor(data[[Y]]),
+                          msg = "Attribute needs to be a factor.")
 
   rf <- ranger(form, data = data, keep.inbag = TRUE, importance = "impurity",
                probability = TRUE, num.threads = n_cores(), ...)

@@ -10,11 +10,11 @@ ex_med <- function(n, type = "dat", seed = 2022) {
 
   X <- rbinom(n, size = 1, prob = expit(0.5 * rowMeans(Z)))
 
-  fW1 <- function(X, Z, eps) X * (rowMeans(Z[, c(1, 2)]) + 1) + eps
+  fW1 <- function(X, Z, eps) X * (rowMeans(Z[, c(1, 2)]) - 1) + eps
   fW2 <- function(X, Z, W1, eps) W1^2 / 2 - 1 +
-                                 X * (rowMeans((Z^2)[, c(2, 3)])+1) +
+                                 X * (1 / 2 * rowMeans((Z^2)[, c(2, 3)]) - 1) +
                                  eps
-  fW3 <- function(X, Z, W1, W2, eps) W1 * W2 / 6 + X * (Z[, 1] / 4 + 2) + eps
+  fW3 <- function(X, Z, W1, W2, eps) W1 * W2 / 6 + X * (Z[, 1] / 4 - 2) + eps
 
   eps_w1 <- rnorm(n)
   eps_w2 <- rnorm(n)
@@ -117,7 +117,7 @@ ex_nomed <- function(n, type = "dat", seed = 2022) {
 
 vis_diff <- function(res, measure = c("CtfDE", "ETT", "ExpSE_x0", "ExpSE_x1",
                                       "CtfIE", "NDE", "NIE", "CtfSE", "TE")) {
-
+  #browser()
   res <- res[res$measure %in% measure, ]
   res <- as.data.table(res)
   res[, faircause_rng := mean(value[method == "faircause_ranger"]),
@@ -145,10 +145,15 @@ vis_diff <- function(res, measure = c("CtfDE", "ETT", "ExpSE_x0", "ExpSE_x1",
     p <- p + geom_vline(aes(xintercept = ground_truth), color = "red",
                         linetype = "dashed", size = 1)
   }
-  p <- p + geom_vline(aes(xintercept = faircause_rng),
-                      color = clrs[mthd == "faircause_ranger"])
-  p <- p + geom_vline(aes(xintercept = faircause_lnr),
-                      color = clrs[mthd == "faircause_linear"])
+
+  if ("faircause_ranger" %in% res$method) {
+    p <- p + geom_vline(aes(xintercept = faircause_rng),
+                        color = clrs[mthd == "faircause_ranger"])
+  }
+  if ("faircause_linear" %in% res$method) {
+    p <- p + geom_vline(aes(xintercept = faircause_lnr),
+                        color = clrs[mthd == "faircause_linear"])
+  }
 
   p
 }

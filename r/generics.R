@@ -38,16 +38,16 @@ autoplot.faircause <- function(x, decompose = "general", dataset = "", ...) {
   names(df) <- c("Measure", "Value", "StdDev")
   inc_meas <- c("TV")
   rename <- list(
-    TV = TeX("TV_{x_0, x_1}(y)"),
-    TE = TeX("TE_{x_0, x_1}(y)"),
-    ExpSE_x1 = TeX("Exp-SE_{x_1}(y)"),
-    ExpSE_x0 = TeX("Exp-SE_{x_0}(y)"),
-    NDE = TeX("NDE_{x_0, x_1}(y)"),
-    NIE = TeX("NIE_{x_1, x_0}(y)"),
-    ETT = TeX("ETT_{x_0, x_1}(y | x_0)"),
-    CtfDE = TeX("Ctf-DE_{x_0, x_1}(y | x_0)"),
-    CtfIE = TeX("Ctf-IE_{x_1, x_0}(y | x_0)"),
-    CtfSE = TeX("Ctf-SE_{x_1, x_0}(y)")
+    TV = TeX("$TV_{x_0, x_1}(y)$"),
+    TE = TeX("$TE_{x_0, x_1}(y)$"),
+    ExpSE_x1 = TeX("$Exp$-SE_{x_1}(y)$"),
+    ExpSE_x0 = TeX("$Exp$-SE_{x_0}(y)$"),
+    NDE = TeX("$NDE_{x_0, x_1}(y)$"),
+    NIE = TeX("$NIE_{x_1, x_0}(y)$"),
+    ETT = TeX("$ETT_{x_0, x_1}(y | x_0)$"),
+    CtfDE = TeX("$Ctf$-$DE_{x_0, x_1}(y | x_0)$"),
+    CtfIE = TeX("$Ctf$-$IE_{x_1, x_0}(y | x_0)$"),
+    CtfSE = TeX("$Ctf$-$SE_{x_1, x_0}(y)$")
   )
 
   if (decompose %in% c("general", "both")) {
@@ -75,6 +75,6 @@ autoplot.faircause <- function(x, decompose = "general", dataset = "", ...) {
       title = element_text(size = 20)
     ) + scale_x_discrete(labels = xlabz) +
     xlab("Causal Fairness Measure") +
-    ggtitle(TeX(paste0("TV_{x_0, x_1}(y) decomposed for ",
+    ggtitle(TeX(paste0("$TV_{x_0, x_1}(y)$ decomposed for ",
                        str_to_title(dataset), " dataset")))
 }
