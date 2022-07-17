@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 library(ggplot2)
 ```
 
-# [fairadapt](https://dplecko.github.io/fairadapt/)
+# [faircause](https://github.com/dplecko/CFA)
 
 <!-- badges: start 
 [![Lifecycle](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
@@ -27,24 +27,24 @@ library(ggplot2)
 [![Codecov test coverage](https://codecov.io/gh/dplecko/fairadapt/branch/main/graph/badge.svg?token=8A0EL5N4RE)](https://app.codecov.io/gh/dplecko/fairadapt)
 <!-- badges: end -->
 
-The R-package `faircause` can be used for performing Causal Fairness Analysis and implements the methods described in the paper [Causal Fairness Analysis (Plecko & Bareinboim, 2022)](fairness.causalai.net). We refer you to the manuscript for full theoretical details and the methodology. Below we offer quick installation instructions and show a worked example that can help the user get started.
+The R-package `faircause` can be used for performing Causal Fairness Analysis and implements the methods described in the paper [Causal Fairness Analysis (Plecko & Bareinboim, 2022)](https://fairness.causalai.net/). We refer you to the manuscript for full theoretical details and the methodology. Below we offer quick installation instructions and show a worked example that can help the user get started.
 
 ## Installation
 
-You can install `faircause` from this Github repository by using the [devtools](cran.devtools.com) package:
+You can install `faircause` from this Github repository by using the [devtools](https://cran.r-project.org/web/packages/devtools/index.html) package:
 
 ```{r, eval = FALSE}
 devtools::install_github("dplecko/faircause")
 ```
 
-Please note that `faircause` is currently at its first version `0.0.0.9000`, meaning that is has not yet been thoroughly tested. Any issues and bug reports would therefore be much appreciated.
+Please note that `faircause` is currently at its first version `0.0.0.9000`, meaning that is has not yet been thoroughly tested. Any issues and bug reports are warmly welcomed and much appreciated.
 
 ## Example
 
 <!-- example could be expanded to show bias before correction -->
 <!-- add plot of adj.mat? visualization of how data changed? -->
 
-We show an example of how to use the `faircause` package on the US Government Census 2018 dataset collected by [American Community Survey](). The dataset contains information on 204,309 employees of the US government, including demographic information $Z$ (age, race, location, citizenship), education and work related information $W$, and the yearly earnings $Y$. The protected attribute $X$ we consider in this case is sex ($x_1$ male, $x_0$ female).
+We show an example of how to use the `faircause` package on the US Government Census 2018 dataset collected by [American Community Survey](https://www.census.gov/programs-surveys/acs/microdata/documentation.html). The dataset contains information on 204,309 employees of the US government, including demographic information $Z$ (age, race, location, citizenship), education and work related information $W$, and the yearly earnings $Y$. The protected attribute $X$ we consider in this case is sex ($x_1$ male, $x_0$ female).
 
 A data scientist analyzing the Census dataset observes the following:
 ```{r tv-measure}
@@ -76,7 +76,7 @@ Based on this causal structure of the variables, the data scientist now performs
 Causal Fairness Analysis by using the `fairness_cookbook()` function exported
 from the `faircause` package:
 
-```{r CFA}
+```{r CFA, fig.width=8, fig.height=5}
 # decompose the total variation measure
 tvd <- fairness_cookbook(data = census, X = X, W = W, Z = Z, Y = Y, 
                          x0 = "female", x1 = "male")

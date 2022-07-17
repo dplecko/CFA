@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# [fairadapt](https://dplecko.github.io/fairadapt/)
+# [faircause](https://github.com/dplecko/CFA)
 
 <!-- badges: start 
 [![Lifecycle](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
@@ -14,15 +14,17 @@
 
 The R-package `faircause` can be used for performing Causal Fairness
 Analysis and implements the methods described in the paper [Causal
-Fairness Analysis (Plecko & Bareinboim, 2022)](fairness.causalai.net).
-We refer you to the manuscript for full theoretical details and the
-methodology. Below we offer quick installation instructions and show a
-worked example that can help the user get started.
+Fairness Analysis (Plecko & Bareinboim,
+2022)](https://fairness.causalai.net/). We refer you to the manuscript
+for full theoretical details and the methodology. Below we offer quick
+installation instructions and show a worked example that can help the
+user get started.
 
 ## Installation
 
 You can install `faircause` from this Github repository by using the
-[devtools](cran.devtools.com) package:
+[devtools](https://cran.r-project.org/web/packages/devtools/index.html)
+package:
 
 ``` r
 devtools::install_github("dplecko/faircause")
@@ -30,7 +32,7 @@ devtools::install_github("dplecko/faircause")
 
 Please note that `faircause` is currently at its first version
 `0.0.0.9000`, meaning that is has not yet been thoroughly tested. Any
-issues and bug reports would therefore be much appreciated.
+issues and bug reports are warmly welcomed and much appreciated.
 
 ## Example
 
@@ -39,8 +41,9 @@ issues and bug reports would therefore be much appreciated.
 
 We show an example of how to use the `faircause` package on the US
 Government Census 2018 dataset collected by [American Community
-Survey](). The dataset contains information on 204,309 employees of the
-US government, including demographic information
+Survey](https://www.census.gov/programs-surveys/acs/microdata/documentation.html).
+The dataset contains information on 204,309 employees of the US
+government, including demographic information
 ![Z](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;Z "Z")
 (age, race, location, citizenship), education and work related
 information
@@ -98,7 +101,7 @@ tvd <- fairness_cookbook(data = census, X = X, W = W, Z = Z, Y = Y,
                          x0 = "female", x1 = "male")
 
 # visualize the x-specific measures of direct, indirect, and spurious effect
-autoplot(tvd, decompose = "xspec", dataset = "Census")
+autoplot(tvd, decompose = "xspec", dataset = "Census 2018")
 ```
 
 <img src="man/figures/README-CFA-1.png" width="100%" />
