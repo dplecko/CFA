@@ -80,7 +80,8 @@ The data scientist has read the Causal Fairness Analysis paper and now
 wants to understand how this observed disparity relates to the
 underlying causal mechanisms that generated it. To this end, he
 constructs the Standard Fairness Model (see [Plecko & Bareinboim,
-Definition 4]()) associated with this dataset:
+Definition 4](https://causalai.net/r90.pdf)) associated with this
+dataset:
 
 ``` r
 X <- "sex" # protected attribute
