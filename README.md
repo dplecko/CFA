@@ -63,18 +63,18 @@ A data scientist analyzing the Census dataset observes the following:
 ``` r
 library(faircause)
 
-census <- head(faircause::gov_census, n = 1000L)
+census <- head(faircause::gov_census, n = 20000L)
 TV <- mean(census$salary[census$sex == "male"]) -
   mean(census$salary[census$sex == "female"])
 
 TV
-#> [1] 16472.01
+#> [1] 15053.69
 ```
 
 In the first step the data scientist computed that the average disparity
 in the yearly salary measured by the TV is
 
-![ E\[Y \\mid x_1\] - E\[Y \\mid x_0\] = \\$ 14011.](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%20E%5BY%20%5Cmid%20x_1%5D%20-%20E%5BY%20%5Cmid%20x_0%5D%20%3D%20%5C%24%2014011. " E[Y \mid x_1] - E[Y \mid x_0] = \$ 14011.")
+![ E\[Y \\mid x_1\] - E\[Y \\mid x_0\] = \\$ 15053.](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%20E%5BY%20%5Cmid%20x_1%5D%20-%20E%5BY%20%5Cmid%20x_0%5D%20%3D%20%5C%24%2015053. " E[Y \mid x_1] - E[Y \mid x_0] = \$ 15053.")
 
 The data scientist has read the Causal Fairness Analysis paper and now
 wants to understand how this observed disparity relates to the
@@ -97,6 +97,7 @@ function exported from the `faircause` package:
 
 ``` r
 # decompose the total variation measure
+set.seed(2022)
 tvd <- fairness_cookbook(data = census, X = X, W = W, Z = Z, Y = Y, 
                          x0 = "female", x1 = "male")
 
@@ -107,6 +108,13 @@ autoplot(tvd, decompose = "xspec", dataset = "Census 2018")
 <img src="man/figures/README-CFA-1.png" width="100%" />
 
 The data scientist concludes that there is a substantial cancellation of
-the direct, indirect, and spurious effects. In particular, the dataset
-might show evidence of disparate treatment, which male employees are
-given higher salaries.
+the direct, indirect effects, namely:
+
+-   the direct effect explains $10,300 of the observed disparity (that
+    is, females would be paid more, had they been male in this case)
+-   the indirect effect accounts for -$6,400 (cancelling out with the
+    direct effect)
+-   the spurious effect accounts for $1,000 of the observed variation
+
+In particular, the dataset might show evidence of disparate treatment,
+which needs further investigation.

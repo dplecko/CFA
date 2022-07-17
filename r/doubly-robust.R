@@ -45,7 +45,7 @@ pred <- function(mod, x) {
   if (is.vector(x)) x <- data.frame(x = x)
 
   if (is.numeric(mod)) {
-    assert_that(is.null(unlist(x)))
+    assertthat::assert_that(is.null(unlist(x)))
     return(rep(mod, nrow(x)))
   }
   else if (inherits(mod, "glm")) {
@@ -80,10 +80,10 @@ doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger",
 
   if (is.factor(x)) x <- as.integer(x) - 1L
   if (is.factor(y)) {
-    assert_that(length(unique(y)) == 2L)
+    assertthat::assert_that(length(unique(y)) == 2L)
     y <- as.integer(y) - 1L
   }
-  assert_that(is.vector(x) | is.factor(x), is.vector(y) | is.factor(y),
+  assertthat::assert_that(is.vector(x) | is.factor(x), is.vector(y) | is.factor(y),
               msg = "Attribute or outcome is not a vector. Disallowed.")
   if (is.vector(z) | is.factor(w)) z <- data.frame(z = z)
   if (is.vector(w) | is.factor(w)) w <- data.frame(w = w)
