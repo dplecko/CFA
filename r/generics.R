@@ -77,5 +77,5 @@ autoplot.faircause <- function(x, decompose = "general", dataset = "", ...) {
     ) + scale_x_discrete(labels = xlabz) +
     xlab("Causal Fairness Measure") +
     ggtitle(TeX(paste0("$TV_{x_0, x_1}(y)$ decomposed for ",
-                       str_to_title(dataset), " dataset")))
+                       dataset, " dataset")))
 }

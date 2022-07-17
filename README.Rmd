@@ -13,6 +13,7 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%"
 )
+library(ggplot2)
 ```
 
 # [fairadapt](https://dplecko.github.io/fairadapt/)
@@ -49,7 +50,7 @@ A data scientist analyzing the Census dataset observes the following:
 ```{r tv-measure}
 library(faircause)
 
-census <- head(fairadapt::gov_census, n = 1000L) # should change this to faircause
+census <- head(faircause::gov_census, n = 1000L)
 TV <- mean(census$salary[census$sex == "male"]) -
   mean(census$salary[census$sex == "female"])
 
@@ -81,7 +82,7 @@ tvd <- fairness_cookbook(data = census, X = X, W = W, Z = Z, Y = Y,
                          x0 = "female", x1 = "male")
 
 # visualize the x-specific measures of direct, indirect, and spurious effect
-autoplot(tvd, decompose = "xspec", dataset = dataset)
+autoplot(tvd, decompose = "xspec", dataset = "Census 2018")
 ```
 
 The data scientist concludes that there is a substantial cancellation of the 

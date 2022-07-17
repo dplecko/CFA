@@ -49,7 +49,7 @@ and the yearly earnings
 ![Y](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;Y "Y").
 The protected attribute
 ![X](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;X "X")
-we consider in this case is gender
+we consider in this case is sex
 (![x_1](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;x_1 "x_1")
 male,
 ![x_0](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;x_0 "x_0")
@@ -58,15 +58,52 @@ female).
 A data scientist analyzing the Census dataset observes the following:
 
 ``` r
-census <- fairadapt::gov_census # should change this to faircause
+library(faircause)
+
+census <- head(faircause::gov_census, n = 1000L)
 TV <- mean(census$salary[census$sex == "male"]) -
   mean(census$salary[census$sex == "female"])
 
 TV
-#> [1] 14011.28
+#> [1] 16472.01
 ```
 
 In the first step the data scientist computed that the average disparity
 in the yearly salary measured by the TV is
 
 ![ E\[Y \\mid x_1\] - E\[Y \\mid x_0\] = \\$ 14011.](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%20E%5BY%20%5Cmid%20x_1%5D%20-%20E%5BY%20%5Cmid%20x_0%5D%20%3D%20%5C%24%2014011. " E[Y \mid x_1] - E[Y \mid x_0] = \$ 14011.")
+
+The data scientist has read the Causal Fairness Analysis paper and now
+wants to understand how this observed disparity relates to the
+underlying causal mechanisms that generated it. To this end, he
+constructs the Standard Fairness Model (see [Plecko & Bareinboim,
+Definition 4]()) associated with this dataset:
+
+``` r
+X <- "sex" # protected attribute
+Z <- c("age", "race", "hispanic_origin", "citizenship", "nativity", 
+       "economic_region") # confounders
+W <- c("marital", "family_size", "children", "education_level", "english_level", 
+       "hours_worked", "weeks_worked", "occupation", "industry") # mediators
+Y <- "salary" # outcome
+```
+
+Based on this causal structure of the variables, the data scientist now
+performs Causal Fairness Analysis by using the `fairness_cookbook()`
+function exported from the `faircause` package:
+
+``` r
+# decompose the total variation measure
+tvd <- fairness_cookbook(data = census, X = X, W = W, Z = Z, Y = Y, 
+                         x0 = "female", x1 = "male")
+
+# visualize the x-specific measures of direct, indirect, and spurious effect
+autoplot(tvd, decompose = "xspec", dataset = "Census")
+```
+
+<img src="man/figures/README-CFA-1.png" width="100%" />
+
+The data scientist concludes that there is a substantial cancellation of
+the direct, indirect, and spurious effects. In particular, the dataset
+might show evidence of disparate treatment, which male employees are
+given higher salaries.
