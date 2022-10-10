@@ -12,7 +12,7 @@ authors:
     location: New York
     email: eb@cs.columbia.edu
 abstract: |
-  In this submission, we analyze the COMPAS dataset from Broward County, Florida. In particular, we expand the analysis of the COMPAS dataset performed by ProPublica in 2016, by complementing the analysis with tools of causal inference. Our analysis is performed in three steps. Firstly, we compute the disparity between demographic groups in the actual, true recidivism rates, and provide a _causal explanation_ for how this disparity arose in practice. Secondly, we compute the disparity between groups for the predictions produced by Northpointe, Inc., and demonstrate that the predictions have a different causal explanation, directly pointing to discrimination. Finally, in the last step, we provide a causal explanation for the disparity of Northpointe's predictions in the group of individuals who did not recidivate - which shows once again that there is a discriminatory effect of race on the predictions. The implication of our analysis is that there prima facie evidence against Northpointe exists, who discriminated against minority groups purely based on race (and not on other, race related features), which is prohibited by the Equal Protection clause of the 14th Amendment. 
+  In this submission, we analyze the predictions from the COMPAS tool used in Broward County, Florida. In particular, we expand on the analysis performed by ProPublica in 2016, complementing it with tools of causal inference. Our analysis is performed in three steps. Firstly, we compute the disparity between demographic groups in the actual, true recidivism rates, and provide a _causal explanation_ for how this disparity arose in practice. Secondly, we compute the disparity between groups for the predictions produced by Northpointe, Inc., and demonstrate that the predictions have a different causal explanation, directly pointing to discrimination. Finally, in the last step, we provide a causal explanation for the disparity of Northpointe's predictions in the group of individuals who did not recidivate - which shows once again that there is a discriminatory effect of race on the predictions. The implication of our analysis is that there exists prima facie evidence against Northpointe, who discriminated against minority groups purely based on race (and not on other, race related features), which is prohibited by the Equal Protection clause of the 14th Amendment. 
 keywords:
   - COMPAS dataset
   - Causal Inference
@@ -29,8 +29,7 @@ vignette: >
 bibliography: shai.bib
 biblio-style: unsrt
 output: >
-  if (Sys.getenv("HAI_TEMPLATE_CLASS") != "html")
-    rticles::arxiv_article else rmarkdown::html_vignette
+  rticles::arxiv_article
 ---
 
 ```{r, setup, include = FALSE}
@@ -67,7 +66,7 @@ names(data)[which(names(data) == "c_charge_degree")] <- "charge"
 
 # Introduction
 
-Across United States, courts are using algorithms to predict which of the defendants are likely to recidivate and re-offend. As is becoming apparent in the literature on fair machine learning, algorithms a priori do not have any ethical or moral values, and they are capable of learning, or even amplifying the existing societal bias. If left unattended, such algorithms could lead to the perpetuation of unfairness, raising a serious concern about the impact of AI on socially important questions.
+Across United States, courts are using algorithms to predict which of the defendants are likely to recidivate and re-offend. As is becoming apparent in the literature on fair machine learning, algorithms do not have any ethical or moral values a priori, and they are capable of learning, or even amplifying the existing societal bias. If left unattended, such algorithms could lead to the perpetuation of unfairness, raising a serious concern about the impact of AI on socially important questions in the long term.
 
 In their seminal work from 2016 \cite{larson2016recidivism}, the team from ProPublica (an independent, non-profit newsroom), analyzed data from a commercial tool called Correctional Offender Management Profiling for Alternative Sanctions (COMPAS), which was developed by Northpointe, Inc. (the company is today known as Equivant). The analysis was performed on a large number of individuals from Broward County, Florida, and compared the recidivism predictions produced by COMPAS with those that actually occurred in practice. The findings of their analysis sent alarm bells ringing to everyone concerned about issues of racial injustice. In particular, the ProPublica team demonstrated, among other things, that:
 
@@ -78,8 +77,8 @@ The above mentioned disparities observed by ProPublica are a starting point of a
 
 \begin{enumerate}[label=(\roman*)]
   \item the direct causal effect of race on the outcome (not explained by other features),
-  \item  the indirect causal effect of race on previous offenses and degree of charge, which in turn influence the likelihood of recidivism,
-  \item the confounded effect of race, which is associated with age and sex in the dataset.
+  \item  the indirect causal effect of race on previous offenses and degree of charge, which in turn influence the outcome,
+  \item the confounded effect of race, which is associated with age and sex in the dataset, both of which are predictive of outcome.
 \end{enumerate}
 
 We remark here that our causal analysis should be thought of manipulating the ``signals" of race, or its perception, rather than race itself, which is an immutable characteristic of every individual \cite{weinberger2022signal, greiner2011causal}. 
@@ -98,12 +97,11 @@ devtools::install_github("dplecko/CFA")
 
 # Methodology
 
-In this manuscript, we analyze the same COMPAS dataset as the ProPublica team.  tools of causal reasoning \cite{pearl:2k}. 
-In particular, we follow the approach of Causal Fairness Analysis described in \cite{plecko2022causal}. First, we start by constructing a causal graphical model of the dataset. The dataset consists of the following information:
+In this manuscript, we analyze the same dataset as the ProPublica team. We apply tools of causal reasoning \cite{pearl:2k}. In particular, we follow the approach of Causal Fairness Analysis described in \cite{plecko2022causal}. First, we start by constructing a causal graphical model of the dataset. The dataset consists of the following information:
 
   - the protected attribute $X$, in this case race (for simplicity, race has two levels, corresponding to the majority group, and all other minority groups put together),
   - the confounding variables $Z$, in this case age and sex,
-  - the mediator variables $W$, in this chase juvenile and prior offense counts, and the charge of degree,
+  - the mediator variables $W$, in this case juvenile and prior offense counts, and the degree of criminal charge,
   - two outcome variables, $Y$ and $\hat{Y}$, which represent the two-year recidivism and the Northpointe's prediction, respectively. 
   
 Therefore, our dataset looks like:
@@ -111,13 +109,11 @@ Therefore, our dataset looks like:
 knitr::kable(head(data), caption = "COMPAS dataset")
 ```
 
-The causal diagram of the above dataset is shown in Figure \ref{fig:compas-sfm}, which shows how different variables influence each other.
-
-The causal graphical model can be interpreted as follows:
+The causal diagram of the above dataset is shown in Figure \ref{fig:compas-sfm}, which shows how different variables influence each other. The causal graphical model can be interpreted as follows:
 
   - there is a bidirected edge between race $X$ and demographic variables $Z$, which are correlated in the dataset; the edge represents either a confounding mechanism through some historical context, or a selection bias mechanism,
   - there is a directed edge from $X$ to $W$, $Y$, which allows for the possibility that race has an effect on the prior offense counts, and the recidivism outcome; the edge can represent various types of bias, such as a bias in policing or the judicial system against minority groups. 
-  - there is a directed edge, from $Z, W$ into the outcome $Y$, allowing for the possibility that prior offense counts or demographic features influence recidivism,
+  - there are directed edges, from $Z, W$ into the outcome $Y$, allowing for the possibility that prior offense counts or demographic features influence recidivism,
   - there is a directed edge from $Z$ to $W$, which represents the effect of demographic variables on prior offense counts.
   
 \begin{figure*}
@@ -154,12 +150,12 @@ The causal graphical model can be interpreted as follows:
             \label{fig:conf-effect}
         \end{subfigure}
         \caption[ Causal diagram and the visual representation of causal effects. ]
-        {\small Causal diagram and the visual representation of causal effects.} 
+        {\small Causal diagram and the visual representation of causal effects. The target causal effect in subfigures (b), (c), and (d) is highlighted in red.} 
         \label{fig:graphs}
     \end{figure*}
   
-Based on the graphical model, and using the methodology of decomposing variations described above, we can decompose the _parity gap_ between the majority and minority groups, into its direct, indirect, and confounded parts. The parity gap is defined as the difference in conditional expectations between the groups, namely
-\begin{equation}
+Based on the graphical model, and using the methodology of decomposing variations which is introduced in Equation \ref{eq:decomposing} shortly, we can decompose the _parity gap_ between the majority and minority groups, into its direct, indirect, and confounded parts. The parity gap is defined as the difference in conditional expectations between the groups, namely
+\begin{equation} \label{eq:decomposing}
   \text{PG}_{x_0, x_1}(y) = P(Y = 1\mid X = x_1) - P(Y = 1 \mid X = x_0).
 \end{equation}
 
@@ -168,10 +164,10 @@ From a causal viewpoint, we can decompose the parity gap in the following way:
 \begin{equation}
   \text{PG}_{x_0, x_1}(y) = \underbrace{\text{DE}}_{\text{race effect}} +  \underbrace{\text{IE}}_{\text{prior counts effect}} +  \underbrace{\text{CE}}_{\text{age/sex effect}},
 \end{equation}
-where DE, IE, and CE stand for direct, indirect, and confounded effect respectively. The graphical visualizations of the thre effects are shown in Figures \ref{fig:dir-effect}, \ref{fig:indir-effect}, and \ref{fig:conf-effect}. After decomposing the parity gap for two-year recidivism $Y$, we also decompose it for the Northpointe's predictions $\hat{Y}$, and finally decompose it for the $\hat{Y}$ in the subgroup of individuals who did not recidivate ($Y = 0$). 
+where DE, IE, and CE stand for direct, indirect, and confounded effects, respectively. The graphical visualizations of the thre effects are shown in Figures \ref{fig:dir-effect}, \ref{fig:indir-effect}, and \ref{fig:conf-effect}. After decomposing the parity gap for two-year recidivism $Y$ (Experiment A), we also decompose it for the Northpointe's predictions $\hat{Y}$ (Experiment B), and finally decompose it for the $\hat{Y}$ in the subgroup of individuals who did not recidivate, i.e. with $Y = 0$ (Experiment C). 
 
 ## Results
-We now report on the results of our methodology of decomposing variations. We report the results of the three experiments: A) explaining the disparity in true recidivism; B) explaining disparity in Northpointe's predictions; C) explaining disparity in Northpointe's prediction for defendants who did not recidivate ($Y = 0$).
+In this section, we report the results of the three experiments: A) explaining the disparity in true recidivism; B) explaining disparity in Northpointe's predictions; C) explaining disparity in Northpointe's prediction for defendants who did not recidivate ($Y = 0$).
 
 ## A: Explaining disparity in recidivism
 
@@ -195,8 +191,8 @@ two_year <- fairness_cookbook(data, X = X, W = W, Z = Z, Y = Y,
 two_year
 ```
 
-After performing the decomposition we can visualize how the decomposition works in practice:
-```{r, vis-recid, fig.width = 9, fig.height = 6, fig.cap = "Causal decomposition of the parity gap for two-year recidivism.", fig.align='center', out.width = "70%"}
+After performing the decomposition we can visualize how the decomposition, as shown in Figure \ref{fig:vis-recid}.
+```{r, vis-recid, fig.width = 9, fig.height = 6, fig.cap = "Causal decomposition of the parity gap for two-year recidivism.", fig.align='center', out.width = "65%", echo=FALSE}
 autoplot(two_year, decompose = "xspec", signed = FALSE)
 ```
 
@@ -212,7 +208,7 @@ autoplot(two_year, decompose = "xspec", signed = FALSE)
 
 Therefore, we have the first crucial result:
 \begin{equation}
-  \text{PG}_{x_0, x_1}(y) = \underbrace{1.5\%}_{\text{race effect}} +  \underbrace{4\%}_{\text{prior counts effect}} +  \underbrace{3\%}_{\text{age/sex effect}}.
+  \text{PG}_{x_0, x_1}(y) = \underbrace{1.5\%\;(\pm 1.8\%)}_{\text{race effect}} +  \underbrace{4\%\;(\pm 0.8\%)}_{\text{prior counts effect}} +  \underbrace{3\%\;(\pm 1.4\%)}_{\text{age/sex effect}}.
 \end{equation}
 Important to note is that _race does not have a statistically significant direct effect on outcome_.
 
@@ -227,7 +223,7 @@ Therefore, we can compute that:
   \text{PG}_{x_0, x_1}(\hat{y}) = 52\% - 35\% = 17\%.
 \end{equation}
 Firstly, we notice that the disparity in the predicted outcome is larger than in the true outcome. But crucially, the question is how this disparity in predicted outcome arises from a causal point of view. We again apply the `fairness_cookbook()`, this time choosing `northpointe` ($\hat{Y}$) as the outcome of interest:
-```{r, north-cookbook, fig.width = 9, fig.height = 6, fig.cap = "Causal decomposition of the parity gap for Northpointe's recidivism prediction.", fig.align='center', cache=TRUE, out.width = "70%"}
+```{r, north-cookbook, fig.width = 9, fig.height = 6, fig.cap = "Causal decomposition of the parity gap for Northpointe's recidivism prediction.", fig.align='center', cache=TRUE, out.width = "65%"}
 Yhat <- "northpointe"
 north_decompose <- fairness_cookbook(data, X = X, W = W, Z = Z, Y = Yhat, 
                                      x0 = "Majority", x1 = "Minority")
@@ -239,16 +235,16 @@ In particular, we obtain that:
 \begin{equation}
   \text{PG}_{x_0, x_1}(\hat{y}) = \underbrace{5.5\% \;(\pm 1.75\%)}_{\text{race effect}} +  \underbrace{7.5\% \;(\pm 1.2\%)}_{\text{prior counts effect}} +  \underbrace{3\%\;(\pm 1.5\%)}_{\text{age/sex effect}}.
 \end{equation}
-Crucially, we find that _race does have a statistically significant direct effect on Northpointe's predictions_. Furthermore, race by itself explains _one third of the observed disparity_.
+The decomposition is also visualized in Figure \ref{fig:north-cookbook}. Crucially, we find that _race does have a statistically significant direct effect on Northpointe's predictions_. Furthermore, race by itself explains _one third of the observed disparity_.
 
 ## C: Explaining disparity in Northpointe's recidivism predictions for _those who did not recidivate_ 
 
 In the final step, we again perform a decomposition of a disparity, but this time within the group of individuals who did not recidivate. Similarly as before, we can distinguish the direct, indirect, and spurious effects in this disparity. However, the quantity we are decomposing is not the parity gap, but the __error rate__ related to the equality of opportunity criterion, i.e.,
 
 \begin{equation}
-\text{ER}_{x_0, x_1}(y) = P(\hat{Y} = 1 \mid X = x_1, Y = 0) - P(\hat{Y} = 1 \mid X = x_0, Y = 0).
+\text{ER}_{x_0, x_1}(\hat{y} | y = 0) = P(\hat{Y} = 1 \mid X = x_1, Y = 0) - P(\hat{Y} = 1 \mid X = x_0, Y = 0).
 \end{equation}
-In words, we compare the proportion of minority individuals who are flagged as high risk, but did not recidivate, to the proportion of majority individuals who are flagged as high risk but did not recidivate. We can compute this
+In words, we compare the proportion of minority individuals who are flagged as high risk, but did not recidivate, to the proportion of majority individuals who are flagged as high risk but did not recidivate. We can compute this as:
 ```{r, no-recid}
 no_recid <- data$two_year_recid == 0
 tapply(data$northpointe[no_recid], data$race[no_recid], mean)
@@ -259,30 +255,33 @@ Therefore, we obtained that:
 \end{equation}
 In words, from defendants who do no recidivate, the minority group defendants are 15% more likely to be labeled as high risk. Once again, we can obtain a causal decomposition, but this time of the $\text{ER}_{x_0, x_1}(\hat{y} \mid y = 0)$ measures. For this purpose, we use the `fairness_cookbook_eo()` functionality:
 
-```{r, eo-decomp, fig.cap = "Causal decomposition of the error rate for the group of non-recidivists.", fig.align='center', fig.width = 9, fig.height = 6, cache=TRUE, out.width = "70%"}
+```{r, eo-decomp, fig.cap = "Causal decomposition of the error rate for the group of non-recidivists.", fig.align='center', fig.width = 9, fig.height = 6, cache=TRUE, out.width = "65%"}
 eo_decompose <- fairness_cookbook_eo(data, X = X, W = W, Z = Z, Y = Y,
                             Yhat = Yhat, x0 = "Majority", x1 = "Minority",
                             ylvl = 0)
 autoplot(eo_decompose, decompose = "xspec", signed = FALSE, eo = TRUE)
 ```
 
-Conclusion: _there is a direct effect of race on the prediction even within the group of individuals who do not recedivate_. Race explains _more than one third of the observed disparity_ in the group. 
+The visualization of the decomposition is shown in Figure \ref{fig:eo-decomp} and can be written mathematically as:
+\begin{equation}
+  \text{ER}_{x_0, x_1}(\hat{y} \mid y = 0) = \underbrace{6.8\% \;(\pm 2\%)}_{\text{race effect}} +  \underbrace{5\% \;(\pm 1.3\%)}_{\text{prior counts effect}} +  \underbrace{3\%\;(\pm 2\%)}_{\text{age/sex effect}}.
+\end{equation}
+We conclude that _there is a direct effect of race on the prediction even within the group of individuals who do not recedivate_. Race explains _more than one third of the observed disparity_ in the group. 
 
 # Discussion
-
 
 ## Key Findings
 The analysis presented in this submission consists of three steps, with each of the steps demonstrating a specific causal explanation. 
 The first step of the analysis demonstrates that the direct effect of race is not statistically significant when analyzing the true recidivism rates. In stark contrast, the second analysis shows that for the predictions produced by Northpointe, the direct effect of race is statistically significant, explaining almost a third of the overall racial disparity. Finally, in the third analysis, we show that the direct effect of race on Northpointe's predictions was significant even in the group of individuals who did not re-offend.
 
-Therefore, the absence of the direct effect in the true, observed outcome, and its presence both in the overall dataset and the group of non-recidivists, indicates that the predictions produced by Northpointe are strongly racially prejudiced, and constitute a serious mistreatment of the racial minority groups.
+Therefore, the absence of the direct effect in the true, observed outcome, and its presence in the predictions for both the overall dataset and the group of non-recidivists, indicates that the predictions produced by Northpointe are strongly racially prejudiced, and constitute a serious mistreatment of the racial minority groups.
 
 ## Legal Implications
 
-We quickly discuss some of the possible legal implications of the findings summarized above. Firstly, direct discrimination is particularly considered in some provisions of the US legal system. For example, under the Title VII of the Civil Rights Act of 1964 \cite{act1964civil}, disparate treatment of individuals based on race is strictly prohibited. Another example is the Fair Housing Act \cite{housing1968fair}, which also prohibits direct racial discrimination.
+We quickly discuss some of the possible legal implications of the findings summarized above. Firstly, direct discrimination is explicitly considered in some provisions of the US legal system. For example, under the Title VII of the Civil Rights Act of 1964 \cite{act1964civil}, disparate treatment of individuals based on race is strictly prohibited. Another example is the Fair Housing Act \cite{housing1968fair}, which also prohibits direct racial discrimination.
 
 Interestingly, recent works in legal scholarship have started to turn to interpreting the disparate treatment doctrine in causal language \cite{plecko2022causal}, in particular looking at the direct effect of the protected attribute. The analysis proposed in this work also gives a causal explanation of how the overall disparity came about, and follows from a more broad framework for causal fairness analysis, which was designed with the intention of interpreting the legal doctrines of disparate treatment and disparate impact.
 
-However, the doctrines of disparate treatment and impact would not be explicitly considered in a legal proceeding on the COMPAS tool. Nonetheless, the absence of a direct effect of race in reality (Experiment A) and its presence in Northpointe's predictions (Experiments B, C) indicate a clear issue and provide prima facie evidence of intentional racial discrimination, which is prohibited by the Equal Protection clause of the 14th Amendment of the United States Constitution.
+However, the doctrines of disparate treatment and disparate impact would likely not be explicitly considered in a legal proceeding on the COMPAS tool. Nonetheless, the absence of a direct effect of race on the true observed outcome (Experiment A) and its presence in Northpointe's predictions (Experiments B, C) indicate a clear issue and provide prima facie evidence of intentional racial discrimination, which is prohibited by the Equal Protection clause of the 14th Amendment of the United States Constitution.
 
 In conclusion, our causal analysis of the COMPAS tool explains the disparities observed in the data, and demonstrates a clear direct effect of race on predictions of recidivism. As discussed above, such findings likely constitute a basis for legal action against a discriminatory practice from the software provider that produced the predictions.
