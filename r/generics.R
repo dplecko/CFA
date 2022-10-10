@@ -34,7 +34,8 @@ summary.faircause <- function(object, decompose = "general", ...) {
 #' @importFrom ggplot2 geom_bar geom_text theme_minimal position_fill theme
 #' @importFrom latex2exp TeX
 #' @export
-autoplot.faircause <- function(x, decompose = "general", dataset = "", ...) {
+autoplot.faircause <- function(x, decompose = "general", dataset = "",
+                               signed = TRUE, eo = FALSE, ...) {
   df <- data.frame(names(x$measures), Reduce(rbind, x$measures))
   names(df) <- c("Measure", "Value", "StdDev")
   inc_meas <- c("TV")
@@ -50,10 +51,31 @@ autoplot.faircause <- function(x, decompose = "general", dataset = "", ...) {
     CtfIE = TeX("$Ctf$-$IE_{x_1, x_0}(y | x_0)$"),
     CtfSE = TeX("$Ctf$-$SE_{x_1, x_0}(y)$")
   )
+  ttl <- "$TV_{x_0, x_1}(y)$"
+
+
+  if (!signed) {
+
+    assertthat::assert_that(
+      decompose == "xspec",
+      msg = "Signed = TRUE not supported for decompose != xspec."
+    )
+    rename$TV <- ifelse(eo, TeX("$ER_{x_0, x_1}(\\hat{y} | y_0)$"),
+                        TeX("$PG_{x_0, x_1}(y)$"))
+    ttl <- ifelse(eo, "$ER_{x_0, x_1}(\\hat{y} | y_0)$", "$PG_{x_0, x_1}(y)$")
+    rename$CtfDE <- "Direct"
+    rename$CtfIE <- "Indirect"
+    rename$CtfSE <- "Confounded"
+
+    sgn_idx <- which(df$Measure %in% c("CtfIE", "CtfSE"))
+
+    df$Value[sgn_idx] <- df$Value[sgn_idx] * (-1)
+
+  }
 
   if (decompose %in% c("general", "both")) {
     inc_meas <- c(inc_meas, "NDE", "NIE", "ExpSE_x0", "ExpSE_x1")
-  } else if (decompose %in% c("xspec")) {
+  } else if (decompose == "xspec") {
     inc_meas <- c(inc_meas, "CtfDE", "CtfIE", "CtfSE")
   } else inc_meas <- names(rename)
 
@@ -76,6 +98,5 @@ autoplot.faircause <- function(x, decompose = "general", dataset = "", ...) {
       title = element_text(size = 20)
     ) + scale_x_discrete(labels = xlabz) +
     xlab("Causal Fairness Measure") +
-    ggtitle(TeX(paste0("$TV_{x_0, x_1}(y)$ decomposed for ",
-                       dataset, " dataset")))
+    ggtitle(TeX(paste0(ttl, " decomposition ", dataset)))
 }

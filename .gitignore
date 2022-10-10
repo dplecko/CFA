@@ -8,3 +8,4 @@ data
 .Rproj.user
 *.rda
 raw-data
+inst/doc

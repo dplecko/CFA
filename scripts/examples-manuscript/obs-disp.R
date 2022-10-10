@@ -5,15 +5,15 @@ invisible(lapply(list.files(r_dir, full.names = TRUE), source))
 
 dataset <- "census"
 
-dat <- get_data(dataset)
+dat <- faircause::gov_census
 mdat <- get_metadata(dataset)
 
 x0_ind <- dat[, mdat[["X"]]] == mdat[["x0"]]
 
 obs_par <- switch(
-  2L - is.na(mdat[["ylvl"]]), 
+  2L - is.na(mdat[["ylvl"]]),
   mean(dat[!x0_ind, mdat[["Y"]]]) - mean(dat[x0_ind, mdat[["Y"]]]),
-  mean(dat[!x0_ind, mdat[["Y"]]] == mdat[["ylvl"]]) - 
+  mean(dat[!x0_ind, mdat[["Y"]]] == mdat[["ylvl"]]) -
     mean(dat[x0_ind, mdat[["Y"]]] == mdat[["ylvl"]])
 )
 

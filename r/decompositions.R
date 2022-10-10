@@ -157,49 +157,21 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
       TV = tv, CtfDE = ctfde, CtfSE = ctfse, ETT = ett, CtfIE = ctfie,
       TE = te, NDE = nde, NIE = nie, ExpSE_x1 = expse_x1,
       ExpSE_x0 = expse_x0
-    ), x0 = x0, x1 = x0, model = model, X = X, W = W, Z = Z, Y = Y,
+    ), x0 = x0, x1 = x1, model = model, X = X, W = W, Z = Z, Y = Y,
     cl = match.call()),
     class = "faircause"
   )
 
 }
 
-# CausalExplanation_EO <- function(data, X, W, Z, Y, x0, x1, ylvl, ...) {
-#
-#   idx <- data[[X]] == x0
-#   int.data <- data
-#   int.data[[X]] <- factor(x1, levels = levels(data[[X]]))
-#
-#   y_idx <- data[[Y]] == ylvl
-#
-#   form <- as.formula(paste(
-#     Y, "~", X, "+", paste(W, collapse = "+"),
-#     "+", paste(Z, collapse = "+")
-#   ))
-#
-#   y_hat <- ranger(form, data = data, classification = T)$predictions
-#
-#   # get EO
-#   eo <- mean(y_hat[!idx & y_idx]) - mean(y_hat[idx & y_idx])
-#
-#
-#   # get DE
-#
-#   pyhat_x1x0_dir <- c_eff(form, data, int.data, idx & y_idx, ...)
-#   de <- pyhat_x1x0_dir - c_eff(form, data, data, idx & y_idx, ...)
-#
-#   # get SE
-#   form <- as.formula(paste(
-#     Y, "~", X, "+", paste(Z, collapse = "+")
-#   ))
-#
-#   se <- pyhat_x1x0_dir - c_eff(form, data, int.data, !idx & y_idx, ...)
-#
-#   ie <- eo - de + se
-#
-#   list(er = eo, ers = se, erd = de, eri = ie)
-#
-# }
+#' @export
+fairness_cookbook_eo <- function(data, X, W, Z, Y, Yhat, x0, x1, ylvl, ...) {
+
+  y_idx <- data[[Y]] == ylvl
+  fairness_cookbook(data = data[y_idx, ], X = X, W = W, Z = Z, Y = Yhat,
+                    x0 = x0, x1 = x1)
+
+}
 
 DoubleRobustCausalExpTV <- function(data, X, W, Z, Y, x0, x1, ...) {
 
