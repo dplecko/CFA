@@ -4,12 +4,12 @@ authors:
   - name: Drago Plecko
     department: Seminar for Statistics
     affiliation: ETH Zurich
-    # location: Pittsburgh, PA 15213
+    location: Zurich
     email: drago.plecko@stat.math.ethz.ch
   - name: Elias Bareinboim
     department: Department of Computer Science
     affiliation: Columbia University
-    # location: Santa Narimana, Levand
+    location: New York
     email: eb@cs.columbia.edu
 abstract: |
   In this submission, we analyze the COMPAS dataset from Broward County, Florida. In particular, we expand the analysis of the COMPAS dataset performed by ProPublica in 2016, by complementing the analysis with tools of causal inference. Our analysis is performed in three steps. Firstly, we compute the disparity between demographic groups in the actual, true recidivism rates, and provide a _causal explanation_ for how this disparity arose in practice. Secondly, we compute the disparity between groups for the predictions produced by Northpointe, Inc., and demonstrate that the predictions have a different causal explanation, directly pointing to discrimination. Finally, in the last step, we provide a causal explanation for the disparity of Northpointe's predictions in the group of individuals who did not recidivate - which shows once again that there is a discriminatory effect of race on the predictions. The implication of our analysis is that there prima facie evidence against Northpointe exists, who discriminated against minority groups purely based on race (and not on other, race related features), which is prohibited by the Equal Protection clause of the 14th Amendment. 
@@ -111,7 +111,7 @@ Therefore, our dataset looks like:
 knitr::kable(head(data), caption = "COMPAS dataset")
 ```
 
-The causal diagram of the above mentioned which is shown in Figure \ref{fig:compas-sfm}, which shows how different variables influence each other.
+The causal diagram of the above dataset is shown in Figure \ref{fig:compas-sfm}, which shows how different variables influence each other.
 
 The causal graphical model can be interpreted as follows:
 
@@ -120,24 +120,55 @@ The causal graphical model can be interpreted as follows:
   - there is a directed edge, from $Z, W$ into the outcome $Y$, allowing for the possibility that prior offense counts or demographic features influence recidivism,
   - there is a directed edge from $Z$ to $W$, which represents the effect of demographic variables on prior offense counts.
   
-\begin{figure}
-\centering
-\includegraphics[width=5cm]{compas-sfm}
-\caption{A causal model for the COMPAS dataset.}
-\label{fig:compas-sfm}
-\end{figure}
+\begin{figure*}
+        \centering
+        \begin{subfigure}[b]{0.475\textwidth}
+            \centering
+            \includegraphics[width=0.6\textwidth]{a}
+            \caption[COMPAS Causal Diagram]%
+            {{\small COMPAS causal diagram.}}    
+            \label{fig:compas-sfm}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.475\textwidth}  
+            \centering 
+            \includegraphics[width=0.6\textwidth]{b}
+            \caption[]%
+            {{\small Direct effect visualization.}}    
+            \label{fig:dir-effect}
+        \end{subfigure}
+        \vskip\baselineskip
+        \begin{subfigure}[b]{0.475\textwidth}   
+            \centering 
+            \includegraphics[width=0.6\textwidth]{c}
+            \caption[]%
+            {{\small Indirect effect visualization.}}    
+            \label{fig:indir-effect}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.475\textwidth}   
+            \centering 
+            \includegraphics[width=0.6\textwidth]{d}
+            \caption[]%
+            {{\small Confounded effect visualization.}}    
+            \label{fig:conf-effect}
+        \end{subfigure}
+        \caption[ Causal diagram and the visual representation of causal effects. ]
+        {\small Causal diagram and the visual representation of causal effects.} 
+        \label{fig:graphs}
+    \end{figure*}
   
 Based on the graphical model, and using the methodology of decomposing variations described above, we can decompose the _parity gap_ between the majority and minority groups, into its direct, indirect, and confounded parts. The parity gap is defined as the difference in conditional expectations between the groups, namely
 \begin{equation}
   \text{PG}_{x_0, x_1}(y) = P(Y = 1\mid X = x_1) - P(Y = 1 \mid X = x_0).
 \end{equation}
 
-Mathematically, we have the following equation decomposing the parity gap:
+From a causal viewpoint, we can decompose the parity gap in the following way:
 
 \begin{equation}
   \text{PG}_{x_0, x_1}(y) = \underbrace{\text{DE}}_{\text{race effect}} +  \underbrace{\text{IE}}_{\text{prior counts effect}} +  \underbrace{\text{CE}}_{\text{age/sex effect}},
 \end{equation}
-where DE, IE, and CE stand for direct, indirect, and confounded effect respectively. After decomposing the parity gap for two-year recidivism $Y$, we also decompose it for the Northpointe's predictions $\hat{Y}$, and finally decompose it for the $\hat{Y}$ in the subgroup of individuals who did not recidivate ($Y = 0$). 
+where DE, IE, and CE stand for direct, indirect, and confounded effect respectively. The graphical visualizations of the thre effects are shown in Figures \ref{fig:dir-effect}, \ref{fig:indir-effect}, and \ref{fig:conf-effect}. After decomposing the parity gap for two-year recidivism $Y$, we also decompose it for the Northpointe's predictions $\hat{Y}$, and finally decompose it for the $\hat{Y}$ in the subgroup of individuals who did not recidivate ($Y = 0$). 
 
 ## Results
 We now report on the results of our methodology of decomposing variations. We report the results of the three experiments: A) explaining the disparity in true recidivism; B) explaining disparity in Northpointe's predictions; C) explaining disparity in Northpointe's prediction for defendants who did not recidivate ($Y = 0$).
