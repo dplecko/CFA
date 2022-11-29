@@ -27,7 +27,7 @@ You can install `faircause` from this Github repository by using the
 package:
 
 ``` r
-devtools::install_github("dplecko/faircause")
+devtools::install_github("dplecko/CFA")
 ```
 
 Please note that `faircause` is currently at its first version
