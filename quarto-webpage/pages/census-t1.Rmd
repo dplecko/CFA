@@ -31,7 +31,7 @@ A data scientist loads the data and performs the following initial analysis:
 
 ```{r initial}
 data <- get(data("gov_census", package = "faircause"))
-data <- as.data.frame(data[seq_len(2000)])
+data <- as.data.frame(data[seq_len(20000)])
 knitr::kable(head(data), caption = "Census dataset.")
 tapply(data$salary, data$sex, mean)
 ```
