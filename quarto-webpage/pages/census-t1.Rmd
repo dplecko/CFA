@@ -1,0 +1,82 @@
+---
+title: "Census Dataset Analysis"
+preamble: >
+  \usepackage[utf8]{inputenc}
+  \usepackage[square,numbers]{natbib}
+  \usepackage{graphicx}
+  \usepackage{enumerate}
+  \usepackage{enumitem}
+vignette: >
+  %\VignetteIndexEntry{COMPAS Analysis - A Causal Approach}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: ../bib/shai.bib
+biblio-style: unsrt
+output: >
+  html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+root <- rprojroot::find_root(rprojroot::is_git_root)
+r_dir <- file.path(root, "r")
+invisible(lapply(list.files(r_dir, full.names = TRUE), source))
+invisible(lapply(list.files(file.path(root, "scripts", "helpers"),
+                            full.names = TRUE), source))
+```
+
+The United States Census of 2018 collected broad information about the US Government employees, including demographic information $Z$ ($Z_1$ for age, $Z_2$ for race, $Z_3$ for nationality), gender $X$ ($x_0$ female, $x_1$ male), marital and family status $M$, education information $L$, and work-related information $R$. 
+
+A data scientist loads the data and performs the following initial analysis:
+
+```{r initial}
+data <- get(data("gov_census", package = "faircause"))
+data <- as.data.frame(data[seq_len(2000)])
+knitr::kable(head(data), caption = "Census dataset.")
+tapply(data$salary, data$sex, mean)
+```
+
+Therefore, the data scientist observed that male employees on average earn \$14000/year more than female employees, that is
+$$ 
+E[y \mid x_1] -  E[y \mid x_0] = \$14000.
+$$
+
+Following the Fairness Cookbook, the data scientist does the following:
+
+**SFM projection:** the SFM projection of the causal diagram $\mathcal{G}$ of this dataset is given by
+$$
+\Pi_{\text{SFM}}(\mathcal{G}) = \langle X = \lbrace X \rbrace,  Z = \lbrace Z_1, Z_2, Z_3 \rbrace, W = \lbrace M, L, R\rbrace, Y = \lbrace Y \rbrace\rangle.
+$$
+She then inputs this SFM projection into the `faircause` R-package,
+```{r cookbook}
+#| label: fig-census-cookbook
+#| fig-cap: Fairness Cookbook on the Census dataset.
+#| fig-width: 8
+#| fig-height: 6
+set.seed(2022)
+mdata <- get_metadata("census")
+mdata
+fc_census <- fairness_cookbook(data, X = mdata$X, Z = mdata$Z, W = mdata$W,
+                               Y = mdata$Y, x0 = mdata$x0, x1 = mdata$x1)
+
+autoplot(fc_census, decompose = "xspec", dataset = "Census")
+```
+
+Using these results, she considers the following:
+
+**Disparate treatment:** when considering disparate treatment, she computes $x\text{-DE}^{\text{sym}}_{x}(y \mid x_0)$ and its 95\% confidence interval to be 
+$$
+x\text{-DE}^{\text{sym}}_{x}(y \mid x_0) = \$9980 \pm \$1049.
+$$
+The hypothesis $H_0^{(x\text{-DE})}$ is thus rejected, providing evidence of disparate treatment of females.
+
+**Disparate impact:** when considering disparate impact, she notice that Ctf-SE, Ctf-IE and their respective 95\% confidence intervals equal:
+$$
+	\begin{align}
+	    x\text{-IE}^{\text{sym}}_{x}(y \mid x_0) &= \$5126 \pm \$778,\\
+	    x\text{-SE}_{x_1, x_0}(y) &= -\$1675 \pm  \$955.
+	\end{align}
+$$
+The data scientist decides that the differences in salary explained by the spurious correlation of gender with age, race, and nationality are not considered discriminatory. Therefore, she tests the hypothesis
+	$$H_0^{(x\text{-IE})}: x\text{-IE}^{\text{sym}}_{x}(y \mid x_0) = 0,$$ 
+which is rejected, indicating evidence of disparate impact on female employees of the government. The measures computed in this example are visualized in @fig-census-cookbook.

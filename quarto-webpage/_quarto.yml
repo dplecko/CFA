@@ -1,0 +1,34 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "Causal Fairness Analysis - Software"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+    right:
+      - href: pages/census-t1.Rmd
+        text: Census Task 1
+      - href: pages/college-admissions-t1.Rmd
+        text: College Admissions Task 1
+      - href: pages/compas-t1.Rmd
+        text: COMPAS Task 1
+      - href: pages/compas-t2.Rmd
+        text: COMPAS Task 2
+      - href: pages/shai-challenge.Rmd
+        text: COMPAS TV/EO
+      - href: pages/compas-t2.Rmd
+        text: Fairadapt
+      - href: pages/ci-tests.Rmd
+        text: CI Tests
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+
+editor: visual
+

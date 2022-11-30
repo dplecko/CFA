@@ -8,3 +8,5 @@
 README.Rmd
 ^LICENSE\.md$
 ^raw-data$
+^docs#
+^quarto-webpage$

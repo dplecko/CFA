@@ -9,3 +9,4 @@ data
 *.rda
 raw-data
 inst/doc
+*_cache

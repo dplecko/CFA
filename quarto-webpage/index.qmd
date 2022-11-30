@@ -1,0 +1,28 @@
+---
+title: "Causal Fairness Analysis - Software Tools"
+bibliography: bib/shai.bib
+biblio-style: IEEEtran
+link-citations: true
+---
+
+This page contains a sequence of vignettes associated with the [Causal Fairness Analysis](https://causalai.net/r90.pdf) paper [@plecko2022causal]. In particular, here you can find all the code used to reproduce the results of the paper, formatted in a vignette-style fashion. There are also additional examples of analyses, which are not presented in the manuscript. In particular, you can find the following:
+
+### A: Vignettes directly reproducing the content of the manuscript
+
+1.  [Census dataset analysis](pages/census-t1.Rmd) from Example 5.1 of [@plecko2022causal, Section 5.1],
+
+2.  [College Admissions Bias Quantification over Time](pages/college-admissions-t1.Rmd) from Example 5.2 of [@plecko2022causal, Section 5.1],
+
+3.  [Analysis of fair predictions on the COMPAS dataset](pages/compas-t2.Rmd) from Example 5.3 of [@plecko2022causal, Section 5.2],
+
+4. [COMPAS dataset analysis](pages/compas-t1.Rmd) from Example 6.1 of [@plecko2022causal, Chapter 6],
+
+4.  [Conditional independence tests on COMPAS & Census datasets](pages/ci-tests.Rmd) from Figure 4.7 of [@plecko2022causal, Section 4.5].
+
+### B: Vignettes not directly reproducing the content of the manuscript:
+
+1. [TV & EO analysis on COMPAS dataset](pages/shai-challenge.Rmd),
+
+1. [Fair predictions using Fair Data Adaptation](pages/compas-t2.Rmd).
+
+To learn more about Causal Fairness Analysis, visit <https://fairness.causalai.net/> where you can access a 2-hour Tutorial on the topic, which was presented in the _International Conference on Machine Learning (ICML) 2022_. 

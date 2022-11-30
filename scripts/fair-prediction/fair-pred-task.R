@@ -42,7 +42,6 @@ rjo_plt <- autoplot(rjo_tvd, decompose = "xspec", dataset = dataset) +
 
 # Method 3: Reweighing by Kamiran & Calders
 library(reticulate)
-
 source_python(file.path(root, "py", paste0("reweighing_", dataset, ".py")))
 
 Yhat_rew <- reweigh_and_predict(r_to_py(dat), r_to_py(dat))

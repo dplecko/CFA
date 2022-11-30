@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.1.189">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="keywords" content="COMPAS dataset, Causal Inference, Causal Fairness Analysis, Graphical Models">
+
+<title>Causal Fairness Analysis - Software - COMPAS Analysis - A Causal Approach</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Causal Fairness Analysis - Software</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/census-t1.html">Census Task 1</a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/college-admissions-t1.html">College Admissions Task 1</a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/compas-t1.html">COMPAS Task 1</a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/compas-t2.html">COMPAS Task 2</a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../pages/shai-challenge.html" aria-current="page">COMPAS TV/EO</a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/compas-t2.html">Fairadapt</a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/ci-tests.html">CI Tests</a>
+  </li>  
+</ul>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#methodology" id="toc-methodology" class="nav-link" data-scroll-target="#methodology">Methodology</a></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
+  <ul class="collapse">
+  <li><a href="#a-explaining-disparity-in-recidivism" id="toc-a-explaining-disparity-in-recidivism" class="nav-link" data-scroll-target="#a-explaining-disparity-in-recidivism">A: Explaining disparity in recidivism</a></li>
+  <li><a href="#b-explaining-disparity-in-northpointes-recidivism-predictions" id="toc-b-explaining-disparity-in-northpointes-recidivism-predictions" class="nav-link" data-scroll-target="#b-explaining-disparity-in-northpointes-recidivism-predictions">B: Explaining disparity in Northpointe’s recidivism predictions</a></li>
+  <li><a href="#c-explaining-disparity-in-northpointes-recidivism-predictions-for-those-who-did-not-recidivate" id="toc-c-explaining-disparity-in-northpointes-recidivism-predictions-for-those-who-did-not-recidivate" class="nav-link" data-scroll-target="#c-explaining-disparity-in-northpointes-recidivism-predictions-for-those-who-did-not-recidivate">C: Explaining disparity in Northpointe’s recidivism predictions for <em>those who did not recidivate</em></a></li>
+  </ul></li>
+  <li><a href="#discussion" id="toc-discussion" class="nav-link" data-scroll-target="#discussion">Discussion</a>
+  <ul class="collapse">
+  <li><a href="#key-findings" id="toc-key-findings" class="nav-link" data-scroll-target="#key-findings">Key Findings</a></li>
+  <li><a href="#legal-implications" id="toc-legal-implications" class="nav-link" data-scroll-target="#legal-implications">Legal Implications</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">COMPAS Analysis - A Causal Approach</h1>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Authors</div>
+  <div class="quarto-title-meta-heading">Affiliations</div>
+  
+    <div class="quarto-title-meta-contents">
+    Drago Plecko 
+  </div>
+    <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            ETH Zurich
+          </p>
+      </div>
+      <div class="quarto-title-meta-contents">
+    Elias Bareinboim 
+  </div>
+    <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Columbia University
+          </p>
+      </div>
+    </div>
+
+<div class="quarto-title-meta">
+
+      
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="abstract-title">Abstract</div>
+    <p>In this submission, we analyze the predictions from the COMPAS tool used in Broward County, Florida. In particular, we expand on the analysis performed by ProPublica in 2016, complementing it with tools of causal inference. Our analysis is performed in three steps. Firstly, we compute the disparity between demographic groups in the actual, true recidivism rates, and provide a <em>causal explanation</em> for how this disparity arose in practice. Secondly, we compute the disparity between groups for the predictions produced by Northpointe, Inc., and demonstrate that the predictions have a different causal explanation, directly pointing to discrimination. Finally, in the last step, we provide a causal explanation for the disparity of Northpointe’s predictions in the group of individuals who did not recidivate - which shows once again that there is a discriminatory effect of race on the predictions. The implication of our analysis is that there exists prima facie evidence against Northpointe, who discriminated against minority groups purely based on race (and not on other, race related features), which is prohibited by the Equal Protection clause of the 14th Amendment.</p>
+  </div>
+</div>
+
+</header>
+
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>Across United States, courts are using algorithms to predict which of the defendants are likely to recidivate and re-offend. As is becoming apparent in the literature on fair machine learning, algorithms do not have any ethical or moral values a priori, and they are capable of learning, or even amplifying the existing societal bias. If left unattended, such algorithms could lead to the perpetuation of unfairness, raising a serious concern about the impact of AI on socially important questions in the long term.</p>
+<p>In their seminal work from 2016 <span class="citation" data-cites="larson2016recidivism">(<a href="#ref-larson2016recidivism" role="doc-biblioref">Larson et al. 2016</a>)</span>, the team from ProPublica (an independent, non-profit newsroom), analyzed data from a commercial tool called Correctional Offender Management Profiling for Alternative Sanctions (COMPAS), which was developed by Northpointe, Inc.&nbsp;(the company is today known as Equivant). The analysis was performed on a large number of individuals from Broward County, Florida, and compared the recidivism predictions produced by COMPAS with those that actually occurred in practice. The findings of their analysis sent alarm bells ringing to everyone concerned about issues of racial injustice. In particular, the ProPublica team demonstrated, among other things, that:</p>
+<ul>
+<li>black defendants who did not recidivate over a two-year period were nearly twice as likely to be classified as higher risk compared to their white counterparts,</li>
+<li>white defendants who did recidivate over a two-year period were labeled as low risk twice as often as black re-offenders.</li>
+</ul>
+<p>The above mentioned disparities observed by ProPublica are a starting point of an important investigation. What their analysis did not investigate is the <em>causal explanation</em> of how the disparities arose. In particular, using the language of causal models, we provide such an explanation as follows. For the observed disparity between the groups, we quantify how much of the disparity can be explained by:</p>
+<ol type="a">
+<li>the direct causal effect of race on the outcome (not explained by other features),</li>
+<li>the indirect causal effect of race on previous offenses and degree of charge, which in turn influence the outcome,</li>
+<li>the confounded effect of race, which is associated with age and sex in the dataset, both of which are predictive of outcome.</li>
+</ol>
+<p>We remark here that our causal analysis should be thought of manipulating the ``signals” of race, or its perception, rather than race itself, which is an immutable characteristic of every individual <span class="citation" data-cites="weinberger2022signal greiner2011causal">(<a href="#ref-weinberger2022signal" role="doc-biblioref">Weinberger 2022</a>; <a href="#ref-greiner2011causal" role="doc-biblioref">Greiner and Rubin 2011</a>)</span>.</p>
+<p>The three steps of our analysis are the following: A. we first look at the causal explanation of the two-year recidivism rates <span class="math inline">\(Y\)</span>, which will help us understand the causal effects of race in the real world, A. we then look at the causal explanation of the Northpointe’s predictions, which will help us understand the causal effects of the <em>predicted world</em>, A. finally, we look at the causal explanation of the Northpointe’s predictions when subsetting to only the group of individuals who did not recidivate over a two-year period; such an analysis will help us understand how Northpointe’s predictions causally treat individuals who do not re-offend.</p>
+<p>We now introduce the methodology used in our analysis, which is implemented in the <code>faircause</code> R-package. The package can be installed using:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"dplecko/CFA"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="methodology" class="level1">
+<h1>Methodology</h1>
+<p>In this manuscript, we analyze the same dataset as the ProPublica team. We apply tools of causal reasoning <span class="citation" data-cites="pearl:2k">(<a href="#ref-pearl:2k" role="doc-biblioref">Pearl 2000</a>)</span>. In particular, we follow the approach of Causal Fairness Analysis described in <span class="citation" data-cites="plecko2022causal">(<a href="#ref-plecko2022causal" role="doc-biblioref">Plecko and Bareinboim 2022</a>)</span>. First, we start by constructing a causal graphical model of the dataset. The dataset consists of the following information:</p>
+<ul>
+<li>the protected attribute <span class="math inline">\(X\)</span>, in this case race (for simplicity, race has two levels, corresponding to the majority group, and all other minority groups put together),</li>
+<li>the confounding variables <span class="math inline">\(Z\)</span>, in this case age and sex,</li>
+<li>the mediator variables <span class="math inline">\(W\)</span>, in this case juvenile and prior offense counts, and the degree of criminal charge,</li>
+<li>two outcome variables, <span class="math inline">\(Y\)</span> and <span class="math inline">\(\hat{Y}\)</span>, which represent the two-year recidivism and the Northpointe’s prediction, respectively.</li>
+</ul>
+<p>Therefore, our dataset looks like:</p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<caption>COMPAS dataset</caption>
+<colgroup>
+<col style="width: 5%">
+<col style="width: 4%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 10%">
+<col style="width: 11%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 17%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">sex</th>
+<th style="text-align: right;">age</th>
+<th style="text-align: left;">race</th>
+<th style="text-align: right;">juv_fel</th>
+<th style="text-align: right;">juv_misd</th>
+<th style="text-align: right;">juv_other</th>
+<th style="text-align: right;">priors</th>
+<th style="text-align: left;">charge</th>
+<th style="text-align: right;">two_year_recid</th>
+<th style="text-align: right;">northpointe</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">69</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">44</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">M</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The causal diagram of the above dataset is shown in <a href="#fig-compas-sfm">Figure&nbsp;1</a>, which shows how different variables influence each other. The causal graphical model can be interpreted as follows:</p>
+<ul>
+<li>there is a bidirected edge between race <span class="math inline">\(X\)</span> and demographic variables <span class="math inline">\(Z\)</span>, which are correlated in the dataset; the edge represents either a confounding mechanism through some historical context, or a selection bias mechanism,</li>
+<li>there is a directed edge from <span class="math inline">\(X\)</span> to <span class="math inline">\(W\)</span>, <span class="math inline">\(Y\)</span>, which allows for the possibility that race has an effect on the prior offense counts, and the recidivism outcome; the edge can represent various types of bias, such as a bias in policing or the judicial system against minority groups.</li>
+<li>there are directed edges, from <span class="math inline">\(Z, W\)</span> into the outcome <span class="math inline">\(Y\)</span>, allowing for the possibility that prior offense counts or demographic features influence recidivism,</li>
+<li>there is a directed edge from <span class="math inline">\(Z\)</span> to <span class="math inline">\(W\)</span>, which represents the effect of demographic variables on prior offense counts.</li>
+</ul>
+<div class="quarto-layout-panel">
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div id="fig-compas-sfm" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="../figs/a.png" class="img-fluid figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;1: COMPAS Causal Diagram</figcaption><p></p>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div id="fig-dir-effect" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="../figs/b.png" class="img-fluid figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;2: Direct effect visualization.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div id="fig-indir-effect" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="../figs/c.png" class="img-fluid figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;3: Indirect effect visualization.</figcaption><p></p>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div id="fig-conf-effect" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="../figs/d.png" class="img-fluid figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;4: Confounded effect visualization.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<p>Based on the graphical model, and using the methodology of decomposing variations which is introduced in <a href="#eq-decomposing">Equation&nbsp;1</a> shortly, we can decompose the <em>parity gap</em> between the majority and minority groups, into its direct, indirect, and confounded parts. The parity gap is defined as the difference in conditional expectations between the groups, namely</p>
+<p><span id="eq-decomposing"><span class="math display">\[
+\begin{equation}
+  \text{PG}_{x_0, x_1}(y) = P(Y = 1\mid X = x_1) - P(Y = 1 \mid X = x_0).
+\end{equation}
+\tag{1}\]</span></span></p>
+<p>From a causal viewpoint, we can decompose the parity gap in the following way: <span class="math display">\[
+\begin{equation}
+  \text{PG}_{x_0, x_1}(y) = \underbrace{\text{DE}}_{\text{race effect}} +  \underbrace{\text{IE}}_{\text{prior counts effect}} +  \underbrace{\text{CE}}_{\text{age/sex effect}},
+\end{equation}
+\]</span> where DE, IE, and CE stand for direct, indirect, and confounded effects, respectively. The graphical visualizations of the thre effects are shown in <a href="#fig-dir-effect">Figure&nbsp;2</a>, <a href="#fig-indir-effect">Figure&nbsp;3</a>, and <a href="#fig-conf-effect">Figure&nbsp;4</a>, respectively. After decomposing the parity gap for two-year recidivism <span class="math inline">\(Y\)</span> (Experiment A), we also decompose it for the Northpointe’s predictions <span class="math inline">\(\hat{Y}\)</span> (Experiment B), and finally decompose it for the <span class="math inline">\(\hat{Y}\)</span> in the subgroup of individuals who did not recidivate, i.e.&nbsp;with <span class="math inline">\(Y = 0\)</span> (Experiment C).</p>
+</section>
+<section id="results" class="level1">
+<h1>Results</h1>
+<p>In this section, we report the results of the three experiments: A) explaining the disparity in true recidivism; B) explaining disparity in Northpointe’s predictions; C) explaining disparity in Northpointe’s prediction for defendants who did not recidivate (<span class="math inline">\(Y = 0\)</span>).</p>
+<section id="a-explaining-disparity-in-recidivism" class="level2">
+<h2 class="anchored" data-anchor-id="a-explaining-disparity-in-recidivism">A: Explaining disparity in recidivism</h2>
+<p>As our starting point, we first compute the disparity between groups in two-year recidivism:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tapply</span>(data<span class="sc">$</span>two_year_recid, data<span class="sc">$</span>race, mean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Majority Minority 
+0.393643 0.480042 </code></pre>
+</div>
+</div>
+<p>Based on this information, we can compute that: <span class="math display">\[\begin{equation}
+  \text{PG}_{x_0, x_1}(y) = 48\% - 39.5\% = 8.5\%.
+\end{equation}\]</span> We then apply the <code>fairness_cookbook()</code> functionality from the R-package, and choose <code>two_year_recid</code> (<span class="math inline">\(Y\)</span>) as the outcome of interest:</p>
+<div class="cell" data-hash="shai-challenge_cache/html/recid-cookbook_5ff4f5ffa430d4eafc9a70420a41edda">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="st">"race"</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"age"</span>, <span class="st">"sex"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>W <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"juv_fel"</span>, <span class="st">"juv_misd"</span>, <span class="st">"juv_other"</span>, <span class="st">"priors"</span>, <span class="st">"charge"</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"two_year_recid"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>two_year <span class="ot">&lt;-</span> <span class="fu">fairness_cookbook</span>(data, <span class="at">X =</span> X, <span class="at">W =</span> W, <span class="at">Z =</span> Z, <span class="at">Y =</span> Y, </span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                              <span class="at">x0 =</span> <span class="st">"Majority"</span>, <span class="at">x1 =</span> <span class="st">"Minority"</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>two_year</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>faircause object:
+
+Attribute:        race 
+Outcome:          two_year_recid 
+Confounders:      age,sex 
+Mediators:        juv_fel,juv_misd,juv_other,priors,charge </code></pre>
+</div>
+</div>
+<p>After performing the decomposition we can visualize how the decomposition, as shown in <a href="#fig-vis-recid">Figure&nbsp;5</a>.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-vis-recid" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="shai-challenge_files/figure-html/fig-vis-recid-1.png" class="img-fluid figure-img" style="width:65.0%"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;5: Causal decomposition of the parity gap for two-year recidivism.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+
+<!-- The key findings can be summarized in the following table: -->
+<!-- | Effect  | Contribution  | Visualization  | -->
+<!-- |:---|:---:|:---:| -->
+<!-- | **Direct**: the difference in recidivism rate purely due to race is not significantly different from 0  | Explains 1.5% ($\pm$ 1.8%) of the disparity  |  ![](direct.gif){width=80%} | -->
+<!-- | **Indirect**: difference in recidivism rate due to racial disparity in prior counts   | Explains 4% ($\pm$ 0.8%) of the disparity  |  ![](indirect.gif){width=80%} | -->
+<!-- | **Confounded**: difference in recidivism rate due to correlation of gender with age/nationality, and influence of age/nationality on decision  | Explains 3% ($\pm$ 1.4%) of the disparity  |  ![](spurious.gif){width=80%} | -->
+<!-- | **Total** | 1.5% + 4% + 3% = 8.5% | | -->
+<p>Therefore, we have the first crucial result: <span class="math display">\[
+\begin{equation}
+  \text{PG}_{x_0, x_1}(y) = \underbrace{1.5\%\;(\pm 1.8\%)}_{\text{race effect}} +  \underbrace{4\%\;(\pm 0.8\%)}_{\text{prior counts effect}} +  \underbrace{3\%\;(\pm 1.4\%)}_{\text{age/sex effect}}.
+\end{equation}
+\]</span> Important to note is that <em>race does not have a statistically significant direct effect on outcome</em>.</p>
+</section>
+<section id="b-explaining-disparity-in-northpointes-recidivism-predictions" class="level2">
+<h2 class="anchored" data-anchor-id="b-explaining-disparity-in-northpointes-recidivism-predictions">B: Explaining disparity in Northpointe’s recidivism predictions</h2>
+<p>Our next step is to analyze the causal decomposition of the Northpointe’s predictions.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tapply</span>(data<span class="sc">$</span>northpointe, data<span class="sc">$</span>race, mean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Majority  Minority 
+0.3480033 0.5174370 </code></pre>
+</div>
+</div>
+<p>Therefore, we can compute that: <span class="math display">\[
+\begin{equation}
+  \text{PG}_{x_0, x_1}(\hat{y}) = 52\% - 35\% = 17\%.
+\end{equation}
+\]</span> Firstly, we notice that the disparity in the predicted outcome is larger than in the true outcome. But crucially, the question is how this disparity in predicted outcome arises from a causal point of view. We again apply the <code>fairness_cookbook()</code>, this time choosing <code>northpointe</code> (<span class="math inline">\(\hat{Y}\)</span>) as the outcome of interest:</p>
+<div class="cell" data-layout-align="center" data-hash="shai-challenge_cache/html/fig-north-cookbook_439b7b6e65319d54f588100c4a9ef075">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>Yhat <span class="ot">&lt;-</span> <span class="st">"northpointe"</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>north_decompose <span class="ot">&lt;-</span> <span class="fu">fairness_cookbook</span>(data, <span class="at">X =</span> X, <span class="at">W =</span> W, <span class="at">Z =</span> Z, <span class="at">Y =</span> Yhat, </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">x0 =</span> <span class="st">"Majority"</span>, <span class="at">x1 =</span> <span class="st">"Minority"</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(north_decompose, <span class="at">decompose =</span> <span class="st">"xspec"</span>, <span class="at">signed =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">TeX</span>(<span class="st">"$PG_{x_0, x_1}(</span><span class="sc">\\</span><span class="st">hat{y})$ decomposition"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div id="fig-north-cookbook" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="shai-challenge_files/figure-html/fig-north-cookbook-1.png" class="img-fluid figure-img" style="width:65.0%"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;6: Causal decomposition of the parity gap for Northpointe’s recidivism prediction.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>In particular, we obtain that: <span class="math display">\[
+\begin{equation}
+  \text{PG}_{x_0, x_1}(\hat{y}) = \underbrace{5.5\% \;(\pm 1.75\%)}_{\text{race effect}} +  \underbrace{7.5\% \;(\pm 1.2\%)}_{\text{prior counts effect}} +  \underbrace{3\%\;(\pm 1.5\%)}_{\text{age/sex effect}}.
+\end{equation}
+\]</span> The decomposition is also visualized in <a href="#fig-north-cookbook">Figure&nbsp;6</a>. Crucially, we find that <em>race does have a statistically significant direct effect on Northpointe’s predictions</em>. Furthermore, race by itself explains <em>one third of the observed disparity</em>.</p>
+</section>
+<section id="c-explaining-disparity-in-northpointes-recidivism-predictions-for-those-who-did-not-recidivate" class="level2">
+<h2 class="anchored" data-anchor-id="c-explaining-disparity-in-northpointes-recidivism-predictions-for-those-who-did-not-recidivate">C: Explaining disparity in Northpointe’s recidivism predictions for <em>those who did not recidivate</em></h2>
+<p>In the final step, we again perform a decomposition of a disparity, but this time within the group of individuals who did not recidivate. Similarly as before, we can distinguish the direct, indirect, and spurious effects in this disparity. However, the quantity we are decomposing is not the parity gap, but the <strong>error rate</strong> related to the equality of opportunity criterion, i.e., <span class="math display">\[
+\begin{equation}
+\text{ER}_{x_0, x_1}(\hat{y} | y = 0) = P(\hat{Y} = 1 \mid X = x_1, Y = 0) - P(\hat{Y} = 1 \mid X = x_0, Y = 0).
+\end{equation}
+\]</span> In words, we compare the proportion of minority individuals who are flagged as high risk, but did not recidivate, to the proportion of majority individuals who are flagged as high risk but did not recidivate. We can compute this as:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>no_recid <span class="ot">&lt;-</span> data<span class="sc">$</span>two_year_recid <span class="sc">==</span> <span class="dv">0</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tapply</span>(data<span class="sc">$</span>northpointe[no_recid], data<span class="sc">$</span>race[no_recid], mean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Majority  Minority 
+0.2345430 0.3769697 </code></pre>
+</div>
+</div>
+<p>Therefore, we obtained that: <span class="math display">\[
+\begin{equation}
+\text{ER}_{x_0, x_1}(\hat{y} \mid y = 0) = 38\% - 23\% = 15\%.
+\end{equation}
+\]</span> In words, from defendants who do no recidivate, the minority group defendants are 15% more likely to be labeled as high risk. Once again, we can obtain a causal decomposition, but this time of the <span class="math inline">\(\text{ER}_{x_0, x_1}(\hat{y} \mid y = 0)\)</span> measures. For this purpose, we use the <code>fairness_cookbook_eo()</code> functionality:</p>
+<div class="cell" data-layout-align="center" data-hash="shai-challenge_cache/html/fig-eo-decomp_7d90349eb0c825fdbec19c3ff25e0751">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>eo_decompose <span class="ot">&lt;-</span> <span class="fu">fairness_cookbook_eo</span>(data, <span class="at">X =</span> X, <span class="at">W =</span> W, <span class="at">Z =</span> Z, <span class="at">Y =</span> Y,</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">Yhat =</span> Yhat, <span class="at">x0 =</span> <span class="st">"Majority"</span>, <span class="at">x1 =</span> <span class="st">"Minority"</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                            <span class="at">ylvl =</span> <span class="dv">0</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(eo_decompose, <span class="at">decompose =</span> <span class="st">"xspec"</span>, <span class="at">signed =</span> <span class="cn">FALSE</span>, <span class="at">eo =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div id="fig-eo-decomp" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="shai-challenge_files/figure-html/fig-eo-decomp-1.png" class="img-fluid figure-img" style="width:65.0%"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;7: Causal decomposition of the error rate for the group of non-recidivists.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The visualization of the decomposition is shown in <a href="#fig-eo-decomp">Figure&nbsp;7</a> and can be written mathematically as: <span class="math display">\[\begin{equation}
+  \text{ER}_{x_0, x_1}(\hat{y} \mid y = 0) = \underbrace{6.8\% \;(\pm 2\%)}_{\text{race effect}} +  \underbrace{5\% \;(\pm 1.3\%)}_{\text{prior counts effect}} +  \underbrace{3\%\;(\pm 2\%)}_{\text{age/sex effect}}.
+\end{equation}\]</span> We conclude that <em>there is a direct effect of race on the prediction even within the group of individuals who do not recedivate</em>. Race explains <em>more than one third of the observed disparity</em> in the group.</p>
+</section>
+</section>
+<section id="discussion" class="level1">
+<h1>Discussion</h1>
+<section id="key-findings" class="level2">
+<h2 class="anchored" data-anchor-id="key-findings">Key Findings</h2>
+<p>The analysis presented in this submission consists of three steps, with each of the steps demonstrating a specific causal explanation. The first step of the analysis demonstrates that the direct effect of race is not statistically significant when analyzing the true recidivism rates. In stark contrast, the second analysis shows that for the predictions produced by Northpointe, the direct effect of race is statistically significant, explaining almost a third of the overall racial disparity. Finally, in the third analysis, we show that the direct effect of race on Northpointe’s predictions was significant even in the group of individuals who did not re-offend.</p>
+<p>Therefore, the absence of the direct effect in the true, observed outcome, and its presence in the predictions for both the overall dataset and the group of non-recidivists, indicates that the predictions produced by Northpointe are strongly racially prejudiced, and constitute a serious mistreatment of the racial minority groups.</p>
+</section>
+<section id="legal-implications" class="level2">
+<h2 class="anchored" data-anchor-id="legal-implications">Legal Implications</h2>
+<p>We quickly discuss some of the possible legal implications of the findings summarized above. Firstly, direct discrimination is explicitly considered in some provisions of the US legal system. For example, under the Title VII of the Civil Rights Act of 1964 <span class="citation" data-cites="act1964civil">(<a href="#ref-act1964civil" role="doc-biblioref">Act 1964a</a>)</span>, disparate treatment of individuals based on race is strictly prohibited. Another example is the Fair Housing Act <span class="citation" data-cites="housing1968fair">(<a href="#ref-housing1968fair" role="doc-biblioref">Act 1964b</a>)</span>, which also prohibits direct racial discrimination.</p>
+<p>Interestingly, recent works in legal scholarship have started to turn to interpreting the disparate treatment doctrine in causal language <span class="citation" data-cites="plecko2022causal">(<a href="#ref-plecko2022causal" role="doc-biblioref">Plecko and Bareinboim 2022</a>)</span>, in particular looking at the direct effect of the protected attribute. The analysis proposed in this work also gives a causal explanation of how the overall disparity came about, and follows from a more broad framework for causal fairness analysis, which was designed with the intention of interpreting the legal doctrines of disparate treatment and disparate impact.</p>
+<p>However, the doctrines of disparate treatment and disparate impact would likely not be explicitly considered in a legal proceeding on the COMPAS tool. Nonetheless, the absence of a direct effect of race on the true observed outcome (Experiment A) and its presence in Northpointe’s predictions (Experiments B, C) indicate a clear issue and provide prima facie evidence of intentional racial discrimination, which is prohibited by the Equal Protection clause of the 14th Amendment of the United States Constitution.</p>
+<p>In conclusion, our causal analysis of the COMPAS tool explains the disparities observed in the data, and demonstrates a clear direct effect of race on predictions of recidivism. As discussed above, such findings likely constitute a basis for legal action against a discriminatory practice from the software provider that produced the predictions.</p>
+
+
+
+</section>
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography">
+<div id="ref-act1964civil" class="csl-entry" role="doc-biblioentry">
+Act, Civil Rights. 1964a. <span>“Civil Rights Act of 1964.”</span> <em>Title VII, Equal Employment Opportunities</em>.
+</div>
+<div id="ref-housing1968fair" class="csl-entry" role="doc-biblioentry">
+———. 1964b. <span>“Fair Housing Act.”</span> <em>Civil Rights Act of 1968 — Title VIII (Fair Housing)</em>.
+</div>
+<div id="ref-greiner2011causal" class="csl-entry" role="doc-biblioentry">
+Greiner, D James, and Donald B Rubin. 2011. <span>“Causal Effects of Perceived Immutable Characteristics.”</span> <em>Review of Economics and Statistics</em> 93 (3): 775–85.
+</div>
+<div id="ref-larson2016recidivism" class="csl-entry" role="doc-biblioentry">
+Larson, Jeff, Surya Mattu, Lauren Kirchner, and Julia Angwin. 2016. <span>“How We Analyzed the COMPAS Recidivism Algorithm.”</span> <em>ProPublica (5 2016)</em> 9.
+</div>
+<div id="ref-pearl:2k" class="csl-entry" role="doc-biblioentry">
+Pearl, J. 2000. <em>Causality: Models, Reasoning, and Inference</em>. New York: Cambridge University Press.
+</div>
+<div id="ref-plecko2022causal" class="csl-entry" role="doc-biblioentry">
+Plecko, Drago, and Elias Bareinboim. 2022. <span>“Causal Fairness Analysis.”</span> <em>arXiv Preprint arXiv:2207.11385</em>.
+</div>
+<div id="ref-weinberger2022signal" class="csl-entry" role="doc-biblioentry">
+Weinberger, Naftali. 2022. <span>“Signal Manipulation and the Causal Analysis of Racial Discrimination.”</span>
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

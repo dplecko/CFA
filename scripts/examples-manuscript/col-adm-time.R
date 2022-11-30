@@ -50,7 +50,6 @@ col_adm_tim <- function(n, cfs) {
                   0.1 * ( (0.125 + 0.2 * (0.5 + cfs$kap))/(0.45) -
                              (0.125 + 0.4 * (0.5 + cfs$kap))/(0.55) ))
 
-    #if (t == 2) browser()
     # update the coefficients
     cfs <- cfs_nxt(cfs)
 
