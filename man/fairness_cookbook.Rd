@@ -4,7 +4,19 @@
 \alias{fairness_cookbook}
 \title{fairness_cookbook}
 \usage{
-fairness_cookbook(data, X, W, Z, Y, x0, x1, nboot = 100, model = "ranger", ...)
+fairness_cookbook(
+  data,
+  X,
+  W,
+  Z,
+  Y,
+  x0,
+  x1,
+  eo = FALSE,
+  nboot = 100,
+  model = "ranger",
+  ...
+)
 }
 \arguments{
 \item{data}{Object of class \code{data.frame} containing the dataset.}
@@ -20,6 +32,9 @@ protected attribute. Must be one of the entries of \code{names(data)}.}
 
 \item{x0, x1}{Scalar values giving the two levels of the binary protected
 attribute.}
+
+\item{eo}{A \code{logical(1L)} indicating whether the object is of type
+equality of odds or total variation. Default is false.}
 
 \item{nboot}{An \code{integer} scalar determining the number of bootstrap
 repetitions used when constructing confidence intervals of the estimates.}
@@ -39,15 +54,9 @@ Implementation of Fairness Cookbook in Causal Fairness Analysis
 (Plecko & Bareinboim 2022). Uses only plain \code{R}.
 }
 \details{
-The procedure takes the training and testing data as an input, together with
-the causal graph given by an adjacency matrix and the list of resolving
-variables, which should be kept fixed during the adaptation procedure. The
-procedure then calculates a fair representation of the data, after which
-any classification method can be used. There are, however, several valid
-training options yielding fair predictions, and the best of them can be
-chosen with cross-validation. For more details we refer the user to the
-original paper. Most of the running time is due to the quantile regression
-step using the ranger package.
+The procedure takes the data as an input, together with
+the causal graph given by the Standard Fairness Model, and outputs a causal
+decomposition of the TV measure into direct, indirect, and spurious effects.
 }
 \examples{
 \dontrun{

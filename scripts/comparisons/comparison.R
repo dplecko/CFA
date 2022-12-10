@@ -6,10 +6,10 @@
 #BSUB -o CFA_benchmark.out
 
 root <- rprojroot::find_root(rprojroot::is_git_root)
-r_dir <- file.path(root, "r")
+r_dir <- file.path(root, "scripts", "helpers")
 invisible(lapply(list.files(r_dir, full.names = TRUE), source))
 
-exmp <- "med" # c("nomed", "med", "berkeley", "compas")
+exmp <- "nomed" # c("nomed", "med", "berkeley", "compas")
 # Census -> need to handle mixed-variable W & Z
 
 res <- list()

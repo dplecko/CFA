@@ -1,7 +1,5 @@
 
-ex_med <- function(n, type = "dat", seed = 2022) {
-
-  set.seed(seed)
+ex_med_bias <- function(n, type = "dat") {
 
   expit <- function(x) exp(x) / (1 + exp(x))
 
@@ -12,8 +10,8 @@ ex_med <- function(n, type = "dat", seed = 2022) {
 
   fW1 <- function(X, Z, eps) X * (rowMeans(Z[, c(1, 2)]) - 1) + eps
   fW2 <- function(X, Z, W1, eps) W1^2 / 2 - 1 +
-                                 X * (1 / 2 * rowMeans((Z^2)[, c(2, 3)]) - 1) +
-                                 eps
+    X * (1 / 2 * rowMeans((Z^2)[, c(2, 3)]) - 1) +
+    eps
   fW3 <- function(X, Z, W1, W2, eps) W1 * W2 / 6 + X * (Z[, 1] / 4 - 2) + eps
 
   eps_w1 <- rnorm(n)
@@ -44,7 +42,7 @@ ex_med <- function(n, type = "dat", seed = 2022) {
 
     y <- f0(cbind(Z, W1, W2, W3)) + X * f1(cbind(Z, W1, W2, W3))
     yx1wx0 <- f0(cbind(Z, W1_0, W2_0, W3_0)) +
-              1 * f1(cbind(Z, W1_0, W2_0, W3_0))
+      1 * f1(cbind(Z, W1_0, W2_0, W3_0))
     yx1 <- f0(cbind(Z, W1_1, W2_1, W3_1)) + 1 * f1(cbind(Z, W1_1, W2_1, W3_1))
     yx0 <- f0(cbind(Z, W1_0, W2_0, W3_0)) + 0 * f1(cbind(Z, W1_0, W2_0, W3_0))
 
@@ -69,9 +67,81 @@ ex_med <- function(n, type = "dat", seed = 2022) {
 
 }
 
-ex_nomed <- function(n, type = "dat", seed = 2022) {
+ex_med <- function(n, type = "dat") {
 
-  set.seed(seed)
+  expit <- function(x) exp(x) / (1 + exp(x))
+
+  Z <- replicate(3, rnorm(n))
+  colnames(Z) <- paste0("Z", 1:3)
+
+  X <- rbinom(n, size = 1, prob = expit(0.5 * rowMeans(Z)))
+
+  fW1 <- function(X, Z, eps, uw)
+    (uw < 0.2 + X * 0.6) * (rowMeans(Z[, c(1, 2)]) - 1) + eps
+  fW2 <- function(X, Z, W1, eps, uw) W1^2 / 2 - 1 +
+    (uw < 0.3 + X * 0.6) * (1 / 2 * rowMeans((Z^2)[, c(2, 3)]) - 1) + eps
+  fW3 <- function(X, Z, W1, W2, eps, uw) W1 * W2 / 6 +
+    (uw < 0.2 + X * 0.6) * (Z[, 1] / 4 - 2) +
+    eps
+
+  eps_w1 <- rnorm(n)
+  eps_w2 <- rnorm(n)
+  eps_w3 <- rnorm(n)
+  u_w1 <- runif(n)
+  u_w2 <- runif(n)
+  u_w3 <- runif(n)
+
+  W1 <- fW1(X, Z, eps_w1, u_w1)
+  W2 <- fW2(X, Z, W1, eps_w2, u_w2)
+  W3 <- fW3(X, Z, W1, W2, eps_w3, u_w3)
+
+  f0 <- function(x) 1 / 2 * rowMeans(abs(x))
+  f1 <- function(x) rowSums((1 / 3 * x^2 * max(1, 1/2 * log(abs(x))))[, c(T, F)])
+
+  if (type == "dat") {
+    Y <- f0(cbind(Z, W1, W2, W3)) + X * f1(cbind(Z, W1, W2, W3)) +
+      rnorm(n, sd = 1/2)
+    dat <- data.frame(cbind(X, Z, W1, W2, W3, Y))
+    return(dat)
+  } else if (type == "gtruth") {
+
+    # potential outcomes
+    W1_0 <- fW1(0, Z, eps_w1, u_w1)
+    W2_0 <- fW2(0, Z, W1_0, eps_w2, u_w2)
+    W3_0 <- fW3(0, Z, W1_0, W2_0, eps_w3, u_w3)
+
+    W1_1 <- fW1(1, Z, eps_w1, u_w1)
+    W2_1 <- fW2(1, Z, W1_1, eps_w2, u_w2)
+    W3_1 <- fW3(1, Z, W1_1, W2_1, eps_w3, u_w3)
+
+    y <- f0(cbind(Z, W1, W2, W3)) + X * f1(cbind(Z, W1, W2, W3))
+    yx1wx0 <- f0(cbind(Z, W1_0, W2_0, W3_0)) +
+      1 * f1(cbind(Z, W1_0, W2_0, W3_0))
+    yx1 <- f0(cbind(Z, W1_1, W2_1, W3_1)) + 1 * f1(cbind(Z, W1_1, W2_1, W3_1))
+    yx0 <- f0(cbind(Z, W1_0, W2_0, W3_0)) + 0 * f1(cbind(Z, W1_0, W2_0, W3_0))
+
+    de <- yx1wx0 - yx0
+    ie <- yx1wx0 - yx1
+
+    return(
+      list(
+        NDE = mean(de),
+        CtfDE = mean(de[X == 0]),
+        TE = mean(yx1 - yx0),
+        NIE = mean(ie),
+        CtfIE = mean(ie[X == 0]),
+        ETT = mean((yx1 - yx0)[X == 0]),
+        CtfSE = mean(yx1[X == 0]) - mean(y[X == 1]),
+        ExpSE_x1 = mean(y[X == 1]) - mean(yx1),
+        ExpSE_x0 = mean(y[X == 0]) - mean(yx0),
+        TV = mean(y[X == 1]) - mean(y[X == 0])
+      )
+    )
+  }
+
+}
+
+ex_nomed <- function(n, type = "dat") {
 
   f0 <- function(x) rowSums(x)
   f1 <- function(x) rowSums((x^2)[, c(T, F)])

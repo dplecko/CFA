@@ -1,10 +1,4 @@
 
-n_cores <- function() {
-  as.integer(
-    Sys.getenv("LSB_DJOB_NUMPROC", unset = parallel::detectCores() / 2L)
-  )
-}
-
 spec_dec <- function(x, k) trimws(format(round(x, k), nsmall=k))
 
 RejectOption <- function(prob, cl) {
@@ -27,4 +21,10 @@ RejectOption <- function(prob, cl) {
 
   prob
 
+}
+
+n_cores <- function() {
+  as.integer(
+    Sys.getenv("LSB_DJOB_NUMPROC", unset = parallel::detectCores() / 2L)
+  )
 }

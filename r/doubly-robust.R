@@ -1,6 +1,6 @@
 
-
-regr <- function(y, x, model = "ranger") {
+#' * could be S3 dispatch in the future *
+regr <- function(y, x, model = "ranger", ...) {
 
   if (is.vector(x)) x <- data.frame(x = x)
 
@@ -15,8 +15,7 @@ regr <- function(y, x, model = "ranger") {
     # probability case
     if (model == "ranger") {
       #cat("First value", y[1], "\n")
-      mod <- ranger::ranger(y = y, x = x, probability = TRUE,
-                            num.threads = n_cores())
+      mod <- ranger::ranger(y = y, x = x, probability = TRUE, ...)
       if (y[1] == max(y)) {
         attr(mod, "targ_col") <- 1L
       } else {
@@ -24,23 +23,24 @@ regr <- function(y, x, model = "ranger") {
       }
       return(mod)
     } else if (model == "linear") {
-      return(glm(y ~ ., data = cbind(y, x), family = "binomial"))
+      return(glm(y ~ ., data = cbind(y, x), family = "binomial", ...))
     }
 
   } else {
 
     # regression case
     if (model == "ranger") {
-      return(ranger::ranger(y = y, x = x))
+      return(ranger::ranger(y = y, x = x, ...))
     } else if (model == "linear") {
-      return(lm(y ~ ., data = cbind(y, x)))
+      return(lm(y ~ ., data = cbind(y, x), ...))
     }
 
   }
 
 }
 
-pred <- function(mod, x) {
+#' * could be S3 dispatch in the future *
+pred <- function(mod, x, ...) {
 
   if (is.vector(x)) x <- data.frame(x = x)
 
@@ -51,32 +51,27 @@ pred <- function(mod, x) {
   else if (inherits(mod, "glm")) {
 
     return(predict(mod, x, type = "response"))
-
   } else if (inherits(mod, "lm")) {
 
-    return(predict(mod, x))
-
+    return(predict(mod, x, ...))
   } else if (inherits(mod, "ranger")) {
 
     #preds <- predict(mod, x)
     if (mod$treetype == "Probability estimation") {
-      preds <- predict(mod, x,
-                     num.threads = n_cores())$predictions[, attr(mod, "targ_col")]
+
+      preds <- predict(mod, x, ...)$predictions[, attr(mod, "targ_col")]
       return(preds)
     } else {
-      return(predict(mod, x, num.threads = n_cores())$predictions)
+
+      return(predict(mod, x, ...)$predictions)
     }
 
   }
 
 }
 
-model_based <- function() {
-  return(NULL)
-}
-
 doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger",
-                              extrm_prob = 0.01) {
+                              extrm_prob = 0.01, ...) {
 
   if (is.factor(x)) x <- as.integer(x) - 1L
   if (is.factor(y)) {
@@ -98,20 +93,20 @@ doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger",
     # total effects
 
     # regress X on Z
-    px_z_tr <- regr(x[tr], z[tr, , drop = FALSE], model = model)
+    px_z_tr <- regr(x[tr], z[tr, , drop = FALSE], model = model, ...)
 
     # regress Y on Z for each level
     y_z0_tr <- regr(y[tr & x == 0], cbind(z[tr & x == 0, , drop = FALSE]),
-                    model = model)
+                    model = model, ...)
     y_z1_tr <- regr(y[tr & x == 1], cbind(z[tr & x == 1, , drop = FALSE]),
-                    model = model)
+                    model = model, ...)
 
     # make predictions on the target partition
-    px_z_ts <- pred(px_z_tr, z[ts, , drop = FALSE])
+    px_z_ts <- pred(px_z_tr, z[ts, , drop = FALSE], ...)
     px_z[ts] <- px_z_ts
 
-    y_z0_ts <- pred(y_z0_tr, cbind(z[ts, , drop = FALSE]))
-    y_z1_ts <- pred(y_z1_tr, cbind(z[ts, , drop = FALSE]))
+    y_z0_ts <- pred(y_z0_tr, cbind(z[ts, , drop = FALSE]), ...)
+    y_z1_ts <- pred(y_z1_tr, cbind(z[ts, , drop = FALSE]), ...)
 
     y0[ts] <- (y[ts] - y_z0_ts) * (x[ts] == 0) / (1 - px_z_ts) +
                 y_z0_ts
@@ -119,10 +114,10 @@ doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger",
                 y_z1_ts
 
     # regress X on Z + W
-    px_zw_tr <- regr(x[tr], cbind(z, w)[tr, , drop = FALSE], model = model)
+    px_zw_tr <- regr(x[tr], cbind(z, w)[tr, , drop = FALSE], model = model, ...)
 
     # predict the regression on target partition
-    px_zw_ts <- pred(px_zw_tr, cbind(z, w)[ts, , drop = FALSE])
+    px_zw_ts <- pred(px_zw_tr, cbind(z, w)[ts, , drop = FALSE], ...)
     px_zw[ts] <- px_zw_ts
 
     # split complement into two equal parts
@@ -134,33 +129,33 @@ doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger",
     # regress Y ~ Z + W for each level of x
     y_zw0_mu <- regr(y[mu & x == 0], cbind(z[mu & x == 0, , drop = FALSE],
                                            w[mu & x == 0, , drop = FALSE]),
-                     model = model)
+                     model = model, ...)
     y_zw1_mu <- regr(y[mu & x == 1], cbind(z[mu & x == 1, , drop = FALSE],
                                            w[mu & x == 1, , drop = FALSE]),
-                     model = model)
+                     model = model, ...)
 
     # part 2: learn nested mean
 
     # predict on nested partition using mu
     y_zw0_ns <- pred(y_zw0_mu, cbind(z[ns, , drop = FALSE],
-                                     w[ns, , drop = FALSE]))
+                                     w[ns, , drop = FALSE]), ...)
     y_zw1_ns <- pred(y_zw1_mu, cbind(z[ns, , drop = FALSE],
-                                     w[ns, , drop = FALSE]))
+                                     w[ns, , drop = FALSE]), ...)
 
     # learn the nested mean function on nested partition
     ey_zw1_0_ns <- regr(y_zw1_ns[x[ns] == 0], z[ns & x == 0, , drop = FALSE],
-                        model = model)
+                        model = model, ...)
     ey_zw0_1_ns <- regr(y_zw0_ns[x[ns] == 1], z[ns & x == 1, , drop = FALSE],
-                        model = model)
+                        model = model, ...)
 
     # part 3: compute the mean / nested mean on target partition
     y_zw0_ts <- pred(y_zw0_mu, cbind(z[ts, , drop = FALSE],
-                                     w[ts, , drop = FALSE]))
-    ey_zw0_1_ts <- pred(ey_zw0_1_ns, z[ts, , drop = FALSE])
+                                     w[ts, , drop = FALSE]), ...)
+    ey_zw0_1_ts <- pred(ey_zw0_1_ns, z[ts, , drop = FALSE], ...)
 
     y_zw1_ts <- pred(y_zw1_mu, cbind(z[ts, , drop = FALSE],
-                                     w[ts, , drop = FALSE]))
-    ey_zw1_0_ts <- pred(ey_zw1_0_ns, z[ts, , drop = FALSE])
+                                     w[ts, , drop = FALSE]), ...)
+    ey_zw1_0_ts <- pred(ey_zw1_0_ns, z[ts, , drop = FALSE], ...)
 
     # part 4: compute the formula
 
@@ -194,11 +189,10 @@ doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger",
 
 }
 
-
 model_mean <- function(form, data, int.data, Y, ...) {
 
-  rf <- ranger::ranger(form, data = data, keep.inbag = T,
-                       importance = "impurity", num.threads = n_cores(), ...)
+  rf <- ranger::ranger(form, data = data, keep.inbag = TRUE,
+                       importance = "impurity", ...)
   assertthat::assert_that(rf$treetype %in% c("Regression",
                                              "Probability estimation"))
 
@@ -208,15 +202,15 @@ model_mean <- function(form, data, int.data, Y, ...) {
       targ_col <- as.character(levels(data[[Y]])[2])
     } else if (is.numeric(data[[Y]])) {
       targ_col <- 2L - (data[[Y]][1] == max(data[[Y]]))
+    } else if (is.logical(data[[Y]])) {
+      targ_col <- 2L
     }
 
-    p2 <- predict(rf, int.data, predict.all = T,
-                  num.threads = n_cores())$predictions[, targ_col, ]
+    p2 <- predict(rf, int.data, predict.all = TRUE, ...)$predictions[, targ_col, ]
 
   } else {
 
-    p2 <- predict(rf, int.data, predict.all = T,
-                  num.threads = n_cores())$predictions
+    p2 <- predict(rf, int.data, predict.all = TRUE, ...)$predictions
 
   }
 
@@ -233,33 +227,9 @@ model_propensity <- function(form, data, Y, xlvl, ...) {
                           msg = "Attribute needs to be a factor.")
 
   rf <- ranger::ranger(form, data = data, keep.inbag = TRUE,
-                       importance = "impurity", probability = TRUE, num.threads = n_cores(), ...)
+                       importance = "impurity", probability = TRUE, ...)
   assertthat::assert_that(rf$treetype == "Probability estimation")
 
   rf$predictions[, xlvl]
-
-}
-
-DR_estimate <- function(y, y_model, prop, idx) {
-
-  # prop is propensity for idx
-  sum((y - y_model) * prop / (1 - prop) * !idx) / sum(idx) + mean(y_model[idx])
-
-}
-
-DR_proced <- function(data, int.data, Y, X, cond, idx, ...) {
-
-  form_mean <- as.formula(paste(Y, "~", X, "+", cond))
-
-  form_prop <- as.formula(paste(X, "~", cond))
-
-  y_model <- model_mean(form_mean, data, int.data, ...)
-  x_prop <- model_propensity(form_prop, data, unique(data[[X]][idx]))
-
-  eps <- 0.001
-  x_prop[x_prop == 0] <- eps
-  x_prop[x_prop == 1] <- 1 - eps
-
-  DR_estimate(data[[Y]], y_model, x_prop, idx)
 
 }

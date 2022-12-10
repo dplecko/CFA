@@ -3,15 +3,9 @@
 #' Implementation of Fairness Cookbook in Causal Fairness Analysis
 #' (Plecko & Bareinboim 2022). Uses only plain \code{R}.
 #'
-#' The procedure takes the training and testing data as an input, together with
-#' the causal graph given by an adjacency matrix and the list of resolving
-#' variables, which should be kept fixed during the adaptation procedure. The
-#' procedure then calculates a fair representation of the data, after which
-#' any classification method can be used. There are, however, several valid
-#' training options yielding fair predictions, and the best of them can be
-#' chosen with cross-validation. For more details we refer the user to the
-#' original paper. Most of the running time is due to the quantile regression
-#' step using the ranger package.
+#' The procedure takes the data as an input, together with
+#' the causal graph given by the Standard Fairness Model, and outputs a causal
+#' decomposition of the TV measure into direct, indirect, and spurious effects.
 #'
 #' @param data Object of class \code{data.frame} containing the dataset.
 #' @param X A \code{character} scalar giving the name of the
@@ -26,6 +20,8 @@
 #' @param model A \code{character} scalar determining the model used in
 #' estimation. Current options are \code{"ranger"} (default) which uses random
 #' forests and \code{"linear"} which uses (generalized) linear models.
+#' @param eo A \code{logical(1L)} indicating whether the object is of type
+#' equality of odds or total variation. Default is false.
 #' @param ... Further arguments passed to downstream model fitting functions.
 #'
 #' @return An object of class \code{faircause}, containing estimates of the
@@ -48,7 +44,7 @@
 #' @import stats
 #' @importFrom assertthat assert_that
 #' @export
-fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
+fairness_cookbook <- function(data, X, W, Z, Y, x0, x1, eo = FALSE,
                               nboot = 100, model = "ranger", ...) {
 
   y <- as.numeric(data[[Y]]) - is.factor(data[[Y]]) # need to check (!)
@@ -90,6 +86,8 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
     data0 <- data1 <- data
     if (!is.factor(data[[X]])) {
       data[[X]] <- factor(data[[X]], levels = c(x0, x1))
+    } else {
+      data[[X]] <- relevel(data[[X]], ref = which(levels(data[[X]]) == x0))
     }
     data0[[X]] <- factor(x0, levels = c(x0, x1))
     data1[[X]] <- factor(x1, levels = c(x0, x1))
@@ -97,10 +95,10 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
     form <- as.formula(paste(Y, "~", paste(c(X, Z), collapse = "+")))
 
     mux1 <- model_mean(form, data, data1, Y = Y,
-                       probability = length(unique(data[[Y]])) == 2L)
+                       probability = length(unique(data[[Y]])) == 2L, ...)
 
     mux0 <- model_mean(form, data, data0, Y = Y,
-                       probability = length(unique(data[[Y]])) == 2L)
+                       probability = length(unique(data[[Y]])) == 2L, ...)
 
     idx <- data[[X]] == x1
 
@@ -108,15 +106,14 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
 
       propx1 <- model_propensity(
         as.formula(paste0(X, " ~ ", paste0(Z, collapse = "+"))), data, Y = X,
-        xlvl = x1)
+        xlvl = which(levels(data[[X]]) == x1), ...)
     } else {
 
       propx1 <- rep(mean(idx), nrow(data))
     }
 
-
-    yx1 <- (data[[Y]] - mux1) * idx / propx1 + mux1
-    yx0 <- (data[[Y]] - mux0) * (!idx) / (1 - propx1) + mux0
+    yx1 <- (y - mux1) * idx / propx1 + mux1
+    yx0 <- (y - mux0) * (!idx) / (1 - propx1) + mux0
 
     extrm_idx <- propx1 < 0.01 | propx1 > 0.99
     yx1[extrm_idx] <- yx0[extrm_idx] <- NA
@@ -136,20 +133,27 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
   te <- msd(yx1, "all", yx0, "all") # pyx1 - pyx0
 
   ### mediated
-  {
+  if (length(W) > 0) {
 
     est_med <- doubly_robust_med(data[[X]], data[, Z], data[, W], data[[Y]],
                                  model = model)
     yx0 <- est_med[[1]]
     yx1 <- est_med[[2]]
     yx1wx0 <- est_med[[4]]
+
+    # get DE
+    nde <- msd(yx1wx0, "all", yx0, "all") # NDE_{x_0, x_1}(y)
+    ctfde <- msd(yx1wx0, "id0", y, "id0") # Ctf-DE_{x_0, x_1}(y | x_0)
+    # get IE
+    nie <- msd(yx1wx0, "all", yx1, "all") # NIE_{x_1, x_0}(y)
+    ctfie <- msd(yx1wx0, "id0", yx1, "id0") # Ctf-IE_{x_1, x_0}(y | x_0)
+  } else {
+
+    nde <- te
+    ctfde <- ett
+    ctfie <- nie <- c(0, 2 * 10^(-16))
   }
-  # get DE
-  nde <- msd(yx1wx0, "all", yx0, "all") # NDE_{x_0, x_1}(y)
-  ctfde <- msd(yx1wx0, "id0", y, "id0") # Ctf-DE_{x_0, x_1}(y | x_0)
-  # get IE
-  nie <- msd(yx1wx0, "all", yx1, "all") # NIE_{x_1, x_0}(y)
-  ctfie <- msd(yx1wx0, "id0", yx1, "id0") # Ctf-IE_{x_1, x_0}(y | x_0)
+
 
   # output
   structure(
@@ -158,71 +162,34 @@ fairness_cookbook <- function(data, X, W, Z, Y, x0, x1,
       TE = te, NDE = nde, NIE = nie, ExpSE_x1 = expse_x1,
       ExpSE_x0 = expse_x0
     ), x0 = x0, x1 = x1, model = model, X = X, W = W, Z = Z, Y = Y,
-    cl = match.call()),
+    cl = match.call(),
+    eo = eo),
     class = "faircause"
   )
 
 }
 
+#' fairness_cookbook_eo
+#'
+#' Implementation of Fairness Cookbook in Causal Fairness Analysis
+#' (Plecko & Bareinboim 2022), for the case when equality of odds is the
+#' measure of interest.
+#'
+#' The procedure takes the data as an input, together with
+#' the causal graph given by the Standard Fairness Model, and outputs a causal
+#' decomposition of the EO measure into direct, indirect, and spurious effects.
+#' @inheritParams fairness_cookbook
+#' @param Yhat A \code{character} scalar giving the name of the constructed
+#' predictor.
+#' @param ylvl A value indicating within which group the decomposition should be
+#' performed. For example, setting \code{ylvl = 1} would correspond to
+#' performing causal effect decompositions for individuals who have
+#' true outcome \code{Y == 1}.
+#'
 #' @export
 fairness_cookbook_eo <- function(data, X, W, Z, Y, Yhat, x0, x1, ylvl, ...) {
 
   y_idx <- data[[Y]] == ylvl
   fairness_cookbook(data = data[y_idx, ], X = X, W = W, Z = Z, Y = Yhat,
-                    x0 = x0, x1 = x1)
-
-}
-
-DoubleRobustCausalExpTV <- function(data, X, W, Z, Y, x0, x1, ...) {
-
-  idx <- data[[X]] == x0
-  int.data <- data
-  int.data[[X]] <- factor(x1, levels = levels(data[[X]]))
-
-  # get TV
-  tv <- mean(data[[Y]][!idx]) - mean(data[[Y]][idx])
-
-  # get DE
-  cond_zw <- paste(paste(W, collapse = " + "), "+", paste(Z, collapse = " + "))
-
-  de <- DR_proced(data, int.data, Y, X, cond_zw, idx, ...) -
-        mean(data[[Y]][idx])
-
-  # get SE
-  cond_z <- paste(Z, collapse = " + ")
-
-  pyx1_x0 <- DR_proced(data, int.data, Y, X, cond_z, idx, ...)
-
-  se <- pyx1_x0 - mean(data[[Y]][!idx])
-
-  # get ETT
-  ett <- pyx1_x0 - mean(data[[Y]][idx])
-
-  cef <- list(TV = tv, DE = de, SE = se, ETT = ett, IE = de - ett)
-
-}
-
-c_eff <- function(form, data, int.data, ...) {
-
-  rf <- ranger::ranger(form, data = data, keep.inbag = T,
-                       importance = "impurity", ...)
-  assertthat::assert_that(rf$treetype %in% c("Regression",
-                                             "Probability estimation"))
-
-  if (rf$treetype == "Probability estimation") {
-
-    p2 <- predict(rf, int.data, predict.all = T)$predictions[, 2, ]
-
-  } else {
-
-    p2 <- predict(rf, int.data, predict.all = T)$predictions
-
-  }
-
-  oob.matrix <- Reduce(cbind, lapply(rf$inbag.counts, function(x=i) x == 0))
-
-  p2 <- rowSums(p2 * oob.matrix) / rowSums(oob.matrix)
-
-  p2
-
+                    eo = TRUE, x0 = x0, x1 = x1)
 }

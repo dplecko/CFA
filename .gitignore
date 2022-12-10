@@ -1,12 +1,11 @@
 paper
 US-Census*
 misc
-data
 *.pdf
 .DS_Store
 .Rhistory
 .Rproj.user
-*.rda
+.Rprofile
 raw-data
 inst/doc
 *_cache
