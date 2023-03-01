@@ -8,5 +8,7 @@
 README.Rmd
 ^LICENSE\.md$
 ^raw-data$
-^docs#
+^docs$
 ^quarto-webpage$
+.nojekyll
+.Rapp.history

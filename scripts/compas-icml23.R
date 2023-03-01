@@ -38,8 +38,7 @@ compute_ippm <- function(pred, out, x, x0, name, nboot = 100) {
 }
 
 set.seed(23)
-data <- read.csv(file.path(root, "inst", "extdata",
-                           "compas-scores-two-years.csv"))
+data <- read.csv(file.path(root, "compas-scores-two-years.csv"))
 col.keep <- which(
   names(data) %in% c("age", "sex", "juv_fel_count",
                      "juv_misd_count", "juv_other_count", "priors_count",
@@ -166,12 +165,3 @@ ggplot(
                               TeX("iPPM"))) +
   scale_y_continuous(labels = scales::percent) +
   ggtitle("Fairness Measures on the COMPAS dataset")
-
-ggsave(file.path("misc", "paper", "compas-algorithm-1.png"), width = 8,
-       height = 4.5)
-
-cat(
-  paste(
-    round(res$value * 100, 2), "\\%", "\\pm", round(1.96 * res$sd * 100, 2), "\\%"
-  )[2 + c(1, 5, 9)], sep = "\n"
-)

@@ -1,6 +1,6 @@
 Package: faircause
 Title: Causal Fairness Analysis
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: c(
     person(given = "Drago",
            family = "Plecko",
@@ -18,8 +18,8 @@ Imports:
     ranger (>= 0.13.1),
     assertthat,
     ggplot2,
-    cowplot,
-    latex2exp
+    latex2exp,
+    grf
 Suggests:
     testthat (>= 3.0.3),
     knitr,
@@ -32,10 +32,11 @@ Suggests:
     ggraph,
     pdftools,
     quantreg,
+    cowplot,
     qrnn,
     igraph,
     scales
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 VignetteBuilder: knitr
 Config/testthat/edition: 3

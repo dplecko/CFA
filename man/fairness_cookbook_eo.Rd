@@ -4,7 +4,23 @@
 \alias{fairness_cookbook_eo}
 \title{fairness_cookbook_eo}
 \usage{
-fairness_cookbook_eo(data, X, W, Z, Y, Yhat, x0, x1, ylvl, ...)
+fairness_cookbook_eo(
+  data,
+  X,
+  Z,
+  W,
+  Y,
+  Yhat,
+  x0,
+  x1,
+  ylvl,
+  method = c("medDML", "causal_forest"),
+  model = c("ranger", "linear"),
+  tune_params = FALSE,
+  nboot1 = 1L,
+  nboot2 = 100L,
+  ...
+)
 }
 \arguments{
 \item{data}{Object of class \code{data.frame} containing the dataset.}
@@ -12,9 +28,9 @@ fairness_cookbook_eo(data, X, W, Z, Y, Yhat, x0, x1, ylvl, ...)
 \item{X}{A \code{character} scalar giving the name of the
 protected attribute. Must be one of the entries of \code{names(data)}.}
 
-\item{W}{A \code{character} vector giving the names of all mediators.}
+\item{Z}{A \code{character} vector giving the names of all mediators.}
 
-\item{Z}{A \code{character} vector giving the names of all confounders.}
+\item{W}{A \code{character} vector giving the names of all confounders.}
 
 \item{Y}{A \code{character} scalar giving the name of the outcome.}
 
@@ -28,6 +44,28 @@ attribute.}
 performed. For example, setting \code{ylvl = 1} would correspond to
 performing causal effect decompositions for individuals who have
 true outcome \code{Y == 1}.}
+
+\item{method}{A \code{character} scalar with two options: \code{"medDML"} for
+mediation double-machine learning, \code{"causal_forest"} for the
+\code{\link[grf:causal_forest]{grf::causal_forest()}} method from the \code{grf} package.}
+
+\item{model}{A \code{character} scalar taking values in
+\code{c("ranger", "linear")}, indicating whether a tree-based learner is used
+\code{\link[ranger:ranger]{ranger::ranger()}}, or if the fitted model should be linear. This parameter
+is only relevant if \code{method == "medDML"}.}
+
+\item{tune_params}{A \code{logical(1L)} indicating whether the parameters
+should be tuned for the tree-based methods (only the \code{min.node.size}
+parameter is tuned). Defaults to \code{FALSE}.}
+
+\item{nboot1}{An \code{integer} scalar determining the number of outer
+bootstrap repetitions, that is, how many times the fitting procedure is
+repeated. Default is \code{1L}.}
+
+\item{nboot2}{An \code{integer} scalar determining the number of inner
+bootstrap repetitions, that is, how many bootstrap samples are taken after
+the potential outcomes are obtained from the estimation procedure.
+Default is \code{100L}.}
 
 \item{...}{Further arguments passed to downstream model fitting functions.}
 }

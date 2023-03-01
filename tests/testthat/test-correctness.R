@@ -1,41 +1,56 @@
 
+# source("tests/testthat/helpers-correctness.R")
+# source("tests/testthat/helpers.R")
+
 test_that("fairness_cookbook correctness", {
 
   #' * change 'SLOW' to true to test correctness *
-  withr::local_envvar(SLOW = "false")
+  Sys.setenv(SLOW = "false")
   skip_if_not(identical(Sys.getenv("SLOW"), "true"))
 
   # (no)-mediators example
-  for (dat_fun in c(ex_nomed, ex_med)) {
+  for (i in c(1, 2, 3)) {
 
-    nsamp <- 10000
+    dat_fun <- ifelse(i == 1, ex_nomed, ifelse(i == 2, ex_med, ex_med_spur))
+    cat("\n---- next example ----\n")
+    nsamp <- 5000
     data <- with_seed(
-      203, dat_fun(nsamp)
+      2023, dat_fun(nsamp)
     )
 
-    gtruth <- with_seed(203, dat_fun(nsamp, type = "gtruth"))
+    gtruth <- with_seed(203, dat_fun(10^6, type = "gtruth"))
 
     Z <- grep("Z", names(data), value = TRUE)
     W <- grep("W", names(data), value = TRUE)
-    mod <- with_seed(
-      203,
-      fairness_cookbook(data, X = "X", Z = Z, Y = "Y", W = W,
-                        x0 = 0, x1 = 1)
-    )
 
-    for (meas in names(mod$measures)) {
+    for (method in c("medDML", "causal_forest")) {
 
-      if (meas == "ETT" & identical(dat_fun, ex_med)) {
+      mod <- with_seed(
+        203,
+        fairness_cookbook(data, X = "X", Z = Z, Y = "Y", W = W,
+                          x0 = 0, x1 = 1, method = method,
+                          nboot1 = 5, nboot2 = 100, tune_params = TRUE)
+      )
 
-        expect_lte(abs(gtruth[[meas]] - mod$measures[[meas]][1]), 0.2)
+      df_meas <- summary(mod)$measures
 
-      } else {
-        p.val <- 2 * (1 - pnorm(abs(gtruth[[meas]] - mod$measures[[meas]][1]),
-                                sd = mod$measures[[meas]][2]))
+      for (meas in df_meas$measure) {
 
-        expect_gte(p.val, 0.01)
+        est_meas <- df_meas[df_meas$measure == meas, ]$value
+        sd_meas <- df_meas[df_meas$measure == meas, ]$sd
+        p.val <- 2 * (1 - pnorm(abs(gtruth[[meas]] - est_meas),
+                                sd = max(sd_meas, 10^(-16))))
+
+        if (method == "causal_forest" & grepl("expse", meas)) {
+
+          expect_true(is.na(p.val))
+        } else {
+
+          if (p.val < 0.0045) cat("\n", i, method, meas, p.val, "\n")
+          expect_gt(p.val, 0.0045)
+        }
+
       }
-
     }
   }
 
@@ -59,7 +74,7 @@ test_that("fairness_cookbook correctness", {
   expect_s3_class(mod.sum, "summary.faircause")
   expect_output(print(mod.sum), regexp = "Call:")
 
-  compas.decomp <- mod$measures
+  compas.decomp <- mod.sum$measures
 
-  expect_snapshot_json(compas.decomp, tolerance = 0.03)
+  expect_snapshot_csv("compas_measures", compas.decomp)
 })

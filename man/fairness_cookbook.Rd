@@ -7,14 +7,17 @@
 fairness_cookbook(
   data,
   X,
-  W,
   Z,
+  W,
   Y,
   x0,
   x1,
   eo = FALSE,
-  nboot = 100,
-  model = "ranger",
+  method = c("medDML", "causal_forest"),
+  model = c("ranger", "linear"),
+  tune_params = FALSE,
+  nboot1 = 1L,
+  nboot2 = 100L,
   ...
 )
 }
@@ -24,30 +27,59 @@ fairness_cookbook(
 \item{X}{A \code{character} scalar giving the name of the
 protected attribute. Must be one of the entries of \code{names(data)}.}
 
-\item{W}{A \code{character} vector giving the names of all mediators.}
+\item{Z}{A \code{character} vector giving the names of all mediators.}
 
-\item{Z}{A \code{character} vector giving the names of all confounders.}
+\item{W}{A \code{character} vector giving the names of all confounders.}
 
 \item{Y}{A \code{character} scalar giving the name of the outcome.}
 
 \item{x0, x1}{Scalar values giving the two levels of the binary protected
 attribute.}
 
-\item{eo}{A \code{logical(1L)} indicating whether the object is of type
-equality of odds or total variation. Default is false.}
+\item{eo}{A \code{logical(1L)} indicating whether the object should be of
+type equality of odds or total variation. Default is \code{FALSE}.}
 
-\item{nboot}{An \code{integer} scalar determining the number of bootstrap
-repetitions used when constructing confidence intervals of the estimates.}
+\item{method}{A \code{character} scalar with two options: \code{"medDML"} for
+mediation double-machine learning, \code{"causal_forest"} for the
+\code{\link[grf:causal_forest]{grf::causal_forest()}} method from the \code{grf} package.}
 
-\item{model}{A \code{character} scalar determining the model used in
-estimation. Current options are \code{"ranger"} (default) which uses random
-forests and \code{"linear"} which uses (generalized) linear models.}
+\item{model}{A \code{character} scalar taking values in
+\code{c("ranger", "linear")}, indicating whether a tree-based learner is used
+\code{\link[ranger:ranger]{ranger::ranger()}}, or if the fitted model should be linear. This parameter
+is only relevant if \code{method == "medDML"}.}
+
+\item{tune_params}{A \code{logical(1L)} indicating whether the parameters
+should be tuned for the tree-based methods (only the \code{min.node.size}
+parameter is tuned). Defaults to \code{FALSE}.}
+
+\item{nboot1}{An \code{integer} scalar determining the number of outer
+bootstrap repetitions, that is, how many times the fitting procedure is
+repeated. Default is \code{1L}.}
+
+\item{nboot2}{An \code{integer} scalar determining the number of inner
+bootstrap repetitions, that is, how many bootstrap samples are taken after
+the potential outcomes are obtained from the estimation procedure.
+Default is \code{100L}.}
 
 \item{...}{Further arguments passed to downstream model fitting functions.}
 }
 \value{
-An object of class \code{faircause}, containing estimates of the
-causal fairness measures, together with some meta information.
+An object of class \code{faircause}, containing the following
+elements:
+\item{\code{measures}}{A \code{data.frame} containing the estimates for each
+combination of measure/outer bootstrap repetition/inner bootstrap repetition.}
+\item{\code{X, Z, W, Y}}{Names of the protected attribute, confounders,
+mediators, and the outcome, respectively.}
+\item{\code{x0, x1}}{Protected attribute levels.}
+\item{\code{method}}{Method of estimation (see parameters above).}
+\item{\code{model}}{Model class of the fit (relevant if
+\code{method == "medDML"}, see parameters above).}
+\item{cl}{The function call that generated the object.}
+\item{eo}{Logical indicator whether the object is an equality of odds object.}
+\item{params}{If \code{tune_params == TRUE} in the function call, this object
+is a list of optimal \code{min.node.size} values for each tree-based used
+in the estimation procedure. See \code{faircause:::doubly_robust_med()} and
+\code{faircause::crf_wrap()} for more details about the used objects.}
 }
 \description{
 Implementation of Fairness Cookbook in Causal Fairness Analysis
@@ -60,11 +92,11 @@ decomposition of the TV measure into direct, indirect, and spurious effects.
 }
 \examples{
 \dontrun{
-data <- faircause:::get_data_berkeley()
+data <- faircause::berkeley
 
-FCB <- fairness_cookbook(data, X = "gender", W = "dept", Z = character(0L),
+fcb <- fairness_cookbook(data, X = "gender", Z = character(0L), W = "dept",
                          Y = "admit", x0 = "Male", x1 = "Female")
-FCB
+fcb
 }
 
 
