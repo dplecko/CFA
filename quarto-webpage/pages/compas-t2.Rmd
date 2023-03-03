@@ -28,8 +28,8 @@ A team of data scientists from ProPublica have shown that the COMPAS dataset fro
 dat <- get(data("compas", package = "faircause"))
 knitr::kable(head(dat), caption = "COMPAS dataset.")
 
-# load the metadata
-mdat <- get_metadata("compas")
+# load the SFM projection
+mdat <- SFM_proj("compas")
 ```
 To produce fair predictions, they first experiment with four different classifiers.
 

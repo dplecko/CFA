@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.1.189">
+<meta name="generator" content="quarto-1.2.269">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -144,30 +144,42 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../index.html">Home</a>
+    <a class="nav-link" href="../index.html">
+ <span class="menu-text">Home</span></a>
   </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../pages/census-t1.html">Census Task 1</a>
+    <a class="nav-link" href="../pages/census-t1.html">
+ <span class="menu-text">Census Task 1</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../pages/college-admissions-t1.html">College Admissions Task 1</a>
+    <a class="nav-link" href="../pages/college-admissions-t1.html">
+ <span class="menu-text">College Admissions Task 1</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="../pages/compas-t1.html" aria-current="page">COMPAS Task 1</a>
+    <a class="nav-link active" href="../pages/compas-t1.html" aria-current="page">
+ <span class="menu-text">COMPAS Task 1</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../pages/compas-t2.html">COMPAS Task 2</a>
+    <a class="nav-link" href="../pages/compas-t1-extended.html">
+ <span class="menu-text">COMPAS Task 1 (Extended)</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../pages/shai-challenge.html">COMPAS TV/EO</a>
+    <a class="nav-link" href="../pages/compas-t2.html">
+ <span class="menu-text">COMPAS Task 2</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../pages/compas-t2.html">Fairadapt</a>
+    <a class="nav-link" href="../pages/shai-challenge.html">
+ <span class="menu-text">COMPAS TV/EO</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../pages/ci-tests.html">CI Tests</a>
+    <a class="nav-link" href="../pages/compas-t2.html">
+ <span class="menu-text">Fairadapt</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/ci-tests.html">
+ <span class="menu-text">CI Tests</span></a>
   </li>  
 </ul>
               <div id="quarto-search" class="" title="Search"></div>
@@ -180,16 +192,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#compas-under-business-necessity" id="toc-compas-under-business-necessity" class="nav-link active" data-scroll-target="#compas-under-business-necessity">COMPAS under Business Necessity</a>
-  <ul class="collapse">
-  <li><a href="#towards-the-solution" id="toc-towards-the-solution" class="nav-link" data-scroll-target="#towards-the-solution">Towards the solution</a></li>
-  </ul></li>
-  </ul>
-</nav>
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -204,65 +207,236 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="quarto-title-meta">
 
     
+  
     
   </div>
   
 
 </header>
 
-<p>In this vignette, we generalize the analysis of the Fairness Cookbook, to consider more refined settings described by an arbitrary causal diagram. The main motivation for doing so comes from the observation that when analyzing disparate impact, quantities such as Ctf-DE<span class="math inline">\(_{x_0,x_1}(y\mid x_0)\)</span>, Ctf-IE<span class="math inline">\(_{x_0,x_1}(y\mid x_0)\)</span>, and Ctf-SE<span class="math inline">\(_{x_0,x_1}(y)\)</span> are insufficient to account for certain <em>business necessity</em> requirements. For concreteness, consider the following example.</p>
-<section id="compas-under-business-necessity" class="level2">
-<h2 class="anchored" data-anchor-id="compas-under-business-necessity">COMPAS under Business Necessity</h2>
-<p>The courts at Broward County, Florida, were using machine learning to predict whether individuals released on parole are at high risk of re-offending within 2 years. The algorithm is based on the demographic information <span class="math inline">\(Z\)</span> (<span class="math inline">\(Z_1\)</span> for gender, <span class="math inline">\(Z_2\)</span> for age), race <span class="math inline">\(X\)</span> (<span class="math inline">\(x_0\)</span> denoting White, <span class="math inline">\(x_1\)</span> Non-White), juvenile offense counts <span class="math inline">\(J\)</span>, prior offense count <span class="math inline">\(P\)</span>, and degree of charge <span class="math inline">\(D\)</span>.</p>
+<p>Courts in Broward County, Florida use machine learning to predict whether individuals released on parole are at high risk of re-offending within 2 years (<span class="math inline">\(Y\)</span>). The algorithm is based on the demographic information <span class="math inline">\(Z\)</span> (<span class="math inline">\(Z_1\)</span> for gender, <span class="math inline">\(Z_2\)</span> for age), race <span class="math inline">\(X\)</span> (<span class="math inline">\(x_0\)</span> denoting White, <span class="math inline">\(x_1\)</span> Non-White), juvenile offense counts <span class="math inline">\(J\)</span>, prior offense count <span class="math inline">\(P\)</span>, and degree of charge <span class="math inline">\(D\)</span>.</p>
+<p>In this vignette, we perform the task of bias detection on this dataset. We begin by loading and pre-processing the original data:</p>
 <div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">file.path</span>(root, <span class="st">"inst"</span>, <span class="st">"extdata"</span>,</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"compas-scores-two-years.csv"</span>))</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>col.keep <span class="ot">&lt;-</span> <span class="fu">which</span>(</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(data) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"juv_fel_count"</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"juv_misd_count"</span>, <span class="st">"juv_other_count"</span>, <span class="st">"priors_count"</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"c_charge_degree"</span>, <span class="st">"race"</span>, <span class="st">"two_year_recid"</span>, <span class="st">"decile_score"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data[, col.keep]</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>race <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>race)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(data<span class="sc">$</span>race) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Minority"</span>, <span class="st">"Minority"</span>, <span class="st">"Majority"</span>, <span class="st">"Minority"</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>                       <span class="st">"Minority"</span>, <span class="st">"Minority"</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>race <span class="ot">&lt;-</span> <span class="fu">relevel</span>(data<span class="sc">$</span>race, <span class="st">"Majority"</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">cumsum</span>(<span class="fu">table</span>(data<span class="sc">$</span>decile_score)) <span class="sc">/</span> <span class="fu">sum</span>(<span class="fu">table</span>(data<span class="sc">$</span>decile_score))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        1         2         3         4         5         6         7         8 
+0.1996119 0.3300527 0.4336013 0.5401996 0.6345994 0.7234544 0.8055171 0.8764902 
+        9        10 
+0.9469088 1.0000000 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># decile_score &gt; 4 represents high risk (approximately)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>northpointe <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(data<span class="sc">$</span>decile_score <span class="sc">&gt;</span> <span class="dv">4</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>decile_score <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(data) <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"_count"</span>, <span class="st">""</span>, <span class="fu">names</span>(data))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(data)[<span class="fu">which</span>(<span class="fu">names</span>(data) <span class="sc">==</span> <span class="st">"c_charge_degree"</span>)] <span class="ot">&lt;-</span> <span class="st">"charge"</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(data), <span class="at">caption =</span> <span class="st">"COMPAS dataset."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<div id="fig-compas-bn" class="quarto-figure quarto-figure-center anchored">
+<table class="table table-sm table-striped">
+<caption>COMPAS dataset.</caption>
+<colgroup>
+<col style="width: 5%">
+<col style="width: 4%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 10%">
+<col style="width: 11%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 17%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">sex</th>
+<th style="text-align: right;">age</th>
+<th style="text-align: left;">race</th>
+<th style="text-align: right;">juv_fel</th>
+<th style="text-align: right;">juv_misd</th>
+<th style="text-align: right;">juv_other</th>
+<th style="text-align: right;">priors</th>
+<th style="text-align: left;">charge</th>
+<th style="text-align: right;">two_year_recid</th>
+<th style="text-align: right;">northpointe</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">69</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">F</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">44</td>
+<td style="text-align: left;">Minority</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">M</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>In Causal Fairness Analysis, we are interested in decomposing the TV measure (also known as the parity gap), into its direct, indirect, and spurious components. We show the causal diagram associated with the data, and also a representation of how the target effects can be visualized as follows:</p>
+<div class="quarto-layout-panel">
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div id="fig-compas-sfm" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="compas-t1_files/figure-html/fig-compas-bn-1.png" class="img-fluid figure-img" width="384"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;1: Causal diagram of the COMPAS dataset. Business Necessity variables highlighted in green.</figcaption><p></p>
+<p><img src="../figs/a.png" class="img-fluid figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;1: COMPAS Causal Diagram</figcaption><p></p>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div id="fig-dir-effect" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="../figs/b.png" class="img-fluid figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;2: Direct effect visualization.</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
-<p>A causal analysis using the <code>fairness_cookbook()</code> revealed that:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">get</span>(<span class="fu">data</span>(<span class="st">"compas"</span>, <span class="at">package =</span> <span class="st">"faircause"</span>))</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2022</span>)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>mdata <span class="ot">&lt;-</span> <span class="fu">get_metadata</span>(<span class="st">"compas"</span>)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>fc_compas <span class="ot">&lt;-</span> <span class="fu">fairness_cookbook</span>(data, <span class="at">X =</span> mdata<span class="sc">$</span>X, <span class="at">Z =</span> mdata<span class="sc">$</span>Z, <span class="at">W =</span> mdata<span class="sc">$</span>W,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>                               <span class="at">Y =</span> mdata<span class="sc">$</span>Y, <span class="at">x0 =</span> mdata<span class="sc">$</span>x0, <span class="at">x1 =</span> mdata<span class="sc">$</span>x1)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(fc_compas, <span class="at">decompose =</span> <span class="st">"xspec"</span>, <span class="at">dataset =</span> <span class="st">"COMPAS"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div id="fig-compas-cookbook" class="quarto-figure quarto-figure-center anchored">
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div id="fig-indir-effect" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="compas-t1_files/figure-html/fig-compas-cookbook-1.png" class="img-fluid figure-img" width="768"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;2: Fairness Cookbook on the COMPAS dataset.</figcaption><p></p>
+<p><img src="../figs/c.png" class="img-fluid figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;3: Indirect effect visualization.</figcaption><p></p>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div id="fig-conf-effect" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="../figs/d.png" class="img-fluid figure-img"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;4: Confounded effect visualization.</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
-<p>That is, the computed measures equal: <span class="math display">\[
-\begin{align}
-  \text{Ctf-IE}_{x_1, x_0}(y\mid x_1) &amp;= -5.7\% \pm 0.5\%,\\
-  \text{Ctf-SE}_{x_1, x_0}(y) &amp;= -4.0\% \pm 0.9\%,
-\end{align}
-\]</span> and are also shown graphically in <a href="#fig-compas-cookbook">Figure&nbsp;2</a>, potentially indicating presence of disparate impact. Based on this information, a legal team of ProPublica filed a lawsuit to the district court, claiming discrimination w.r.t. the Non-White subpopulation based on the doctrine of disparate impact. After the court hearing, the judge rules that using the attributes age (<span class="math inline">\(Z_2\)</span>), prior count (<span class="math inline">\(P\)</span>), and charge degree (<span class="math inline">\(D\)</span>) is not discriminatory, but using the attributes juvenile count (<span class="math inline">\(J\)</span>) and gender (<span class="math inline">\(Z_1\)</span>) is discriminatory. The causal diagram with a visualization of which variables are included in the business-necessity set is given in <a href="#fig-compas-bn">Figure&nbsp;1</a>. Data scientists at ProPublica need to consider how to proceed in the light of this new requirement for discounting the allowable attributes in the quantiative analysis.</p>
-<p>The difficulty in this example is that the quantity Ctf-SE<span class="math inline">\(_{x_1, x_0}(y)\)</span> measures the spurious discrimination between the attribute <span class="math inline">\(X\)</span> and outcome <span class="math inline">\(Y\)</span> as generated by <em>both confounders</em> <span class="math inline">\(Z_1\)</span> and <span class="math inline">\(Z_2\)</span>. Since using the confounder <span class="math inline">\(Z_2\)</span> is not considered discriminatory, but using the confounder <span class="math inline">\(Z_1\)</span> is, the quantity Ctf-SE<span class="math inline">\(_{x_1, x_0}(y)\)</span> needs to be refined such that the spurious variations based on the different confounders are disentangled. In particular, one might be interested in finding a decomposition of the spurious effect such that <span class="math display">\[
-\begin{align}
-    \text{Ctf-SE}_{x_1, x_0}(y) = \underbrace{\text{Ctf-SE}^{Z_1}_{x_1, x_0}(y)}_{\text{gender variations}} + \underbrace{\text{Ctf-SE}^{Z_2}_{x_1, x_0}(y)}_{\text{age variations}},
-\end{align}
-\]</span> which would allow the data analyst to further distinguish the variations explained by each of the confounders. A similar challenge is present for the Ctf-IE<span class="math inline">\(_{x_1, x_0}(y\mid x_1)\)</span> measure, since it has contributions explained by juvenile offense counts <span class="math inline">\(J\)</span>, prior counts <span class="math inline">\(P\)</span>, and the charge degree <span class="math inline">\(D\)</span>. Therefore, we might be interested in decomposing the indirect effect into <span class="math display">\[
-\begin{align}
-    \text{Ctf-IE}_{x_1, x_0}(y \mid x_1) =&amp; \underbrace{\text{Ctf-IE}^J_{x_1, x_0}(y \mid x_1)}_{\text{juvenile count variations}} + \underbrace{\text{Ctf-IE}^P_{x_1, x_0}(y \mid x_1)}_{\text{prior count variations}} \\ &amp;+ \underbrace{\text{Ctf-IE}^D_{x_1, x_0}(y \mid x_1)}_{\text{charge degree variations}}. \nonumber
-\end{align}
-\]</span> Again, such a decomposition would allow the data analyst to better understand the contribution of each of the mediators to the totality of the indirect effect. In situations when some mediating variables are in the business necessity set, while others are not, such a decomposition would allow for assessment of disparate impact claims.</p>
-<section id="towards-the-solution" class="level3">
-<h3 class="anchored" data-anchor-id="towards-the-solution">Towards the solution</h3>
+</div>
+<p>After obtaining the data, we then specify the Standard Fairness Model, and decompose the TV measure for the true outcome <span class="math inline">\(Y\)</span>:</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="st">"race"</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"age"</span>, <span class="st">"sex"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>W <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"juv_fel"</span>, <span class="st">"juv_misd"</span>, <span class="st">"juv_other"</span>, <span class="st">"priors"</span>, <span class="st">"charge"</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"two_year_recid"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>two_year <span class="ot">&lt;-</span> <span class="fu">fairness_cookbook</span>(data, <span class="at">X =</span> X, <span class="at">W =</span> W, <span class="at">Z =</span> Z, <span class="at">Y =</span> Y,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                              <span class="at">x0 =</span> <span class="st">"Majority"</span>, <span class="at">x1 =</span> <span class="st">"Minority"</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(two_year, <span class="at">decompose =</span> <span class="st">"xspec"</span>) <span class="sc">+</span> </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">TeX</span>(<span class="st">"$Y$ disparity decomposition COMPAS"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="compas-t1_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" style="width:95.0%"></p>
+<p></p><figcaption class="figure-caption">Causal decomposition of the TV measure for two-year recidivism.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>However, we are also interested in the disparity for the predictor <span class="math inline">\(\widehat{Y}\)</span>, so we can decompose the TV measure for the predictor, too:</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>Yhat <span class="ot">&lt;-</span> <span class="st">"northpointe"</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>north_decompose <span class="ot">&lt;-</span> <span class="fu">fairness_cookbook</span>(data, <span class="at">X =</span> X, <span class="at">W =</span> W, <span class="at">Z =</span> Z, <span class="at">Y =</span> Yhat,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">x0 =</span> <span class="st">"Majority"</span>, <span class="at">x1 =</span> <span class="st">"Minority"</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(north_decompose, <span class="at">decompose =</span> <span class="st">"xspec"</span>) <span class="sc">+</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">TeX</span>(<span class="st">"$</span><span class="sc">\\</span><span class="st">widehat{Y}$ disparity decomposition COMPAS"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="compas-t1_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" style="width:95.0%"></p>
+<p></p><figcaption class="figure-caption">Causal decomposition of the TV measure for Northpointe’s predictions.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>To perform the complete analysis, we plot the two results side-by-side, and shade the areas depending on whether the associated measure is included in the business necessity set or not:</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="compas-t1_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" style="width:95.0%"></p>
+<p></p><figcaption class="figure-caption">Causal decompositions of the TV measure for the true and predicted outcomes visualized together.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
 
 
-</section>
-</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -306,7 +480,24 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     button.classList.add('code-copy-button-checked');
     var currentTitle = button.getAttribute("title");
     button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
     setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
       button.setAttribute("title", currentTitle);
       button.classList.remove('code-copy-button-checked');
     }, 1000);
@@ -342,24 +533,42 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       return note.innerHTML;
     });
   }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
   var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
   for (var i=0; i<bibliorefs.length; i++) {
     const ref = bibliorefs[i];
-    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
-    tippyHover(ref, function() {
-      var popup = window.document.createElement('div');
-      cites.forEach(function(cite) {
-        var citeDiv = window.document.createElement('div');
-        citeDiv.classList.add('hanging-indent');
-        citeDiv.classList.add('csl-entry');
-        var biblioDiv = window.document.getElementById('ref-' + cite);
-        if (biblioDiv) {
-          citeDiv.innerHTML = biblioDiv.innerHTML;
-        }
-        popup.appendChild(citeDiv);
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
       });
-      return popup.innerHTML;
-    });
+    }
   }
 });
 </script>

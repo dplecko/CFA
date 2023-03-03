@@ -54,7 +54,7 @@ She then inputs this SFM projection into the `faircause` R-package,
 #| fig-width: 8
 #| fig-height: 6
 set.seed(2022)
-mdata <- get_metadata("census")
+mdata <- SFM_proj("census")
 mdata
 fc_census <- fairness_cookbook(data, X = mdata$X, Z = mdata$Z, W = mdata$W,
                                Y = mdata$Y, x0 = mdata$x0, x1 = mdata$x1)

@@ -15,6 +15,8 @@ website:
         text: College Admissions Task 1
       - href: pages/compas-t1.Rmd
         text: COMPAS Task 1
+      - href: pages/compas-t1-extended.Rmd
+        text: COMPAS Task 1 (Extended)
       - href: pages/compas-t2.Rmd
         text: COMPAS Task 2
       - href: pages/shai-challenge.Rmd
