@@ -42,7 +42,7 @@ org_dat$two_year_recid <- ranger(two_year_recid ~ ., dat,
                                  classification = TRUE)$predictions
 
 # Method 1: decompose Total Variation
-org_tvd <- fairness_cookbook(org_dat, mdat[["X"]], mdat[["W"]], mdat[["Z"]],
+org_tvd <- fairness_cookbook(org_dat, mdat[["X"]], mdat[["Z"]], mdat[["W"]],
                              mdat[["Y"]], mdat[["x0"]], mdat[["x1"]])
 org_plt <- autoplot(org_tvd, decompose = "xspec", dataaset = dataset) +
   xlab("") + ylab("")
@@ -64,7 +64,7 @@ reweigh_dat <- dat
 reweigh_dat$two_year_recid <- as.vector(py$Yhat_rew)
 
 reweigh_tvd <- fairness_cookbook(
-  reweigh_dat, mdat[["X"]], mdat[["W"]], mdat[["Z"]], mdat[["Y"]], mdat[["x0"]],
+  reweigh_dat, mdat[["X"]], mdat[["Z"]], mdat[["W"]], mdat[["Y"]], mdat[["x0"]],
   mdat[["x1"]])
 
 rew_plt <- autoplot(reweigh_tvd, decompose = "xspec", dataset = dataset) +

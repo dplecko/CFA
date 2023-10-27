@@ -124,15 +124,17 @@ res <- col_adm_tim(n = 5000L, cfs = cfs)
 otp <- c()
 for (t in seq_along(res[["bqn"]])) {
 
-  x <- res[["bqn"]][[t]]
+  x <- summary(res[["bqn"]][[t]])$measures
   x_tr <- res[["gtr"]][[t]]
-  add_row <- data.frame(Spurious = x$measures$CtfSE[1],
-                        Indirect = x$measures$CtfIE[1],
-                        Direct = x$measures$CtfDE[1],
-                        Spurious_True = x_tr[3],
-                        Indirect_True = x_tr[2],
-                        Direct_True = x_tr[1],
-                        Year = 2010+t)
+  add_row <- data.frame(
+    Spurious = x[x$measure == "ctfse", ]$value,
+    Indirect = x[x$measure == "ctfie", ]$value,
+    Direct = x[x$measure == "ctfde", ]$value,
+    Spurious_True = x_tr[3],
+    Indirect_True = x_tr[2],
+    Direct_True = x_tr[1],
+    Year = 2010+t
+  )
 
   otp <- rbind(otp, add_row)
 

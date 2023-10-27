@@ -15,9 +15,11 @@ This page contains a sequence of vignettes associated with the [Causal Fairness 
 
 3.  [Analysis of fair predictions on the COMPAS dataset](pages/compas-t2.Rmd) from Example 5.3 of [@plecko2022causal, Section 5.2],
 
-4. [COMPAS dataset analysis](pages/compas-t1.Rmd) from Example 6.1 of [@plecko2022causal, Chapter 6],
+4. [COMPAS dataset analysis](pages/compas-t1.Rmd) from Example 6.1 of [@plecko2022causal, Section 6],
 
-4.  [Conditional independence tests on COMPAS & Census datasets](pages/ci-tests.Rmd) from Figure 4.7 of [@plecko2022causal, Section 4.5].
+5.  [Conditional independence tests on COMPAS & Census datasets](pages/ci-tests.Rmd) from Figure 4.7 of [@plecko2022causal, Section 4.5],
+
+6. [Outcome Control Cancer Surgery Example](pages/outcome-control.qmd) from [@plecko2022causal, Section 5.3.3]. 
 
 ### B: Vignettes not directly reproducing the content of the manuscript:
 

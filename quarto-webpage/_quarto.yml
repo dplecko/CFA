@@ -25,6 +25,8 @@ website:
         text: Fairadapt
       - href: pages/ci-tests.Rmd
         text: CI Tests
+      - href: pages/outcome-control.qmd
+        text: Outcome Control
 
 format:
   html:
