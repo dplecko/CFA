@@ -16,7 +16,7 @@ output: >
   html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 root <- rprojroot::find_root(rprojroot::is_git_root)
 r_dir <- file.path(root, "r")
@@ -33,13 +33,16 @@ A data scientist loads the data and performs the following initial analysis:
 data <- get(data("gov_census", package = "faircause"))
 data <- as.data.frame(data[seq_len(20000)])
 knitr::kable(head(data), caption = "Census dataset.")
-tapply(data$salary, data$sex, mean)
+mean_sal <- tapply(data$salary, data$sex, mean)
+tv <- mean_sal[2] - mean_sal[1]
 ```
 
 Therefore, the data scientist observed that male employees on average earn \$14000/year more than female employees, that is
-$$ 
-E[y \mid x_1] -  E[y \mid x_0] = \$14000.
-$$
+<center> 
+```{r, results='asis', fig.align='center', echo=FALSE}
+cat(paste0("$E[y \\mid x_1] - E[y \\mid x_0] = ", round(tv), ".$"))
+```
+</center> 
 
 Following the Fairness Cookbook, the data scientist does the following:
 
@@ -56,27 +59,52 @@ She then inputs this SFM projection into the `faircause` R-package,
 set.seed(2022)
 mdata <- SFM_proj("census")
 mdata
-fc_census <- fairness_cookbook(as.data.frame(data), X = mdata$X, Z = mdata$Z, W = mdata$W,
-                               Y = mdata$Y, x0 = mdata$x0, x1 = mdata$x1)
+fc_census <- fairness_cookbook(
+  as.data.frame(data), X = mdata$X, Z = mdata$Z, W = mdata$W,
+  Y = mdata$Y, x0 = mdata$x0, x1 = mdata$x1
+)
 
 autoplot(fc_census, decompose = "xspec", dataset = "Census")
 ```
 
 Using these results, she considers the following:
 
-**Disparate treatment:** when considering disparate treatment, she computes $x\text{-DE}^{\text{sym}}_{x}(y \mid x_0)$ and its 95\% confidence interval to be 
-$$
-x\text{-DE}^{\text{sym}}_{x}(y \mid x_0) = \$9980 \pm \$1049.
-$$
+**Disparate treatment:** when considering disparate treatment, she computes $x\text{-DE}_{x_0, x_1}(y \mid x_0)$ and its 95\% confidence interval to be 
+
+<br><center> 
+```{r, results='asis', fig.align='center', echo=FALSE}
+xde <- summary(fc_census)$measures["ctfde", ]$value
+xde_sd <- summary(fc_census)$measures["ctfde", ]$sd
+cat(paste0("$x\\text{-DE}_{x_0, x_1}(y \\mid x_0) = ", round(xde), 
+           "\\pm", round(xde_sd), ".$"))
+```
+</center><br>
+
 The hypothesis $H_0^{(x\text{-DE})}$ is thus rejected, providing evidence of disparate treatment of females.
 
 **Disparate impact:** when considering disparate impact, she notice that Ctf-SE, Ctf-IE and their respective 95\% confidence intervals equal:
-$$
-	\begin{align}
-	    x\text{-IE}^{\text{sym}}_{x}(y \mid x_0) &= \$5126 \pm \$778,\\
-	    x\text{-SE}_{x_1, x_0}(y) &= -\$1675 \pm  \$955.
-	\end{align}
-$$
+
+<br><center>
+```{r, results='asis', fig.align='center', echo=FALSE}
+xie <- summary(fc_census)$measures["ctfie", ]$value
+xie_sd <- summary(fc_census)$measures["ctfie", ]$sd
+xse <- summary(fc_census)$measures["ctfse", ]$value
+xse_sd <- summary(fc_census)$measures["ctfse", ]$sd
+
+cat(
+  paste0(
+    "$\\begin{align}",
+    "x\\text{-IE}_{x_1, x_0}(y \\mid x_0) &= ", round(xie), "\\pm",
+    round(xie_sd), "\\\\",
+    "x\\text{-SE}_{x_1, x_0}(y) &= ", round(xse), "\\pm",
+    round(xse_sd),
+    ".\\end{align}$"
+  )
+)
+```
+</center><br>
+
+
 The data scientist decides that the differences in salary explained by the spurious correlation of gender with age, race, and nationality are not considered discriminatory. Therefore, she tests the hypothesis
-	$$H_0^{(x\text{-IE})}: x\text{-IE}^{\text{sym}}_{x}(y \mid x_0) = 0,$$ 
+	$$H_0^{(x\text{-IE})}: x\text{-IE}_{x_1, x_0}(y \mid x_0) = 0,$$ 
 which is rejected, indicating evidence of disparate impact on female employees of the government. The measures computed in this example are visualized in @fig-census-cookbook.
