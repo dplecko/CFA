@@ -1,0 +1,1307 @@
+{
+  "lact_24": {
+    "concepts": ["lact"],
+    "description": "Worst lactate in 24 hours",
+    "callback": "lact_dayone",
+    "class": "rec_cncpt",
+    "target": "id_tbl"
+  },
+  "ast_24": {
+    "concepts": ["ast"],
+    "description": "Worst AST in 24 hours",
+    "callback": "ast_dayone",
+    "class": "rec_cncpt",
+    "target": "id_tbl"
+  },
+  "safi_24": {
+    "concepts": ["safi"],
+    "description": "Worst SaO2/FiO2 in 24 hours",
+    "callback": "safi_dayone",
+    "class": "rec_cncpt",
+    "target": "id_tbl"
+  },
+  "pafi_24": {
+    "concepts": ["pafi"],
+    "description": "Worst PaO2/FiO2 in 24 hours",
+    "callback": "pafi_dayone",
+    "class": "rec_cncpt",
+    "target": "id_tbl"
+  },
+  "charlson": {
+    "target": "id_tbl",
+    "sources": {
+      "miiv": [
+        {
+          "ids": [9, 10],
+          "table": "diagnoses_icd",
+          "val_var": "icd_code",
+          "sub_var": "icd_version",
+          "callback": "miiv_charlson_dir"
+        }
+      ]
+    }
+  },
+  "diag": {
+    "target": "id_tbl",
+    "levels": ["CMED", "CSURG", "DENT", "ENT", "GU", "GYN", "MED", "NB", "NBB", "NMED", "NSURG", "OBS", "ORTHO", "OMED", "PSURG", "PSYCH", "SURG", "TRAUM", "TSURG", "VSURG"],
+    "class": "fct_cncpt",
+    "description": "patient admission type",
+    "category": "demographics",
+    "sources": {
+      "aumc": [
+        {
+          "val_var": "specialty",
+          "table": "admissions",
+          "callback": "apply_map(c(Cardiochirurgie = 'CSURG', Cardiologie = 'CMED', ders = 'MED', Gynaecologie = 'GYN', `Heelkunde Gastro-enterologie` = 'SURG', `Heelkunde Longen/Oncologie` = 'TSURG', `Heelkunde Oncologie` = 'SURG', Hematologie = 'MED', `Intensive Care Volwassenen` = 'MED', Inwendig = 'MED', `Keel, Neus & Oorarts` = 'ENT', Longziekte = 'MED', `Maag-,Darm-,Leverziekten` = 'MED', Mondheelkunde = 'DENT', Nefrologie = 'GU', Neurochirurgie = 'NSURG', Neurologie = 'NMED', Obstetrie = 'OBS', `Oncologie Inwendig` = 'MED', Oogheelkunde = 'MED', Orthopedie = 'ORTHO', `Plastische chirurgie` = 'PSURG', Reumatologie = 'OMED', Traumatologie = 'TRAUM', Urologie = 'GU', Vaatchirurgie = 'VSURG', Verloskunde = 'OBS'))",
+          "class": "col_itm"
+        }
+      ],
+      "eicu": [
+        {
+          "table": "admissiondx",
+          "val_var": "admitdxpath",
+          "callback": "eicu_diag",
+          "class": "col_itm"
+        }
+      ],
+      "eicu_demo": [
+        {
+          "table": "admissiondx",
+          "val_var": "admitdxpath",
+          "callback": "eicu_diag",
+          "class": "col_itm"
+        }
+      ],
+      "miiv": [
+        {
+          "table": "services",
+          "val_var": "curr_service",
+          "class": "col_itm"
+        }
+      ],
+      "mimic": [
+        {
+          "table": "services",
+          "val_var": "curr_service",
+          "callback": "mimic_adm_diag",
+          "class": "col_itm"
+        }
+      ],
+      "mimic_demo": [
+        {
+          "table": "services",
+          "val_var": "curr_service",
+          "callback": "mimic_adm_diag",
+          "class": "col_itm"
+        }
+      ]
+    }
+  },
+  "acu_24": {
+    "concepts": ["sofa"],
+    "description": "SOFA at 24 hours",
+    "callback": "acute_dayone",
+    "class": "rec_cncpt",
+    "target": "id_tbl"
+  },
+  "ethnicity": {
+    "description": "Ethnicity",
+    "category": "Misc.",
+    "levels": ["Caucasian", "Asian", "African American", "Hispanic", "Other"],
+    "class": "fct_cncpt",
+    "target": "id_tbl",
+    "sources": {
+      "mimic_demo": [
+        {
+          "table": "admissions",
+          "val_var": "ethnicity",
+          "class": "col_itm",
+          "callback": "eth_mim_callback"
+        }
+      ],
+      "mimic": [
+        {
+          "table": "admissions",
+          "val_var": "ethnicity",
+          "class": "col_itm",
+          "callback": "eth_mim_callback"
+        }
+      ],
+      "miiv": [
+        {
+          "table": "admissions",
+          "val_var": "ethnicity",
+          "class": "col_itm",
+          "callback": "eth_miiv_callback"
+        }
+      ],
+      "eicu_demo": [
+        {
+          "table": "patient",
+          "val_var": "ethnicity",
+          "class": "col_itm",
+          "callback": "eth_eicu_cb"
+        }
+      ],
+      "eicu": [
+        {
+          "table": "patient",
+          "val_var": "ethnicity",
+          "class": "col_itm",
+          "callback": "eth_eicu_cb"
+        }
+      ]
+    }
+  },
+  "abx_infusion": {
+    "sources": {
+      "miiv": [
+        {
+          "ids": [225798, 225837, 225838, 225840, 225842, 225843, 225844, 225845, 225847, 225848, 225850, 225851, 225853, 225855, 225857, 225859, 225860, 225862, 225863, 225865, 225866, 225868, 225869, 225871, 225873, 225875, 225876, 225877, 225879, 225881, 225882, 225883, 225884, 225885, 225886, 225888, 225889, 225890, 225892, 225893, 225895, 225896, 225897, 225898, 225899, 225900, 225902, 225903, 225905, 227691, 228003],
+          "table": "inputevents",
+          "sub_var": "itemid",
+          "callback": "transform_fun(set_val(TRUE))"
+        }
+      ]
+    }
+  },
+  "map_beta200": {
+    "concepts": ["map", "norepi_equiv"],
+    "description": "MAP - 200 x NeEq",
+    "callback": "map_beta_200",
+    "class": "rec_cncpt"
+  },
+  "map_beta100": {
+    "concepts": ["map", "norepi_equiv"],
+    "description": "MAP - 100 x NeEq",
+    "callback": "map_beta_100",
+    "class": "rec_cncpt"
+  },
+  "map_beta50": {
+    "concepts": ["map", "norepi_equiv"],
+    "description": "MAP - 50 x NeEq",
+    "callback": "map_beta_50",
+    "class": "rec_cncpt"
+  },
+  "aptt_inr": {
+    "concepts": ["ptt", "inr_pt"],
+    "description": "Bellomo index (APTT x INR)",
+    "category": "respiratory",
+    "aggregate": ["min", "max"],
+    "callback": "aptt_inr_cb",
+    "class": "rec_cncpt"
+  },
+  "neut_div_lymph": {
+    "concepts": ["neut", "lymph"],
+    "description": "Neutrophils / Lymphocytes",
+    "category": "bone_marrow",
+    "callback": "neut_lymph_cb",
+    "class": "rec_cncpt"
+  },
+  "plt_div_inr": {
+    "concepts": ["plt", "inr_pt"],
+    "description": "Platelets / Inter.Norm.Rat. Prothrobin Time",
+    "category": "coag",
+    "callback": "plt_inr_cb",
+    "class": "rec_cncpt"
+  },
+  "four_c": {
+    "concepts": ["age", "sex", "n_comb", "resp", "o2sat", "gcs", "bun", "crp"],
+    "description": "SaO2/FiO2",
+    "category": "Misc.",
+    "callback": "four_c_score_callback",
+    "class": "rec_cncpt"
+  },
+  "grs": {
+    "concepts": ["age", "sex", "o2sat", "neut_total", "crp", "alb", "crea", "DM", "COPD"],
+    "description": "SaO2/FiO2",
+    "category": "Misc.",
+    "callback": "grs_callback",
+    "class": "rec_cncpt"
+  },
+  "neut_total": {
+    "concepts": ["neut", "wbc"],
+    "category": "Misc.",
+    "callback": "multiply_wbc",
+    "class": "rec_cncpt"
+  },
+  "n_comb": {
+    "description": "No. comorbidities",
+    "category": "Misc.",
+    "target": "id_tbl",
+    "sources": {
+      "mimic_demo": [
+        {
+          "table": "diagnoses_icd",
+          "sub_var": "icd9_code",
+          "class": "col_itm",
+          "callback": "DM_callback"
+        }
+      ],
+      "eicu_demo": [
+        {
+          "table": "diagnosis",
+          "sub_var": "icd9code",
+          "class": "col_itm",
+          "callback": "DM_callback"
+        }
+      ]
+    }
+  },
+  "DM": {
+    "description": "No. comorbidities",
+    "category": "Misc.",
+    "target": "id_tbl",
+    "sources": {
+      "mimic_demo": [
+        {
+          "table": "diagnoses_icd",
+          "sub_var": "icd9_code",
+          "class": "col_itm",
+          "callback": "DM_callback"
+        }
+      ],
+      "eicu_demo": [
+        {
+          "table": "diagnosis",
+          "sub_var": "icd9code",
+          "class": "col_itm",
+          "callback": "DM_callback"
+        }
+      ]
+    }
+  },
+  "COPD": {
+    "description": "No. comorbidities",
+    "category": "Misc.",
+    "target": "id_tbl",
+    "sources": {
+      "mimic_demo": [
+        {
+          "table": "diagnoses_icd",
+          "sub_var": "icd9_code",
+          "class": "col_itm",
+          "callback": "CPD_callback"
+        }
+      ],
+      "eicu_demo": [
+        {
+          "table": "diagnosis",
+          "sub_var": "icd9code",
+          "class": "col_itm",
+          "callback": "CPD_callback"
+        }
+      ]
+    }
+  },
+  "sed_med": {
+    "target": "win_tbl",
+    "description": "Sedation",
+    "class": "lgl_cncpt",
+    "sources": {
+      "aumc": [
+        {
+          "table": "drugitems",
+          "sub_var": "itemid",
+          "ids": [
+            7194, 7219, 7480, 6883, 12940, 7165, 6962, 9620, 12750, 7170,
+            19163, 12402, 21242, 7014, 9146, 9048
+          ],
+          "dur_var": "stop"
+        }
+      ],
+      "hirid": [
+        {
+          "table": "pharma",
+          "sub_var": "pharmaid",
+          "ids": [
+            442, 1001215, 1000977, 1000978, 245, 246, 1000988, 1000239,
+            1000418, 1000700, 1001051, 1001054, 1000902, 251, 252, 1000976,
+            1000991, 1001049, 1000847, 1000475, 1000607, 202, 1000491, 1001050,
+            1001052, 1001053, 208, 1000691, 1000699
+          ],
+          "dur_var": "enteredentryat",
+          "group_var": "infusionid",
+          "target": "ts_tbl",
+          "callback": "hirid_pharma_win12"
+        }
+      ],
+      "miiv": [
+        {
+          "table": "inputevents",
+          "sub_var": "itemid",
+          "ids": [
+            222168, 221744, 221668, 225942, 225154, 221833, 221385, 221623,
+            227520, 225972
+          ],
+          "dur_var": "endtime"
+        }
+      ],
+      "mimic": [
+        {
+          "table": "inputevents_mv",
+          "sub_var": "itemid",
+          "ids": [
+            222168, 221744, 221668, 225942, 225154, 221833, 221385, 221623,
+            227520, 225972
+          ],
+          "dur_var": "endtime"
+        },
+        {
+          "table": "inputevents_cv",
+          "sub_var": "itemid",
+          "ids": [
+            30131, 30118, 30124, 30126, 30308, 30149, 30150, 44306, 45520,
+            46725, 45764, 30139, 30153, 41733, 43387
+          ],
+          "dur_var": "storetime",
+          "target": "ts_tbl",
+          "callback": "ts_to_win_12hours"
+        }
+      ],
+      "sic": [
+        {
+          "ids": [1400, 1430, 1445, 1480, 1495, 1499, 1501, 1549, 1696, 1723,
+1747, 1914, 2142],
+          "table": "medication",
+          "sub_var": "DrugID",
+          "val_var": "AmountPerMinute",
+          "dur_var": "OffsetDrugEnd"
+        }
+      ]
+    }
+  },
+  "sed_rass": {
+    "concepts": "rass",
+    "description": "RASS as 6h windows",
+    "category": "neurological",
+    "aggregate": "min",
+    "callback": "sed_rass",
+    "class": "rec_cncpt"
+  },
+  "gcs_raw": {
+    "concepts": ["egcs", "mgcs", "vgcs", "tgcs"],
+    "description": "GCS (w/o sedation)",
+    "category": "neurological",
+    "aggregate": ["min", "min", "min", "min"],
+    "callback": "gcs_cb_generator('gcs_raw', NA_character_)",
+    "class": "rec_cncpt"
+  },
+  "gcs_med": {
+    "concepts": ["egcs", "mgcs", "vgcs", "tgcs", "sed_med"],
+    "description": "GCS (with sedation)",
+    "category": "neurological",
+    "aggregate": ["min", "min", "min", "min", "any"],
+    "callback": "gcs_cb_generator('gcs_med', 'sed_med')",
+    "class": "rec_cncpt"
+  },
+  "gcs_rass": {
+    "concepts": ["egcs", "mgcs", "vgcs", "tgcs", "sed_rass"],
+    "description": "GCS (with rass)",
+    "category": "neurological",
+    "aggregate": ["min", "min", "min", "min", null],
+    "callback": "gcs_cb_generator('gcs_rass', 'sed_rass')",
+    "class": "rec_cncpt"
+  },
+  "adm": {
+    "sources": {
+      "sic": [
+        {
+          "class": "col_itm",
+          "table": "cases",
+          "val_var": "SurgicalSite",
+          "callback": "sic_adm_cb"
+        }
+      ]
+    }
+  },
+  "ptt": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [597],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "tri": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [270],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "tnt": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [481],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID",
+          "callback": "transform_fun(binary_op(`/`, 1000))"
+        }
+      ]
+    }
+  },
+  "glu": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [348, 656],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "fgn": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [344],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "bili_dir": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [332],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "be": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [668],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "ck": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [611],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "ckmb": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [253],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "alb": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [287],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "wbc": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [301],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "rbc": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [599],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "k": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [463, 685],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "phos": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [471],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID",
+          "callback": "transform_fun(binary_op(`*`, 3.097521))"
+        }
+      ]
+    }
+  },
+  "ph": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [688],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "pco2": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [687],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "neut": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [230],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "mcv": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [286],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "mchc": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [290],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "mch": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [566],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "na": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [469, 686],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "mg": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [468],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID",
+          "callback": "transform_fun(binary_op(`*`, 2.431))"
+        }
+      ]
+    }
+  },
+  "lymph": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [223],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "hgb": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [658, 289],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "hct": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [217, 682],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "eos": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [197],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "cl": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [683, 450],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "cai": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [655],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "ca": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [457],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID",
+          "callback": "transform_fun(binary_op(`*`, 4.008))"
+        }
+      ]
+    }
+  },
+  "bicar": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [456],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "basos": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [174],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "sex": {
+    "sources": {
+      "sic": [
+        {
+          "table": "cases",
+          "val_var": "Sex",
+          "class": "col_itm",
+          "callback": "sic_sex_cb"
+        }
+      ]
+    }
+  },
+  "adm_episode": {
+    "target": "id_tbl",
+    "sources": {
+      "sic": [
+        {
+          "table": "cases",
+          "val_var": "AdmissionYear",
+          "grp_var": "PatientID",
+          "off_var": "OffsetAfterFirstAdmission",
+          "class": "col_itm",
+          "callback": "sic_adm_epi_cb"
+        }
+      ],
+      "miiv": [
+        {
+          "table": "icustays",
+          "val_var": "subject_id",
+          "class": "col_itm",
+          "callback": "miiv_adm_epi_cb"
+        }
+      ]
+    }
+  },
+  "age": {
+    "sources": {
+      "sic": [
+        {
+          "table": "cases",
+          "val_var": "AgeOnAdmission",
+          "class": "col_itm"
+        }
+      ]
+    }
+  },
+  "saps3": {
+    "target": "id_tbl",
+    "sources": {
+      "sic": [
+        {
+          "table": "cases",
+          "val_var": "saps3",
+          "class": "col_itm"
+        }
+      ]
+    }
+  },
+  "inr_pt": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [237],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID",
+          "callback": "sic_inr_pt_cb"
+        }
+      ]
+    }
+  },
+  "pt": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [598],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "bun": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [355],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID",
+          "callback": "transform_fun(binary_op(`/`, 2.14))"
+        }
+      ]
+    }
+  },
+  "lact": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [657, 454],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "alp": {
+    "sources": {
+      "sic": [
+        {
+          "ids": 617,
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "alt": {
+    "sources": {
+      "sic": [
+        {
+          "ids": 617,
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "ast": {
+    "sources": {
+      "sic": [
+        {
+          "ids": 616,
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "rass": {
+    "sources": {
+      "sic": [
+        {
+          "table": "rass",
+          "sub_var": "DataID",
+          "ids": [3123]
+        }
+      ]
+    }
+  },
+  "tgcs": {
+    "sources": {
+      "sic": [
+        {
+          "table": "gcs",
+          "class": "col_itm",
+          "val_var": "AdmissionFormGCS",
+          "callback": "sic_gcs_cb"
+        }
+      ]
+    }
+  },
+  "samp_raw": {
+    "sources": {
+      "sic": [
+        {
+          "table": "microbiology",
+          "class": "col_itm",
+          "val_var": "TimeOfStay"
+        }
+      ]
+    }
+  },
+  "samp": {
+    "sources": {
+      "sic": [
+        {
+          "table": "microbiology",
+          "class": "col_itm",
+          "val_var": "TimeOfStay",
+          "callback": "sic_samp_cb"
+        }
+      ]
+    }
+  },
+  "min_vol": {
+    "sources": {
+      "sic": [
+        {
+          "table": "data_float_h",
+          "ids": [2019],
+          "sub_var": "DataID"
+        }
+      ]
+    }
+  },
+  "los_icu": {
+    "sources": {
+      "sic": [
+        {
+          "table": "cases",
+          "class": "col_itm",
+          "val_var": "TimeOfStay",
+          "callback": "sic_los_icu_cb"
+        }
+      ]
+    }
+  },
+  "mech_vent": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [2281],
+          "table": "data_float_h",
+          "sub_var": "DataID",
+          "dur_var": "rawdata",
+          "add_var": "cnt",
+          "callback": "sic_mv_cb"
+        }
+      ]
+    }
+  },
+  "death": {
+    "sources": {
+      "sic": [
+        {
+          "table": "cases",
+          "class": "col_itm",
+          "index_var": "OffsetAfterFirstAdmission",
+          "add_var": "OffsetOfDeath",
+          "add_var2": "TimeOfStay",
+          "val_var": "HospitalDischargeType",
+          "callback": "sic_death_cb"
+        }
+      ]
+    }
+  },
+  "antimycotic": {
+    "sources": {
+      "sic": [
+        {
+          "table": "medication",
+          "ids": [1464, 1466, 1856],
+          "sub_var": "DrugID",
+          "callback": "transform_fun(set_val(TRUE))"
+        }
+      ]
+    }
+  },
+  "abx": {
+    "sources": {
+      "sic": [
+        {
+          "table": "medication",
+          "ids": [1406, 1408, 1410, 1418, 1421, 1422, 1423, 1428, 1431, 1433, 1436, 1449, 1454, 1457, 1458, 1459, 1460, 1461, 1603, 1795, 1913, 1927],
+          "sub_var": "DrugID",
+          "callback": "transform_fun(set_val(TRUE))"
+        }
+      ]
+    }
+  },
+  "height": {
+    "sources": {
+      "sic": [
+        {
+          "table": "cases",
+          "val_var": "HeightOnAdmission",
+          "class": "col_itm"
+        }
+      ]
+    }
+  },
+  "weight": {
+    "sources": {
+      "sic": [
+        {
+          "table": "cases",
+          "val_var": "WeightOnAdmission",
+          "class": "col_itm",
+          "callback": "transform_fun(binary_op(`/`, 1000))"
+        }
+      ]
+    }
+  },
+  "urine": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [725],
+          "table": "data_float_h",
+          "sub_var": "DataID"
+        }
+      ]
+    }
+  },
+  "epi_dur": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [1502],
+          "table": "medication",
+          "sub_var": "DrugID",
+          "stop_var": "OffsetDrugEnd",
+          "callback": "sic_dur"
+        }
+      ]
+    }
+  },
+  "dobu_dur": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [1559],
+          "table": "medication",
+          "sub_var": "DrugID",
+          "stop_var": "OffsetDrugEnd",
+          "callback": "sic_dur"
+        }
+      ]
+    }
+  },
+  "dopa_dur": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [1618],
+          "table": "medication",
+          "sub_var": "DrugID",
+          "stop_var": "OffsetDrugEnd",
+          "callback": "sic_dur"
+        }
+      ]
+    }
+  },
+  "norepi_dur": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [1562],
+          "table": "medication",
+          "sub_var": "DrugID",
+          "stop_var": "OffsetDrugEnd",
+          "callback": "sic_dur"
+        }
+      ]
+    }
+  },
+  "epi_rate": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [1502],
+          "table": "medication",
+          "sub_var": "DrugID",
+          "val_var": "AmountPerMinute",
+          "stop_var": "OffsetDrugEnd",
+          "callback": "sic_rate_kg"
+        }
+      ]
+    }
+  },
+  "dobu_rate": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [1559],
+          "table": "medication",
+          "sub_var": "DrugID",
+          "val_var": "AmountPerMinute",
+          "stop_var": "OffsetDrugEnd",
+          "callback": "sic_rate_kg"
+        }
+      ]
+    }
+  },
+  "dopa_rate": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [1618],
+          "table": "medication",
+          "sub_var": "DrugID",
+          "val_var": "AmountPerMinute",
+          "stop_var": "OffsetDrugEnd",
+          "callback": "sic_rate_kg"
+        }
+      ]
+    }
+  },
+  "norepi_rate": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [1562],
+          "table": "medication",
+          "sub_var": "DrugID",
+          "val_var": "AmountPerMinute",
+          "stop_var": "OffsetDrugEnd",
+          "callback": "sic_rate_kg"
+        }
+      ]
+    }
+  },
+  "fio2": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [2283],
+          "table": "data_float_h",
+          "sub_var": "DataID"
+        }
+      ]
+    }
+  },
+  "po2": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [664, 689],
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "plt": {
+    "sources": {
+      "sic": [
+        {
+          "ids": 314,
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "bili": {
+    "sources": {
+      "sic": [
+        {
+          "ids": 333,
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "crea": {
+    "sources": {
+      "sic": [
+        {
+          "ids": 367,
+          "table": "laboratory",
+          "sub_var": "LaboratoryID"
+        }
+      ]
+    }
+  },
+  "hr": {
+    "sources": {
+      "sic": [
+        {
+          "ids": 708,
+          "table": "data_float_h",
+          "sub_var": "DataID"
+        }
+      ]
+    }
+  },
+  "map": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [703, 706],
+          "table": "data_float_h",
+          "sub_var": "DataID"
+        }
+      ]
+    }
+  },
+  "dpb": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [702, 705],
+          "table": "data_float_h",
+          "sub_var": "DataID"
+        }
+      ]
+    }
+  },
+  "dbp": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [702, 705],
+          "table": "data_float_h",
+          "sub_var": "DataID"
+        }
+      ]
+    }
+  },
+  "sbp": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [701, 704],
+          "table": "data_float_h",
+          "sub_var": "DataID"
+        }
+      ]
+    }
+  },
+  "o2sat": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [710],
+          "table": "data_float_h",
+          "sub_var": "DataID"
+        }
+      ]
+    }
+  },
+  "resp": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [719],
+          "table": "data_float_h",
+          "sub_var": "DataID"
+        }
+      ]
+    }
+  },
+  "temp": {
+    "sources": {
+      "sic": [
+        {
+          "ids": [709],
+          "table": "data_float_h",
+          "sub_var": "DataID"
+        }
+      ]
+    }
+  }
+}

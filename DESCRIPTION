@@ -23,6 +23,7 @@ Imports:
 Suggests:
     testthat (>= 3.0.3),
     knitr,
+    reticulate,
     rmarkdown,
     markdown,
     data.table,
@@ -35,7 +36,8 @@ Suggests:
     cowplot,
     qrnn,
     igraph,
-    scales
+    scales,
+    xgboost
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 VignetteBuilder: knitr

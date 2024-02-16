@@ -84,25 +84,25 @@ print.summary.faircause <- function(x,
 #' @importFrom latex2exp TeX
 #' @export
 autoplot.faircause <- function(x, decompose = c("xspec", "general", "both"),
-                               dataset = "", signed = TRUE, ...) {
+                               dataset = "", signed = TRUE, var_name = "y", ...) {
 
   decompose <- match.arg(decompose, c("xspec", "general", "both"))
   df <- summarize_measures(x$measures)
   names(df) <- c("Measure", "Value", "StdDev")
 
   rename <- list(
-    tv = TeX("$TV_{x_0, x_1}(y)$"),
-    te = TeX("$TE_{x_0, x_1}(y)$"),
-    expse_x1 = TeX("Exp-SE$_{x_1}(y)$"),
-    expse_x0 = TeX("Exp-SE$_{x_0}(y)$"),
-    nde = TeX("$NDE_{x_0, x_1}(y)$"),
-    nie = TeX("$NIE_{x_1, x_0}(y)$"),
-    ett = TeX("$ETT_{x_0, x_1}(y | x_0)$"),
-    ctfde = TeX("$Ctf$-$DE_{x_0, x_1}(y | x_0)$"),
-    ctfie = TeX("$Ctf$-$IE_{x_1, x_0}(y | x_0)$"),
-    ctfse = TeX("$Ctf$-$SE_{x_1, x_0}(y)$")
+    tv = TeX(sprintf("$TV_{x_0, x_1}(%s)$", var_name)),
+    te = TeX(sprintf("$TE_{x_0, x_1}(%s)$", var_name)),
+    expse_x1 = TeX(sprintf("Exp-SE$_{x_1}(%s)$", var_name)),
+    expse_x0 = TeX(sprintf("Exp-SE$_{x_0}(%s)$", var_name)),
+    nde = TeX(sprintf("$NDE_{x_0, x_1}(%s)$", var_name)),
+    nie = TeX(sprintf("$NIE_{x_1, x_0}(%s)$", var_name)),
+    ett = TeX(sprintf("$ETT_{x_0, x_1}(%s | x_0)$", var_name)),
+    ctfde = TeX(sprintf("$Ctf$-$DE_{x_0, x_1}(%s | x_0)$", var_name)),
+    ctfie = TeX(sprintf("$Ctf$-$IE_{x_1, x_0}(%s | x_0)$", var_name)),
+    ctfse = TeX(sprintf("$Ctf$-$SE_{x_1, x_0}(%s)$", var_name))
   )
-  ttl <- "$TV_{x_0, x_1}(y)$"
+  ttl <- sprintf("$TV_{x_0, x_1}(%s)$", var_name)
 
   if (!signed) {
 
@@ -162,6 +162,7 @@ autoplot.faircause <- function(x, decompose = c("xspec", "general", "both"),
     ggtitle(TeX(paste0(ttl, " decomposition ", dataset)))
 }
 
+# helpers
 summarize_measures <- function(meas) {
 
   data.frame(
@@ -170,4 +171,3 @@ summarize_measures <- function(meas) {
     sd = tapply(meas$value, meas$measure, sd)
   )
 }
-

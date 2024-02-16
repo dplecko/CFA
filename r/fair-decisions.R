@@ -1,0 +1,137 @@
+#' fair_predictions
+#'
+#' Implementation of Fairness Cookbook in Causal Fairness Analysis
+#' (Plecko & Bareinboim 2022). Uses only plain \code{R}.
+#'
+#' The procedure takes the data as an input, together with
+#' the causal graph given by the Standard Fairness Model, and outputs a causal
+#' decomposition of the TV measure into direct, indirect, and spurious effects.
+#'
+#' @param data Object of class \code{data.frame} containing the dataset.
+#' @param X A \code{character} scalar giving the name of the
+#' protected attribute. Must be one of the entries of \code{names(data)}.
+#' @param Z A \code{character} vector giving the names of all mediators.
+#' @param W A \code{character} vector giving the names of all confounders.
+#' @param Y A \code{character} scalar giving the name of the outcome.
+#' @param x0,x1 Scalar values giving the two levels of the binary protected
+#' attribute.
+#' @param method A \code{character} scalar with two options: \code{"medDML"} for
+#' mediation double-machine learning, \code{"causal_forest"} for the
+#' [grf::causal_forest()] method from the \code{grf} package.
+#' @param model A \code{character} scalar taking values in
+#' \code{c("ranger", "linear")}, indicating whether a tree-based learner is used
+#' [ranger::ranger()], or if the fitted model should be linear. This parameter
+#' is only relevant if \code{method == "medDML"}.
+#' @param tune_params A \code{logical(1L)} indicating whether the parameters
+#' should be tuned for the tree-based methods (only the \code{min.node.size}
+#' parameter is tuned). Defaults to \code{FALSE}.
+#' @param nboot1 An \code{integer} scalar determining the number of outer
+#' bootstrap repetitions, that is, how many times the fitting procedure is
+#' repeated. Default is \code{1L}.
+#' @param nboot2 An \code{integer} scalar determining the number of inner
+#' bootstrap repetitions, that is, how many bootstrap samples are taken after
+#' the potential outcomes are obtained from the estimation procedure.
+#' Default is \code{100L}.
+#' @param ... Further arguments passed to downstream model fitting functions.
+#'
+#' @return An object of class \code{faircause}, containing the following
+#' elements:
+#' \item{\code{measures}}{A \code{data.frame} containing the estimates for each
+#' combination of measure/outer bootstrap repetition/inner bootstrap repetition.}
+#' \item{\code{X, Z, W, Y}}{Names of the protected attribute, confounders,
+#' mediators, and the outcome, respectively.}
+#' \item{\code{x0, x1}}{Protected attribute levels.}
+#' \item{\code{method}}{Method of estimation (see parameters above).}
+#' \item{\code{model}}{Model class of the fit (relevant if
+#' \code{method == "medDML"}, see parameters above).}
+#' \item{cl}{The function call that generated the object.}
+#' \item{eo}{Logical indicator whether the object is an equality of odds object.}
+#' \item{params}{If \code{tune_params == TRUE} in the function call, this object
+#' is a list of optimal \code{min.node.size} values for each tree-based used
+#' in the estimation procedure. See `faircause:::doubly_robust_med()` and
+#' `faircause::crf_wrap()` for more details about the used objects.}
+#' @examples
+#' \dontrun{
+#' data <- faircause::berkeley
+#'
+#' fcb <- fairness_cookbook(data, X = "gender", Z = character(0L), W = "dept",
+#'                          Y = "admit", x0 = "Male", x1 = "Female")
+#' fcb
+#' }
+#'
+#'
+#' @author Drago Plecko
+#' @references
+#' Plecko, D. & Bareinboim, E. (2022).
+#' Causal Fairness Analysis \cr
+#' @import stats
+#' @importFrom assertthat assert_that
+#' @importFrom grf causal_forest
+#' @importFrom reticulate py_run_file source_python
+#' @export
+fair_decisions <- function(data, X, Z, W, Y, D, x0, x1,
+                           xgb_params = list(eta = 0.1), xgb_nrounds = 100,
+                           delta_transform = function(x) x, delta_sign = 0,
+                           method = c("medDML", "causal_forest"),
+                           model = c("ranger", "linear"), tune_params = FALSE,
+                           nboot1 = 1L, nboot2 = 100L, ...) {
+
+  verify_numeric_input(data)
+
+  method <- match.arg(method, c("medDML", "causal_forest"))
+  model <- match.arg(model, c("ranger", "linear"))
+
+  # decompose the disparity in resource allocation
+  d_fcb <- fairness_cookbook(data, X = X, Z = Z, W = W, Y = D, x0 = x0, x1 = x1,
+                             model = model, method = method,
+                             tune_params = tune_params,
+                             nboot1 = 1L, nboot2 = 100L, ...)
+
+
+  # split train and eval ?
+  # train_idx <- seq_len(round((1 - eval_prop) * nrow(data)))
+  # train_data <- data[train_idx, ]
+  # eval_data <- data[-train_idx, ]
+
+  # estimate the delta parameter
+  xgbcv <- xgboost::xgb.cv(
+    params = xgb_params,
+    data = as.matrix(data[, c(X, Z, W, D)]),
+    label = data[[Y]], nrounds = xgb_nrounds,
+    early_stopping_rounds = 5, nfold = 10, verbose = FALSE
+  )
+
+  # pick optimal number of rounds
+  xgb_nrounds <- xgbcv$best_iteration
+
+  # train the prediction object
+  xgb_mod <- xgboost::xgboost(
+    params = xgb_params, data = as.matrix(data[, c(X, Z, W, D)]),
+    label = data[[Y]], nrounds = xgb_nrounds, verbose = FALSE
+  )
+
+  data$delta <- predict_delta(xgb_mod, data, D, delta_sign, delta_transform)
+
+  # perform a decomposition on Delta
+  delta_fcb <- fairness_cookbook(data, X = X, Z = Z, W = W, Y = D,
+                                 x0 = x0, x1 = x1,
+                                 model = model, method = method,
+                                 tune_params = tune_params,
+                                 nboot1 = 1L, nboot2 = 100L, ...)
+
+  # output a faircause object
+  structure(
+    list(
+      d_fcb = d_fcb,
+      delta_fcb = delta_fcb,
+      data = data, delta = data$delta,
+      delta_sign = delta_sign, delta_transform = delta_transform,
+      xgb_mod = xgb_mod, xgb_params = xgb_params,
+      x0 = x0, x1 = x1, model = model, X = X, W = W, Z = Z, Y = Y, D = D,
+      cl = match.call(),
+      method = method,
+      tune_params = tune_params, nboot1 = nboot1, nboot2 = nboot2
+    ),
+    class = "fair_decision"
+  )
+}

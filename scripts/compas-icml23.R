@@ -38,7 +38,7 @@ compute_ippm <- function(pred, out, x, x0, name, nboot = 100) {
 }
 
 set.seed(23)
-data <- read.csv(file.path(root, "compas-scores-two-years.csv"))
+data <- read.csv(file.path(root, "inst", "extdata", "compas-scores-two-years.csv"))
 col.keep <- which(
   names(data) %in% c("age", "sex", "juv_fel_count",
                      "juv_misd_count", "juv_other_count", "priors_count",
@@ -57,6 +57,13 @@ np_ippm <- compute_ippm(data$decile_score / 10, data$two_year_recid,
 data$decile_score <- NULL
 names(data) <- gsub("_count", "", names(data))
 names(data)[which(names(data) == "c_charge_degree")] <- "charge"
+
+# remove factors if needed
+# data$race <- as.integer(data$race == "Majority")
+# data$sex <- as.integer(data$sex == "Female")
+# data$charge <- as.integer(data$charge == "F")
+# write.csv(data, file = file.path(root, "scripts", "learning-algorithms",
+#                                  "compas-preproc.csv"))
 
 # decomposing the true outcome
 X <- "race"
