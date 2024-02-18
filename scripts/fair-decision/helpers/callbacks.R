@@ -3,11 +3,11 @@ eth_mim_callback <- function(x, val_var, env) {
 
   groups <- list(
     Caucasian = c("WHITE", "WHITE - BRAZILIAN", "WHITE - EASTERN EUROPEAN",
-                  "WHITE - OTHER EUROPEAN",
-                  "WHITE - RUSSIAN"),
-    Asian = c("ASIAN", "ASIAN - ASIAN INDIAN", "ASIAN - CAMBODIAN", "ASIAN - CHINESE",
-              "ASIAN - FILIPINO", "ASIAN - JAPANESE", "ASIAN - KOREAN", "ASIAN - OTHER",
-              "ASIAN - THAI", "ASIAN - VIETNAMESE"),
+                  "WHITE - OTHER EUROPEAN", "WHITE - RUSSIAN"),
+    Asian = c("ASIAN", "ASIAN - ASIAN INDIAN", "ASIAN - CAMBODIAN",
+              "ASIAN - CHINESE", "ASIAN - FILIPINO", "ASIAN - JAPANESE",
+              "ASIAN - KOREAN", "ASIAN - OTHER", "ASIAN - THAI",
+              "ASIAN - VIETNAMESE"),
     Hispanic = c("HISPANIC/LATINO - CENTRAL AMERICAN (OTHER)",
                  "HISPANIC/LATINO - COLOMBIAN",
                  "HISPANIC/LATINO - CUBAN", "HISPANIC/LATINO - DOMINICAN",
@@ -24,7 +24,8 @@ eth_mim_callback <- function(x, val_var, env) {
               "PORTUGUESE", "SOUTH AMERICAN",
               "AMERICAN INDIAN/ALASKA NATIVE",
               "AMERICAN INDIAN/ALASKA NATIVE FEDERALLY RECOGNIZED TRIBE",
-              "CARIBBEAN ISLAND", "BLACK/AFRICAN", "BLACK/CAPE VERDEAN", "BLACK/HAITIAN")
+              "CARIBBEAN ISLAND", "BLACK/AFRICAN", "BLACK/CAPE VERDEAN",
+              "BLACK/HAITIAN")
   )
   map <- unlist(groups)
   names(map) <- rep(names(groups), times = lapply(groups, length))
@@ -35,16 +36,28 @@ eth_mim_callback <- function(x, val_var, env) {
 eth_miiv_callback <- function(x, val_var, env) {
 
   groups <- list(
-    Caucasian = c("WHITE"),
-    Asian = c("ASIAN"),
-    Hispanic = c("HISPANIC/LATINO"),
-    `African American` = c("BLACK/AFRICAN AMERICAN"),
-    Other = c("OTHER", "UNKNOWN", "UNABLE TO OBTAIN")
+    Caucasian = c("WHITE", "WHITE - BRAZILIAN", "WHITE - EASTERN EUROPEAN",
+                  "WHITE - OTHER EUROPEAN", "WHITE - RUSSIAN"),
+    Asian = c("ASIAN", "ASIAN - ASIAN INDIAN", "ASIAN - CHINESE",
+              "ASIAN - KOREAN", "ASIAN - SOUTH EAST ASIAN"),
+    Hispanic = c("HISPANIC OR LATINO", "HISPANIC/LATINO",
+                 "HISPANIC/LATINO - CENTRAL AMERICAN",
+                 "HISPANIC/LATINO - COLUMBIAN", "HISPANIC/LATINO - CUBAN",
+                 "HISPANIC/LATINO - DOMINICAN", "HISPANIC/LATINO - GUATEMALAN",
+                 "HISPANIC/LATINO - HONDURAN", "HISPANIC/LATINO - MEXICAN",
+                 "HISPANIC/LATINO - PUERTO RICAN",
+                 "HISPANIC/LATINO - SALVADORAN", "SOUTH AMERICAN"),
+    `African American` = c("BLACK/AFRICAN", "BLACK/AFRICAN AMERICAN",
+                           "BLACK/CAPE VERDEAN", "BLACK/CARIBBEAN ISLAND"),
+    Other = c("OTHER", "UNKNOWN", "UNABLE TO OBTAIN", "MULTIPLE RACE/ETHNICITY",
+              "NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER",
+              "PATIENT DECLINED TO ANSWER", "PORTUGUESE")
   )
+
   map <- unlist(groups)
   names(map) <- rep(names(groups), times = lapply(groups, length))
 
-  x[, ethnicity := names(map)[match(ethnicity, map)]]
+  x[, race := names(map)[match(race, map)]]
 
 
 }

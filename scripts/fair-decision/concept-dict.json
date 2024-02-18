@@ -104,8 +104,8 @@
     "class": "rec_cncpt",
     "target": "id_tbl"
   },
-  "ethnicity": {
-    "description": "Ethnicity",
+  "race": {
+    "description": "Race",
     "category": "Misc.",
     "levels": ["Caucasian", "Asian", "African American", "Hispanic", "Other"],
     "class": "fct_cncpt",
@@ -130,7 +130,7 @@
       "miiv": [
         {
           "table": "admissions",
-          "val_var": "ethnicity",
+          "val_var": "race",
           "class": "col_itm",
           "callback": "eth_miiv_callback"
         }
