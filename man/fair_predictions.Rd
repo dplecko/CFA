@@ -41,6 +41,27 @@ protected attribute. Must be one of the entries of \code{names(data)}.}
 \item{x0, x1}{Scalar values giving the two levels of the binary protected
 attribute.}
 
+\item{BN}{A character vector with any combination of entries
+\code{"DE"}, \code{"IE"}, \code{"SE"} representing the business necessity set.}
+
+\item{eval_prop}{Proportion of the data that should be used as a held-out
+evaluation set for the purposes of early stopping in the neural network fit.}
+
+\item{lr}{Learning rate of the fitting process (for Adam optimizer).}
+
+\item{lmbd_seq}{A sequence of values of \eqn{\lambda}, the parameter value
+which balances between the standard loss functions (cross-entropy for
+classification; mean squared error for regression) and the causal loss, which
+measures how closely satisfied the desired causal constraints are. See more
+in the details.}
+
+\item{relu_eps}{A special type of penalization that allows small deviations
+from the causal constraints. Default is \code{FALSE}. When changing to \code{TRUE},
+a different value of the \eqn{\lambda} may be more appropriate.}
+
+\item{patience}{Number of epochs of patience before triggering early
+stopping.}
+
 \item{method}{A \code{character} scalar with two options: \code{"medDML"} for
 mediation double-machine learning, \code{"causal_forest"} for the
 \code{\link[grf:causal_forest]{grf::causal_forest()}} method from the \code{grf} package.}
@@ -66,42 +87,46 @@ Default is \code{100L}.}
 \item{...}{Further arguments passed to downstream model fitting functions.}
 }
 \value{
-An object of class \code{faircause}, containing the following
-elements:
-\item{\code{measures}}{A \code{data.frame} containing the estimates for each
-combination of measure/outer bootstrap repetition/inner bootstrap repetition.}
-\item{\code{X, Z, W, Y}}{Names of the protected attribute, confounders,
-mediators, and the outcome, respectively.}
-\item{\code{x0, x1}}{Protected attribute levels.}
-\item{\code{method}}{Method of estimation (see parameters above).}
-\item{\code{model}}{Model class of the fit (relevant if
-\code{method == "medDML"}, see parameters above).}
-\item{cl}{The function call that generated the object.}
-\item{eo}{Logical indicator whether the object is an equality of odds object.}
+An object of class \code{fair_prediction} with elements:
+\item{\code{yhat_meas}, \code{y_meas}}{Causal fairness summaries for
+\eqn{\widehat{Y}} and \eqn{Y}.}
+\item{\code{task_type}}{Fit type: regression/classification.}
+\item{\code{train_data}, \code{eval_data}}{Training and evaluation data.}
+\item{\code{lr}, \code{patience}, \code{BN}}{See input definitions.}
+\item{\code{neural_models}}{A list of neural network models obtained during
+the model fitting. Note that these are python objects.}
+\item{\code{X, Z, W, Y}}{Names of protected attribute, confounders,
+mediators, outcome.}
+\item{\code{x0, x1}}{Levels of protected attribute.}
+\item{\code{method}}{Estimation method. See \verb{@param method}.}
+\item{\code{model}}{Model class for \code{method == "medDML"}.}
+\item{cl}{Generating function call.}
 \item{params}{If \code{tune_params == TRUE} in the function call, this object
 is a list of optimal \code{min.node.size} values for each tree-based used
 in the estimation procedure. See \code{faircause:::doubly_robust_med()} and
 \code{faircause::crf_wrap()} for more details about the used objects.}
 }
 \description{
-Implementation of Fairness Cookbook in Causal Fairness Analysis
-(Plecko & Bareinboim 2022). Uses only plain \code{R}.
+Implementation of the Fair Prediction algorithm described in Causal Fairness
+Analysis (Plecko & Bareinboim 2024). Uses only plain \code{R}.
 }
 \details{
 The procedure takes the data as an input, together with
-the causal graph given by the Standard Fairness Model, and outputs a causal
-decomposition of the TV measure into direct, indirect, and spurious effects.
-}
-\examples{
-\dontrun{
-data <- faircause::berkeley
-
-fcb <- fairness_cookbook(data, X = "gender", Z = character(0L), W = "dept",
-                         Y = "admit", x0 = "Male", x1 = "Female")
-fcb
-}
-
-
+the causal graph given by the Standard Fairness Model, and the choice of
+the business necessity set. It outputs an S3 class object of type
+\code{fair_prediction} which contains model fits that satisfy the desired causal
+constraints. The optimized loss function is the following:
+\deqn{L(y, \hat{y}) + \lambda \Big( | \text{NDE}_{x_0, x_1}(\hat{y}) - \eta_1 |
++ | \text{NIE}_{x_1, x_0}(\hat{y}) - \eta_2 | + | \text{Exp-SE}_{x_1}(\hat{y})
+ - \eta_3 | + | \text{Exp-SE}_{x_0}(\hat{y}) - \eta_4 | \Big).}
+\eqn{L(y, \hat{y})} is either cross-entropy (for classification) or mean
+squared error (for regression). The values of \eqn{\eta_1, \eta_2, \eta_3,
+\eta_4} are either 0 if the effect is not in the business necessity set, or
+equal the effect estimate for the true outcome \eqn{Y} (if the effect is BN).
+The fitting process is repeated over a range of \eqn{\lambda} values, which
+can be controlled using the \code{lmbd_seq} argument.
+The quality of the fit can be assessed by applying \code{autoplot()} to the S3
+object. Predictions on test data can be obtained by applying \code{predict()}.
 }
 \references{
 Plecko, D. & Bareinboim, E. (2022).

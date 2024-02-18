@@ -20,7 +20,6 @@ summary.faircause <- function(object, decompose = "xspec", ...) {
       x0 = object$x0,
       x1 = object$x1,
       measures = summarize_measures(object$measures),
-      eo = object$eo,
       decompose = decompose
     ),
     class = "summary.faircause"
@@ -43,35 +42,19 @@ print.summary.faircause <- function(x,
   meas_list <- lapply(x$measures$value, function(a) a)
   names(meas_list) <- x$measures$measure
 
-  if (x$eo) {
-    cat("Error Rate (ER):", meas_list$tv[1], "\n")
+  cat("Total Variation (TV):", meas_list$tv[1], "\n")
 
-    cat("ER decomposition :\n\n")
-
-    assertthat::assert_that(
-      x$decompose == "xspec",
-      msg = "eo = TRUE only supported for decompose == xspec."
-    )
-
-    cat("ER_x0x1(yhat | y) (", meas_list$tv[1], ") = ERde_x0x1(yhat | x0, y) (",
-        meas_list$ctfde[1], ") - ERie_x1x0(yhat | x0, y) (", meas_list$ctfie[1],
-        ") - ERse_x1x0(yhat | y) (", meas_list$ctfse[1], ")\n", sep = "")
-
-  } else {
-    cat("Total Variation (TV):", meas_list$tv[1], "\n")
-
-    cat("TV decomposition(s) :\n\n")
-    if (x$decompose %in% c("general", "both")) {
-      cat("TV_x0x1(y) (", meas_list$tv[1], ") = NDE_x0x1(y) (",
-          meas_list$nde[1], ") - NIE_x1x0(y) (", meas_list$nie[1],
-          ") + ExpSE_x0(y) (", meas_list$expse_x0[1], ") - ExpSE_x1(y) (",
-          meas_list$expse_x1[1], ")\n", sep = "")
-    }
-    if (x$decompose %in% c("xspec", "both")) {
-      cat("TV_x0x1(y) (", meas_list$tv[1], ") = CtfDE_x0x1(y | x0) (",
-          meas_list$ctfde[1], ") - CtfIE_x1x0(y | x0) (", meas_list$ctfie[1],
-          ") - CtfSE_x1x0(y | x0) (", meas_list$ctfse[1], ")\n", sep = "")
-    }
+  cat("TV decomposition(s) :\n\n")
+  if (x$decompose %in% c("general", "both")) {
+    cat("TV_x0x1(y) (", meas_list$tv[1], ") = NDE_x0x1(y) (",
+        meas_list$nde[1], ") - NIE_x1x0(y) (", meas_list$nie[1],
+        ") + ExpSE_x0(y) (", meas_list$expse_x0[1], ") - ExpSE_x1(y) (",
+        meas_list$expse_x1[1], ")\n", sep = "")
+  }
+  if (x$decompose %in% c("xspec", "both")) {
+    cat("TV_x0x1(y) (", meas_list$tv[1], ") = CtfDE_x0x1(y | x0) (",
+        meas_list$ctfde[1], ") - CtfIE_x1x0(y | x0) (", meas_list$ctfie[1],
+        ") - CtfSE_x1x0(y | x0) (", meas_list$ctfse[1], ")\n", sep = "")
   }
 
   invisible(x)
@@ -110,9 +93,8 @@ autoplot.faircause <- function(x, decompose = c("xspec", "general", "both"),
       decompose == "xspec",
       msg = "Signed = TRUE not supported for decompose != xspec."
     )
-    rename$TV <- ifelse(x$eo, TeX("$ER_{x_0, x_1}(\\hat{y} | y)$"),
-                        TeX("$PG_{x_0, x_1}(y)$"))
-    ttl <- ifelse(x$eo, "$ER_{x_0, x_1}(\\hat{y} | y)$", "$PG_{x_0, x_1}(y)$")
+    rename$TV <- TeX("$PG_{x_0, x_1}(y)$")
+    ttl <- "$PG_{x_0, x_1}(y)$"
     rename$CtfDE <- "Direct"
     rename$CtfIE <- "Indirect"
     rename$CtfSE <- "Confounded"
@@ -121,16 +103,6 @@ autoplot.faircause <- function(x, decompose = c("xspec", "general", "both"),
 
     df$Value[sgn_idx] <- df$Value[sgn_idx] * (-1)
 
-  } else if (x$eo) {
-
-    ttl <- "$ER_{x_0, x_1}(\\hat{y} | y)$"
-    assertthat::assert_that(
-      decompose == "xspec",
-      msg = "eo = TRUE only supported for decompose == xspec."
-    )
-    rename$CtfDE <- TeX("$ER^{de}_{x_0, x_1}(\\hat{y} | y, x_0)$")
-    rename$CtfIE <- TeX("$ER^{ie}_{x_1, x_0}(\\hat{y} | y, x_0)$")
-    rename$CtfSE <- TeX("$ER^{se}_{x_0, x_1}(\\hat{y} | y)$")
   }
 
   inc_meas <- switch(

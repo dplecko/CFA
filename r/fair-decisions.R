@@ -1,64 +1,54 @@
-#' fair_predictions
+#' fair_decisions
 #'
-#' Implementation of Fairness Cookbook in Causal Fairness Analysis
-#' (Plecko & Bareinboim 2022). Uses only plain \code{R}.
+#' Implementation of the Outcome Control algorithm described in Causal Fairness
+#' Analysis (Plecko & Bareinboim 2024). Uses only plain \code{R}.
 #'
 #' The procedure takes the data as an input, together with
-#' the causal graph given by the Standard Fairness Model, and outputs a causal
-#' decomposition of the TV measure into direct, indirect, and spurious effects.
+#' the causal graph given by the Standard Fairness Model, and a choice of a
+#' specific control/decision variable (input `D`). It outputs an S3 class object
+#' of type `fair_decision` which contains the estimates of the conditional
+#' average treatment effects (CATEs) of variable \eqn{D} on \eqn{Y}, conditional
+#' on the values of \eqn{X, Z, W}. This quantity is also referred to as the
+#' benefit, and is defined as:
+#' \deqn{\Delta := E[Y_{d_1} - Y_{d_0} \mid x, z, w].}
+#' Subsequently, several steps of Outcome Control are performed. First, the
+#' causal decomposition of the original decision \eqn{D} is performed. Secondly,
+#' the decomposition of the benefit \eqn{\Delta} is performed. Finally, the
+#' benefit fairness criterion is investigated. All of these can be inspected by
+#' applying the `autoplot()` function on the S3 object. Also, the object allows
+#' for predictions of the benefit values, and of construct decisions, using the
+#' `predict()` function.
 #'
-#' @param data Object of class \code{data.frame} containing the dataset.
-#' @param X A \code{character} scalar giving the name of the
-#' protected attribute. Must be one of the entries of \code{names(data)}.
-#' @param Z A \code{character} vector giving the names of all mediators.
-#' @param W A \code{character} vector giving the names of all confounders.
-#' @param Y A \code{character} scalar giving the name of the outcome.
-#' @param x0,x1 Scalar values giving the two levels of the binary protected
-#' attribute.
-#' @param method A \code{character} scalar with two options: \code{"medDML"} for
-#' mediation double-machine learning, \code{"causal_forest"} for the
-#' [grf::causal_forest()] method from the \code{grf} package.
-#' @param model A \code{character} scalar taking values in
-#' \code{c("ranger", "linear")}, indicating whether a tree-based learner is used
-#' [ranger::ranger()], or if the fitted model should be linear. This parameter
-#' is only relevant if \code{method == "medDML"}.
-#' @param tune_params A \code{logical(1L)} indicating whether the parameters
-#' should be tuned for the tree-based methods (only the \code{min.node.size}
-#' parameter is tuned). Defaults to \code{FALSE}.
-#' @param nboot1 An \code{integer} scalar determining the number of outer
-#' bootstrap repetitions, that is, how many times the fitting procedure is
-#' repeated. Default is \code{1L}.
-#' @param nboot2 An \code{integer} scalar determining the number of inner
-#' bootstrap repetitions, that is, how many bootstrap samples are taken after
-#' the potential outcomes are obtained from the estimation procedure.
-#' Default is \code{100L}.
+#' @inheritParams fairness_cookbook
+#' @param D `character(1L)` with the name of the decision/control variable.
+#' @param xgb_params `xgboost` parameters passed to the fit.
+#' @param xgb_nrounds Number of boosting rounds in `xgboost`.
+#' @param delta_transform An arbitrary transformation function that can be
+#' applied to the outcome \eqn{Y} when computing the benefit \eqn{\Delta}.
+#' @param delta_sign Sometimes perhaps the \eqn{\Delta} parameter is assumed
+#' to have a specific sign (-1 or 1). When this argument is specified, the sign
+#' is enforced. Default value is 0, which (in principle) allows for both
+#' positive and negative \eqn{\Delta} values.
 #' @param ... Further arguments passed to downstream model fitting functions.
 #'
-#' @return An object of class \code{faircause}, containing the following
-#' elements:
-#' \item{\code{measures}}{A \code{data.frame} containing the estimates for each
-#' combination of measure/outer bootstrap repetition/inner bootstrap repetition.}
-#' \item{\code{X, Z, W, Y}}{Names of the protected attribute, confounders,
-#' mediators, and the outcome, respectively.}
-#' \item{\code{x0, x1}}{Protected attribute levels.}
-#' \item{\code{method}}{Method of estimation (see parameters above).}
-#' \item{\code{model}}{Model class of the fit (relevant if
-#' \code{method == "medDML"}, see parameters above).}
-#' \item{cl}{The function call that generated the object.}
-#' \item{eo}{Logical indicator whether the object is an equality of odds object.}
-#' \item{params}{If \code{tune_params == TRUE} in the function call, this object
+#' @return An object of class \code{fair_decision} with elements:
+#'   \item{\code{d_fcb}, \code{delta_fcb}}{Fairness Cookbook objects for the
+#'   decision \eqn{D} and the benefit \eqn{\Delta}.}
+#'   \item{\code{delta}}{Estimated values of the benefit \eqn{\Delta}.}
+#'   \item{\code{data}, \code{delta_sign}, \code{delta_transform},
+#'   \code{xgb_params}}{See input definitions.}
+#'   \item{\code{xgb_mod}}{\code{xgboost} model for estimating the benefit
+#'   \eqn{\Delta}.}
+#'   \item{\code{X, Z, W, Y, D}}{Names of protected attribute, confounders,
+#'   mediators, outcome, and the decision/control variable.}
+#'   \item{\code{x0, x1}}{Levels of protected attribute.}
+#'   \item{\code{method}}{Estimation method. See `@param method`.}
+#'   \item{\code{model}}{Model class for \code{method == "medDML"}.}
+#'   \item{cl}{Generating function call.}
+#'   \item{params}{If \code{tune_params == TRUE} in the function call, this object
 #' is a list of optimal \code{min.node.size} values for each tree-based used
 #' in the estimation procedure. See `faircause:::doubly_robust_med()` and
 #' `faircause::crf_wrap()` for more details about the used objects.}
-#' @examples
-#' \dontrun{
-#' data <- faircause::berkeley
-#'
-#' fcb <- fairness_cookbook(data, X = "gender", Z = character(0L), W = "dept",
-#'                          Y = "admit", x0 = "Male", x1 = "Female")
-#' fcb
-#' }
-#'
 #'
 #' @author Drago Plecko
 #' @references
@@ -110,7 +100,8 @@ fair_decisions <- function(data, X, Z, W, Y, D, x0, x1,
     label = data[[Y]], nrounds = xgb_nrounds, verbose = FALSE
   )
 
-  data$delta <- predict_delta(xgb_mod, data, D, delta_sign, delta_transform)
+  data$delta <- predict_delta(xgb_mod, data, X, Z, W, D, delta_sign,
+                              delta_transform)
 
   # perform a decomposition on Delta
   delta_fcb <- fairness_cookbook(data, X = X, Z = Z, W = W, Y = D,

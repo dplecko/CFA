@@ -15,8 +15,6 @@
 #' @param Y A \code{character} scalar giving the name of the outcome.
 #' @param x0,x1 Scalar values giving the two levels of the binary protected
 #' attribute.
-#' @param eo A \code{logical(1L)} indicating whether the object should be of
-#' type equality of odds or total variation. Default is \code{FALSE}.
 #' @param method A \code{character} scalar with two options: \code{"medDML"} for
 #' mediation double-machine learning, \code{"causal_forest"} for the
 #' [grf::causal_forest()] method from the \code{grf} package.
@@ -47,7 +45,6 @@
 #' \item{\code{model}}{Model class of the fit (relevant if
 #' \code{method == "medDML"}, see parameters above).}
 #' \item{cl}{The function call that generated the object.}
-#' \item{eo}{Logical indicator whether the object is an equality of odds object.}
 #' \item{params}{If \code{tune_params == TRUE} in the function call, this object
 #' is a list of optimal \code{min.node.size} values for each tree-based used
 #' in the estimation procedure. See `faircause:::doubly_robust_med()` and
@@ -70,7 +67,7 @@
 #' @importFrom assertthat assert_that
 #' @importFrom grf causal_forest
 #' @export
-fairness_cookbook <- function(data, X, Z, W, Y, x0, x1, eo = FALSE,
+fairness_cookbook <- function(data, X, Z, W, Y, x0, x1,
                               method = c("medDML", "causal_forest"),
                               model = c("ranger", "linear"), tune_params = FALSE,
                               nboot1 = 1L, nboot2 = 100L, ...) {
@@ -124,38 +121,8 @@ fairness_cookbook <- function(data, X, Z, W, Y, x0, x1, eo = FALSE,
       measures = res,
       x0 = x0, x1 = x1, model = model, X = X, W = W, Z = Z, Y = Y,
       cl = match.call(),
-      eo = eo,
       method = method,
       params = params),
     class = "faircause"
   )
-}
-
-#' fairness_cookbook_eo
-#'
-#' Implementation of Fairness Cookbook in Causal Fairness Analysis
-#' (Plecko & Bareinboim 2022), for the case when equality of odds is the
-#' measure of interest.
-#'
-#' The procedure takes the data as an input, together with
-#' the causal graph given by the Standard Fairness Model, and outputs a causal
-#' decomposition of the EO measure into direct, indirect, and spurious effects.
-#' @inheritParams fairness_cookbook
-#' @param Yhat A \code{character} scalar giving the name of the constructed
-#' predictor.
-#' @param ylvl A value indicating within which group the decomposition should be
-#' performed. For example, setting \code{ylvl = 1} would correspond to
-#' performing causal effect decompositions for individuals who have
-#' true outcome \code{Y == 1}.
-#'
-#' @export
-fairness_cookbook_eo <- function(data, X, Z, W, Y, Yhat, x0, x1, ylvl,
-                                 method = c("medDML", "causal_forest"),
-                                 model = c("ranger", "linear"),
-                                 tune_params = FALSE,
-                                 nboot1 = 1L, nboot2 = 100L, ...) {
-
-  y_idx <- data[[Y]] == ylvl
-  fairness_cookbook(data = data[y_idx, ], X = X, Z = Z, W = W, Y = Yhat,
-                    x0 = x0, x1 = x1, eo = TRUE)
 }

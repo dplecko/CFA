@@ -10,4 +10,5 @@ misc
 .idea
 raw-data
 inst/doc
+inst/shinyapp
 *_cache

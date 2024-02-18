@@ -4,20 +4,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import copy
-import pdb
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
-# Replace 'your_dataset.csv' with the actual path to your COMPAS dataset file
-# file_path = 'scripts/learning-algorithms/compas-preproc.csv'
-# compas_data = pd.read_csv(file_path, index_col=0)
-
-# Display the first few rows of the dataframe to confirm it's loaded correctly
-# print(compas_data.head())
-
-class CompasClassifier(nn.Module):
+class TwoLayerArchitecture(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
-        super(CompasClassifier, self).__init__()
+        super(TwoLayerArchitecture, self).__init__()
         # Define the architecture here.
         self.layer1 = nn.Linear(input_size, hidden_size)
         self.layer2 = nn.Linear(hidden_size, hidden_size)
@@ -32,12 +24,16 @@ class CompasClassifier(nn.Module):
 
 # Custom loss for direct effect (!)
 def causal_loss(pred, pred0, pred1, X, Z, W, Y, px_z, eta_de, eta_ie, eta_se_x1, 
-                eta_se_x0, relu_eps, eps):
-    
-    # f(x1,w), f(x0, w)
-    pred_prob = torch.sigmoid(pred).squeeze()
-    pred_prob1 = torch.sigmoid(pred1).squeeze()
-    pred_prob0 = torch.sigmoid(pred0).squeeze()
+                eta_se_x0, relu_eps, eps, task_type):
+
+    if task_type == 'classification':
+        pred_prob = torch.sigmoid(pred).squeeze()
+        pred_prob1 = torch.sigmoid(pred1).squeeze()
+        pred_prob0 = torch.sigmoid(pred0).squeeze()
+    else:
+        pred_prob = pred.squeeze()
+        pred_prob1 = pred1.squeeze()
+        pred_prob0 = pred0.squeeze()
     X_sq = X.squeeze()
     
     # get P(x | z) model
@@ -92,14 +88,17 @@ def train_w_es(train_data, eval_data, x_col, z_cols, w_cols, y_col, lmbd, lr=0.0
 
     # Initial partition of data
     X_train = train_data[x_col].values.reshape(-1, 1)
-    Z_train = train_data[z_cols].values
-    W_train = train_data[w_cols].values
+    Z_train = train_data[z_cols].values.reshape(-1, len(z_cols))
+    W_train = train_data[w_cols].values.reshape(-1, len(w_cols))
     Y_train = train_data[y_col].values.reshape(-1, 1).squeeze()
+
+    # Determine whether the task is classification or regression
+    task_type = 'regression' if len(np.unique(Y_train)) > 2 else 'classification'
 
     # Split data into training and evaluation sets
     X_eval = eval_data[x_col].values.reshape(-1, 1)
-    Z_eval = eval_data[z_cols].values
-    W_eval = eval_data[w_cols].values
+    Z_eval = eval_data[z_cols].values.reshape(-1, len(z_cols))
+    W_eval = eval_data[w_cols].values.reshape(-1, len(w_cols))
     Y_eval = eval_data[y_col].values.reshape(-1, 1).squeeze()
 
     # Now you can fit the logistic regression or any other model on the training data
@@ -130,8 +129,12 @@ def train_w_es(train_data, eval_data, x_col, z_cols, w_cols, y_col, lmbd, lr=0.0
     Y_eval_t = torch.tensor(Y_eval, dtype=torch.float)
     
     fts_eval = np.hstack([X_eval, Z_eval, W_eval])
-    
-    column_names = [x_col] + z_cols + w_cols
+
+    column_names = (
+            [x_col] +
+            (list(z_cols) if isinstance(z_cols, (list, np.ndarray)) else [z_cols]) +
+            (list(w_cols) if isinstance(w_cols, (list, np.ndarray)) else [w_cols])
+    )
     x_idx = column_names.index(x_col)
 
     best_global_loss = float('inf')
@@ -139,9 +142,10 @@ def train_w_es(train_data, eval_data, x_col, z_cols, w_cols, y_col, lmbd, lr=0.0
     restarts = 0
 
     while restarts <= max_restarts:
-        model = CompasClassifier(input_size=fts_train.shape[1], hidden_size=16, 
-                                 output_size=1)
-        loss_fn = nn.BCEWithLogitsLoss()
+        model = TwoLayerArchitecture(input_size=fts_train.shape[1], hidden_size=16,
+                                     output_size=1)
+
+        loss_fn = nn.MSELoss() if task_type == 'regression' else nn.BCEWithLogitsLoss()
         optim = torch.optim.Adam(model.parameters(), lr=lr)
 
         fts_train_t = torch.tensor(fts_train, dtype=torch.float)
@@ -188,7 +192,7 @@ def train_w_es(train_data, eval_data, x_col, z_cols, w_cols, y_col, lmbd, lr=0.0
                                           batch_fts[:, len(z_cols)+1:], batch_lbl, 
                                           px_z_t[indices], eta_de, eta_ie, 
                                           eta_se_x1, eta_se_x0,
-                                          relu_eps, eps)
+                                          relu_eps, eps, task_type)
                 
                 total_loss = bce_loss + lmbd * custom_loss
 
@@ -208,7 +212,7 @@ def train_w_es(train_data, eval_data, x_col, z_cols, w_cols, y_col, lmbd, lr=0.0
                   eval_pred, eval_pred0, eval_pred1,
                   X_eval_t, Z_eval_t, W_eval_t, Y_eval_t, 
                   eval_px_z_t, eta_de, eta_ie, eta_se_x1, eta_se_x0,
-                  relu_eps, eps
+                  relu_eps, eps, task_type
                 )
                 eval_tot_loss = eval_bce_loss + lmbd * eval_causal_loss
                 
@@ -251,7 +255,7 @@ def train_w_es(train_data, eval_data, x_col, z_cols, w_cols, y_col, lmbd, lr=0.0
     # return test_preds.numpy()
     return best_model_global
 
-def pred_nn_proba(model, test_data):
+def pred_nn_proba(model, test_data, task_type):
     """
     Generate predictions using a trained model and test features.
 
@@ -272,7 +276,8 @@ def pred_nn_proba(model, test_data):
     model.eval()  # Set the model to evaluation mode
     with torch.no_grad():  # Ensure gradients are not computed for inference
         predictions = model(fts_test_t)
-        predictions = torch.sigmoid(predictions)  # Apply sigmoid to get probabilities
+        if task_type == 'classification':
+            predictions = torch.sigmoid(predictions)  # Apply sigmoid to get probabilities
     return predictions.numpy()
   
 # learning_rates = [0.1, 0.01, 0.001, 0.0001]

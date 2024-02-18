@@ -12,7 +12,6 @@ fairness_cookbook(
   Y,
   x0,
   x1,
-  eo = FALSE,
   method = c("medDML", "causal_forest"),
   model = c("ranger", "linear"),
   tune_params = FALSE,
@@ -35,9 +34,6 @@ protected attribute. Must be one of the entries of \code{names(data)}.}
 
 \item{x0, x1}{Scalar values giving the two levels of the binary protected
 attribute.}
-
-\item{eo}{A \code{logical(1L)} indicating whether the object should be of
-type equality of odds or total variation. Default is \code{FALSE}.}
 
 \item{method}{A \code{character} scalar with two options: \code{"medDML"} for
 mediation double-machine learning, \code{"causal_forest"} for the
@@ -75,7 +71,6 @@ mediators, and the outcome, respectively.}
 \item{\code{model}}{Model class of the fit (relevant if
 \code{method == "medDML"}, see parameters above).}
 \item{cl}{The function call that generated the object.}
-\item{eo}{Logical indicator whether the object is an equality of odds object.}
 \item{params}{If \code{tune_params == TRUE} in the function call, this object
 is a list of optimal \code{min.node.size} values for each tree-based used
 in the estimation procedure. See \code{faircause:::doubly_robust_med()} and
