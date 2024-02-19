@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="dcterms.date" content="2024-02-16">
 
-<title>CFA Software - Causal Fairness Analysis - from Python</title>
+<title>CFA Software - Task 1: MIMIC-IV Hospitality Mortality after ICU Admission</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -94,6 +95,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
@@ -205,14 +208,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#inspecting-the-data-from-mimic-iv-dataset" id="toc-inspecting-the-data-from-mimic-iv-dataset" class="nav-link active" data-scroll-target="#inspecting-the-data-from-mimic-iv-dataset">Inspecting the Data from MIMIC-IV dataset</a></li>
+  <li><a href="#constructing-the-sfm" id="toc-constructing-the-sfm" class="nav-link" data-scroll-target="#constructing-the-sfm">Constructing the SFM</a></li>
+  <li><a href="#decomposing-the-disparity" id="toc-decomposing-the-disparity" class="nav-link" data-scroll-target="#decomposing-the-disparity">Decomposing the Disparity</a></li>
+  <li><a href="#zooming-in-on-the-spurious-effect" id="toc-zooming-in-on-the-spurious-effect" class="nav-link" data-scroll-target="#zooming-in-on-the-spurious-effect">Zooming-in on the Spurious Effect</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Causal Fairness Analysis - from Python</h1>
+<h1 class="title">Task 1: MIMIC-IV Hospitality Mortality after ICU Admission</h1>
 </div>
 
 
@@ -220,6 +232,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="quarto-title-meta">
 
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">February 16, 2024</p>
+    </div>
+  </div>
   
     
   </div>
@@ -227,57 +245,206 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<div class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> rpy2.robjects <span class="im">as</span> ro</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> rpy2.robjects.packages <span class="im">import</span> importr</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> rpy2.robjects <span class="im">import</span> pandas2ri</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> rpy2.robjects.vectors <span class="im">import</span> StrVector</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> rpy2.robjects.conversion <span class="im">import</span> localconverter</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>compas_path <span class="op">=</span> os.path.join(git_root, <span class="st">"scripts"</span>, <span class="st">"fair-prediction"</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"compas-preprocessed.csv"</span>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>compas <span class="op">=</span> pd.read_csv(compas_path)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>compas.drop(compas.columns[<span class="dv">0</span>], axis<span class="op">=</span><span class="dv">1</span>, inplace<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> localconverter(ro.default_converter <span class="op">+</span> pandas2ri.converter):</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  r_compas <span class="op">=</span> ro.conversion.py2rpy(compas)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>faircause <span class="op">=</span> importr(<span class="st">'faircause'</span>)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>fc_compas <span class="op">=</span> faircause.fairness_cookbook(</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  r_compas, X <span class="op">=</span> <span class="st">"race"</span>,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  W <span class="op">=</span> StrVector([<span class="st">"juv_fel"</span>, <span class="st">"juv_misd"</span>, <span class="st">"juv_other"</span>, <span class="st">"priors"</span>, <span class="st">"charge"</span>]),</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  Z <span class="op">=</span> StrVector([<span class="st">"age"</span>, <span class="st">"sex"</span>]),</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  Y <span class="op">=</span> <span class="st">"two_year_recid"</span>,</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  x0 <span class="op">=</span> <span class="dv">0</span>,</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  x1 <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<section id="inspecting-the-data-from-mimic-iv-dataset" class="level2">
+<h2 class="anchored" data-anchor-id="inspecting-the-data-from-mimic-iv-dataset">Inspecting the Data from MIMIC-IV dataset</h2>
+<p>We begin by loading and inspecting the required data from MIMIC-IV:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load the mortality data</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>patient_ids <span class="ot">&lt;-</span> <span class="fu">id_col</span>(<span class="fu">load_concepts</span>(<span class="st">"adm_episode"</span>, <span class="st">"miiv"</span>, </span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">verbose =</span> <span class="cn">FALSE</span>)[adm_episode <span class="sc">==</span> <span class="dv">1</span>])</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">load_concepts</span>(<span class="fu">c</span>(<span class="st">"acu_24"</span>, <span class="st">"diag"</span>, <span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"charlson"</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>                       <span class="st">"lact_24"</span>, <span class="st">"pafi_24"</span>, <span class="st">"ast_24"</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>                       <span class="st">"race"</span>, <span class="st">"death"</span>), <span class="st">"miiv"</span>, <span class="at">patient_ids =</span> patient_ids,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>                     <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> dat[race <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Caucasian"</span>, <span class="st">"African American"</span>)]</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>dat[, <span class="fu">c</span>(<span class="fu">index_var</span>(dat)) <span class="sc">:</span><span class="er">=</span> <span class="cn">NULL</span>]</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>imp_lst <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">age =</span> <span class="dv">65</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">acu_24 =</span> <span class="dv">0</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">charlson =</span> <span class="dv">0</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">lact_24 =</span> <span class="dv">1</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">ast_24 =</span> <span class="dv">20</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">pafi_24 =</span> <span class="dv">500</span>,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">death =</span> <span class="cn">FALSE</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="fu">ncol</span>(dat))) {</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  var <span class="ot">&lt;-</span> <span class="fu">names</span>(dat)[i]</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(<span class="fu">is.na</span>(dat[[var]])) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(imp_lst[[var]]))</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    dat[<span class="fu">is.na</span>(<span class="fu">get</span>(var)), <span class="fu">c</span>(var) <span class="sc">:</span><span class="er">=</span> imp_lst[[var]]]</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ro.r.summary(fc_compas).rx2(<span class="st">"measures"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-    WARNING: The R package "reticulate" only fixed recently
-    an issue that caused a segfault when used with rpy2:
-    https://github.com/rstudio/reticulate/pull/1188
-    Make sure that you use a version of that package that includes
-    the fix.
-              measure       value          sd
-ctfde       ctfde -0.05267448 0.008506597
-ctfie       ctfie  0.07872395 0.008864717
-ctfse       ctfse  0.03724921 0.009534149
-ett           ett -0.13139843 0.006831753
-expse_x0 expse_x0  0.01684047 0.001207810
-expse_x1 expse_x1 -0.03331364 0.002440835
-nde           nde -0.03042546 0.011378097
-nie           nie  0.08806808 0.007254499
-te             te -0.11849353 0.011704603
-tv             tv -0.16864764 0.012047903
-</code></pre>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(dat), <span class="at">caption =</span> <span class="st">"MIMIC-IV Mortality data."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>MIMIC-IV Mortality data.</caption>
+<colgroup>
+<col style="width: 10%">
+<col style="width: 8%">
+<col style="width: 7%">
+<col style="width: 4%">
+<col style="width: 8%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 10%">
+<col style="width: 8%">
+<col style="width: 12%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">stay_id</th>
+<th style="text-align: right;">acu_24</th>
+<th style="text-align: left;">diag</th>
+<th style="text-align: right;">age</th>
+<th style="text-align: left;">sex</th>
+<th style="text-align: right;">charlson</th>
+<th style="text-align: right;">lact_24</th>
+<th style="text-align: right;">pafi_24</th>
+<th style="text-align: right;">ast_24</th>
+<th style="text-align: left;">race</th>
+<th style="text-align: left;">death</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">30000153</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">TRAUM</td>
+<td style="text-align: right;">61</td>
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.7</td>
+<td style="text-align: right;">430.0000</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: left;">Caucasian</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">30001396</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">MED</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1.8</td>
+<td style="text-align: right;">361.9048</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Caucasian</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">30001446</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: left;">MED</td>
+<td style="text-align: right;">56</td>
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1.7</td>
+<td style="text-align: right;">466.6667</td>
+<td style="text-align: right;">114</td>
+<td style="text-align: left;">Caucasian</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">30001656</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">NMED</td>
+<td style="text-align: right;">68</td>
+<td style="text-align: left;">Female</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">500.0000</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: left;">Caucasian</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">30001947</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">SURG</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.7</td>
+<td style="text-align: right;">535.0000</td>
+<td style="text-align: right;">36</td>
+<td style="text-align: left;">Caucasian</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">30002415</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">CSURG</td>
+<td style="text-align: right;">72</td>
+<td style="text-align: left;">Female</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">240.0000</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: left;">Caucasian</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>We consider the cohort of all patients in the database admitted to the ICU (and we only consider the first admission of each patient). We also load information on the SOFA score, admission diagnosis, age, sex, Charlson comorbidity index, worst values of lactate, PaO2/FiO2, and AST in first 24 hours. We further load the race information (protected attribute <span class="math inline">\(X\)</span>) and the death indicator (outcome <span class="math inline">\(Y\)</span>). We want to investigate the disparities in outcome between <code>"Caucasian"</code> and <code>"African American"</code> groups.</p>
+</section>
+<section id="constructing-the-sfm" class="level2">
+<h2 class="anchored" data-anchor-id="constructing-the-sfm">Constructing the SFM</h2>
+<p>We next construct the Standard Fairness Model, with also a decision <span class="math inline">\(D\)</span>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># constructing the SFM</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="st">"race"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"age"</span>, <span class="st">"sex"</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>W <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"acu_24"</span>, <span class="st">"diag"</span>, <span class="st">"charlson"</span>, <span class="st">"lact_24"</span>, <span class="st">"pafi_24"</span>, <span class="st">"ast_24"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="st">"death"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="decomposing-the-disparity" class="level2">
+<h2 class="anchored" data-anchor-id="decomposing-the-disparity">Decomposing the Disparity</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fcb <span class="ot">&lt;-</span> <span class="fu">fairness_cookbook</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat, <span class="at">X =</span> X, <span class="at">Z =</span> Z, <span class="at">W =</span> W, <span class="at">Y =</span> Y,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">x1 =</span> <span class="st">"Caucasian"</span>, <span class="at">x0 =</span> <span class="st">"African American"</span>, <span class="at">nboot2 =</span> <span class="dv">5</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can then inspect the decomposition by calling <code>autoplot()</code> on the <code>fcb</code> object which is an S3 class of type <code>faircause</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(fcb) <span class="sc">+</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Causal decomposition of mortality difference: MIMIC-IV race effect"</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">y=</span><span class="st">"Mortality difference (%)"</span>) <span class="sc">+</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Total Variation"</span>, <span class="st">"Direct"</span>, <span class="st">"Indirect"</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Confounded"</span>), <span class="at">name =</span> <span class="st">"Pathway"</span>) <span class="sc">+</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_discrete</span>(<span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Total Variation"</span>, <span class="st">"Direct"</span>, <span class="st">"Indirect"</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"Confounded"</span>), <span class="at">name =</span> <span class="st">"Pathway"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="t1-icu-mortality_files/figure-html/autoplot-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="zooming-in-on-the-spurious-effect" class="level2">
+<h2 class="anchored" data-anchor-id="zooming-in-on-the-spurious-effect">Zooming-in on the Spurious Effect</h2>
+<p>To better understand the spurious effect, we plot the density of the age distributions between groups:</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="t1-icu-mortality_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

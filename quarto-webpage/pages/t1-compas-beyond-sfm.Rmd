@@ -4,6 +4,8 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+library(ggplot2)
+library(latex2exp)
 knitr::opts_chunk$set(echo = TRUE)
 root <- rprojroot::find_root(rprojroot::is_git_root)
 r_dir <- file.path(root, "r")

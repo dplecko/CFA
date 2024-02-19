@@ -5,26 +5,143 @@ biblio-style: IEEEtran
 link-citations: true
 ---
 
-This page contains a sequence of vignettes associated with the [Causal Fairness Analysis](https://causalai.net/r90.pdf) paper [@plecko2022causal]. In particular, here you can find all the code used to reproduce the results of the paper, formatted in a vignette-style fashion. There are also additional examples of analyses, which are not presented in the manuscript. In particular, you can find the following:
+This page contains a sequence of vignettes associated with the [Causal Fairness Analysis](https://causalai.net/r90.pdf) paper [@plecko2022causal]. In particular, here you can find all the code used to reproduce the results of the paper, formatted in a vignette-style fashion. There are also additional examples of analyses, which are not presented in the manuscript. In particular, you can find the following examples, grouped by different tasks (bias detection, fair prediction, fair decision-making):
 
-### A: Vignettes directly reproducing the content of the manuscript
+<style>
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid #ddd;
+  }
+  th, td {
+    text-align: center;
+    padding: 8px;
+    border-right: 1px solid #ddd; /* Add vertical lines */
+  }
+  th:last-child, td:last-child {
+    border-right: none; /* Remove right border for the last column */
+  }
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  th {
+    background-color: #4CAF50;
+    color: white;
+  }
+</style>
 
-1.  [Census dataset analysis](pages/census-t1.Rmd) from Example 5.1 of [@plecko2022causal, Section 5.1],
 
-2.  [College Admissions Bias Quantification over Time](pages/college-admissions-t1.Rmd) from Example 5.2 of [@plecko2022causal, Section 5.1],
+<table>
+  <tr>
+    <th>Task</th>
+    <th>Dataset</th>
+    <th>Vignette Name</th>
+    <th>Manuscript Reference</th>
+  </tr>
+  <tr>
+    <td>Task 1</td>
+    <td>Census 2018</td>
+    <td><a href="pages/t1-census.Rmd">Census Bias Detection</a></td>
+    <td>Example 5.1, Section 5.1</td>
+  </tr>
+  <tr>
+    <td>Task 1</td>
+    <td>College Admissions</td>
+    <td><a href="pages/t1-admissions-over-time.Rmd">Admissions Over Time</a></td>
+    <td>Example 5.2, Section 5.1</td>
+  </tr>
+  <tr>
+    <td>Task 1</td>
+    <td>COMPAS</td>
+    <td><a href="pages/t1-compas-y-yhat.Rmd">True Outcome vs. Northpointe's Predictions</a></td>
+    <td>Example 5.3, Section 5.1</td>
+  </tr>
+  <tr>
+    <td>Task 1</td>
+    <td>COMPAS</td>
+    <td><a href="pages/t1-compas-beyond-sfm.Rmd">Task 1 Beyond the SFM</a></td>
+    <td>Example 6.1, Section 6</td>
+  </tr>
+  <tr>
+    <td>Task 1</td>
+    <td>MIMIC-IV</td>
+    <td><a href="pages/t1-icu-mortality.Rmd">Mortality after ICU admission</a></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Task 2</td>
+    <td>COMPAS</td>
+    <td><a href="pages/t2-compas-fpt-inthe-wild.Rmd">Fair Prediction Theorem in the Wild</a></td>
+    <td>Example 5.4, Section 5.2</td>
+  </tr>
+  <tr>
+    <td>Task 2</td>
+    <td>COMPAS</td>
+    <td><a href="pages/t2-compas-neural-inproc.Rmd">Neural In-Processing</a></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Task 3</td>
+    <td>MIMIC-IV</td>
+    <td><a href="pages/t3-mimic-respirators.Rmd">Respirators in the ICU</a></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Task 3</td>
+    <td>Surgeries (Synthetic)</td>
+    <td><a href="pages/t3-surgeries.qmd">Cancer Surgery Allocation</a></td>
+    <td>Section 5.3.3</td>
+  </tr>
+  <tr>
+    <td>Other</td>
+    <td>Adult / COMPAS</td>
+    <td><a href="pages/ci-tests.Rmd">Conditional independence tests</a></td>
+    <td>Figure 4.7, Section 4.5</td>
+  </tr>
+  <tr>
+    <td>Other</td>
+    <td>COMPAS</td>
+    <td><a href="pages/python-use.qmd">Using CFA from python</a></td>
+    <td></td>
+  </tr>
+</table>
 
-3.  [Analysis of fair predictions on the COMPAS dataset](pages/compas-t2.Rmd) from Example 5.3 of [@plecko2022causal, Section 5.2],
+<!-- #### Task 1: Bias Detection and Quantification -->
 
-4. [COMPAS dataset analysis](pages/compas-t1.Rmd) from Example 6.1 of [@plecko2022causal, Section 6],
+<!-- 1.  [Census dataset analysis](pages/t1-census.Rmd) from Example 5.1 of [@plecko2022causal, Section 5.1], -->
 
-5.  [Conditional independence tests on COMPAS & Census datasets](pages/ci-tests.Rmd) from Figure 4.7 of [@plecko2022causal, Section 4.5],
+<!-- 1.  [College Admissions Bias Quantification over Time](pages/t1-admissions-over-time.Rmd) from Example 5.2 of [@plecko2022causal, Section 5.1], -->
 
-6. [Outcome Control Cancer Surgery Example](pages/outcome-control.qmd) from [@plecko2022causal, Section 5.3.3]. 
+<!-- 1.  [COMPAS dataset -- True Outcome vs. Northpointe's Predictions](pages/t1-compas-y-yhat.Rmd) from Example 5.2 of [@plecko2022causal, Section 5.1], -->
 
-### B: Vignettes not directly reproducing the content of the manuscript:
+<!-- 1. [COMPAS dataset -- beyond the SFM](pages/t1-compas-beyond-sfm.Rmd) from Example 6.1 of [@plecko2022causal, Section 6], -->
 
-1. [TV & EO analysis on COMPAS dataset](pages/shai-challenge.Rmd),
+<!-- 1. [MIMIC-IV -- Mortality disparities after ICU admission](pages/t1-icu-mortality.Rmd). -->
 
-1. [Fair predictions using Fair Data Adaptation](pages/compas-t2.Rmd).
+<!-- #### Task 2: Fair Prediction -->
 
-To learn more about Causal Fairness Analysis, visit <https://fairness.causalai.net/> where you can access a 2-hour Tutorial on the topic, which was presented in the _International Conference on Machine Learning (ICML) 2022_. 
+<!-- 1.  [COMPAS dataset -- Fair Prediction Theorem in the Wild](pages/t2-compas-fpt-inthe-wild.Rmd) from Example 5.3 of [@plecko2022causal, Section 5.2], -->
+
+<!-- 1.  [COMPAS dataset -- Neural In-Processing](pages/t2-compas-neural-inproc.Rmd) for producing causally fair predictions. -->
+
+<!-- #### Task 3: Fair Decision-Making -->
+
+<!-- 1. [MIMIC-IV -- Allocation of Respirators in the ICU](pages/t3-mimic-respirators.Rmd), -->
+
+<!-- 1. [Cancer Surgeries (Synthetic) -- Outcome Control](pages/t3-surgeries.qmd) from [@plecko2022causal, Section 5.3.3].  -->
+
+<!-- #### Other Tasks -->
+<!-- 1.  [Conditional independence tests on COMPAS & Census datasets](pages/ci-tests.Rmd) from Figure 4.7 of [@plecko2022causal, Section 4.5], -->
+
+<!-- 1. [Using CFA from python](pages/python-use.qmd). -->
+
+
+## Want to learn more about Causal Fairness Analysis?
+For those interested in learning more about CFA, we suggest the following resources:
+
+<ol style="list-style-type: lower-roman; counter-reset: list;">
+  <li> Reading the Causal Fairness Analysis paper, found <a href="https://causalai.net/r90.pdf">here</a>,</li>
+  <li> Follow the series of <a href="https://www.cs.columbia.edu/~dplecko/#teaching">lectures on CFA</a> which were part of the COMSW-4775 course at Columbia Computer Science,</li>
+  <li> Check our <a href="https://fairness.causalai.net/">ICML 2022 Tutorial</a>.</li>
+  <li> Check the vignettes on this webpage which demonstrate how to perform Causal Fairness Analysis in practice.</li>
+</ol>

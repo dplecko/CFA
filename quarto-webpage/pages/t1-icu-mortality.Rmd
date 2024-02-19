@@ -1,0 +1,110 @@
+---
+title: "Task 1: MIMIC-IV Hospitality Mortality after ICU Admission"
+output: html_document
+date: "2024-02-16"
+---
+
+```{r setup, include=FALSE}
+root <- rprojroot::find_root(rprojroot::has_dir(".git"))
+Sys.setenv("RICU_CONFIG_PATH" = file.path(root, "scripts", "fair-decision"))
+Sys.setenv("RICU_SRC_LOAD" =
+             "mimic,miiv,aumc,hirid,eicu,eicu_demo,mimic_demo,anzics,sic")
+
+library(ricu)
+library(ggplot2)
+library(icd)
+library(data.table)
+library(faircause)
+r_dir <- file.path(root, "scripts", "fair-decision", "helpers")
+invisible(lapply(list.files(r_dir, full.names = TRUE), source))
+```
+
+## Inspecting the Data from MIMIC-IV dataset
+
+We begin by loading and inspecting the required data from MIMIC-IV:
+
+```{r icu-mortality-inspect}
+# load the mortality data
+patient_ids <- id_col(load_concepts("adm_episode", "miiv", 
+                                    verbose = FALSE)[adm_episode == 1])
+dat <- load_concepts(c("acu_24", "diag", "age", "sex", "charlson",
+                       "lact_24", "pafi_24", "ast_24",
+                       "race", "death"), "miiv", patient_ids = patient_ids,
+                     verbose = FALSE)
+dat <- dat[race %in% c("Caucasian", "African American")]
+dat[, c(index_var(dat)) := NULL]
+imp_lst <- list(
+  age = 65,
+  acu_24 = 0,
+  charlson = 0,
+  lact_24 = 1,
+  ast_24 = 20,
+  pafi_24 = 500,
+  death = FALSE
+)
+
+for (i in seq_len(ncol(dat))) {
+
+  var <- names(dat)[i]
+  if (any(is.na(dat[[var]])) & !is.null(imp_lst[[var]]))
+    dat[is.na(get(var)), c(var) := imp_lst[[var]]]
+}
+
+knitr::kable(head(dat), caption = "MIMIC-IV Mortality data.")
+```
+
+We consider the cohort of all patients in the database admitted to the ICU (and we only consider the first admission of each patient). We also load information on the SOFA score, admission diagnosis, age, sex, Charlson comorbidity index, worst values of lactate, PaO2/FiO2, and AST in first 24 hours. We further load the race information (protected attribute $X$) and the death indicator (outcome $Y$).
+We want to investigate the disparities in outcome between `"Caucasian"` and `"African American"` groups.
+
+## Constructing the SFM
+
+We next construct the Standard Fairness Model, with also a decision $D$:
+
+```{r construct-sfm}
+# constructing the SFM
+X <- "race"
+Z <- c("age", "sex")
+W <- c("acu_24", "diag", "charlson", "lact_24", "pafi_24", "ast_24")
+Y <- "death"
+```
+
+## Decomposing the Disparity
+
+```{r decompose-difference}
+fcb <- fairness_cookbook(
+  data = dat, X = X, Z = Z, W = W, Y = Y,
+  x1 = "Caucasian", x0 = "African American", nboot2 = 5
+)
+```
+
+We can then inspect the decomposition by calling `autoplot()` on the `fcb` object which is an S3 class of type `faircause`:
+
+```{r autoplot, fig.align='center', message=FALSE, fig.width=8, fig.height=5}
+autoplot(fcb) +
+  labs(title="Causal decomposition of mortality difference: MIMIC-IV race effect",
+       y="Mortality difference (%)") +
+  theme_minimal() +
+  scale_x_discrete(labels = c("Total Variation", "Direct", "Indirect",
+                                "Confounded"), name = "Pathway") +
+  scale_fill_discrete(labels = c("Total Variation", "Direct", "Indirect",
+                                 "Confounded"), name = "Pathway")
+```
+
+## Zooming-in on the Spurious Effect
+
+To better understand the spurious effect, we plot the density of the age distributions between groups:
+
+```{r, echo=FALSE, fig.align='center', fig.width=7, fig.height=4}
+# investigate the age data
+age_dat <- load_concepts(c("age", "race"), "miiv", 
+                         patient_ids = patient_ids,
+                         verbose=FALSE)
+ggplot(age_dat[race %in% c("Caucasian", "African American")],
+       aes(x = age, fill = race)) +
+  geom_density(alpha = 0.4) +
+  scale_fill_discrete(name = "Race") +
+  theme_minimal()
+ 
+# ggsave("~/Desktop/mortality.png", width = 7, height = 4, bg = "white",
+#        dpi = 500)
+```

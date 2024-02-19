@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="dcterms.date" content="2024-02-16">
 
-<title>CFA Software - Causal Fairness Analysis - from Python</title>
+<title>CFA Software - Task 2: Neural In-Processing on COMPAS</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -94,6 +95,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <link rel="stylesheet" href="../styles.css">
 </head>
@@ -205,14 +208,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#inspecting-the-compas-dataset" id="toc-inspecting-the-compas-dataset" class="nav-link active" data-scroll-target="#inspecting-the-compas-dataset">Inspecting the COMPAS dataset</a></li>
+  <li><a href="#constructing-the-sfm" id="toc-constructing-the-sfm" class="nav-link" data-scroll-target="#constructing-the-sfm">Constructing the SFM</a></li>
+  <li><a href="#obtaining-fair-predictions" id="toc-obtaining-fair-predictions" class="nav-link" data-scroll-target="#obtaining-fair-predictions">Obtaining Fair Predictions</a></li>
+  <li><a href="#decomposing-the-disparity-on-evaluation-data" id="toc-decomposing-the-disparity-on-evaluation-data" class="nav-link" data-scroll-target="#decomposing-the-disparity-on-evaluation-data">Decomposing the Disparity on Evaluation Data</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Causal Fairness Analysis - from Python</h1>
+<h1 class="title">Task 2: Neural In-Processing on COMPAS</h1>
 </div>
 
 
@@ -220,6 +232,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="quarto-title-meta">
 
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">February 16, 2024</p>
+    </div>
+  </div>
   
     
   </div>
@@ -227,57 +245,185 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<div class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> rpy2.robjects <span class="im">as</span> ro</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> rpy2.robjects.packages <span class="im">import</span> importr</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> rpy2.robjects <span class="im">import</span> pandas2ri</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> rpy2.robjects.vectors <span class="im">import</span> StrVector</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> rpy2.robjects.conversion <span class="im">import</span> localconverter</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>compas_path <span class="op">=</span> os.path.join(git_root, <span class="st">"scripts"</span>, <span class="st">"fair-prediction"</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"compas-preprocessed.csv"</span>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>compas <span class="op">=</span> pd.read_csv(compas_path)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>compas.drop(compas.columns[<span class="dv">0</span>], axis<span class="op">=</span><span class="dv">1</span>, inplace<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> localconverter(ro.default_converter <span class="op">+</span> pandas2ri.converter):</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  r_compas <span class="op">=</span> ro.conversion.py2rpy(compas)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>faircause <span class="op">=</span> importr(<span class="st">'faircause'</span>)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>fc_compas <span class="op">=</span> faircause.fairness_cookbook(</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  r_compas, X <span class="op">=</span> <span class="st">"race"</span>,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  W <span class="op">=</span> StrVector([<span class="st">"juv_fel"</span>, <span class="st">"juv_misd"</span>, <span class="st">"juv_other"</span>, <span class="st">"priors"</span>, <span class="st">"charge"</span>]),</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  Z <span class="op">=</span> StrVector([<span class="st">"age"</span>, <span class="st">"sex"</span>]),</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  Y <span class="op">=</span> <span class="st">"two_year_recid"</span>,</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  x0 <span class="op">=</span> <span class="dv">0</span>,</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  x1 <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ro.r.summary(fc_compas).rx2(<span class="st">"measures"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-    WARNING: The R package "reticulate" only fixed recently
-    an issue that caused a segfault when used with rpy2:
-    https://github.com/rstudio/reticulate/pull/1188
-    Make sure that you use a version of that package that includes
-    the fix.
-              measure       value          sd
-ctfde       ctfde -0.05267448 0.008506597
-ctfie       ctfie  0.07872395 0.008864717
-ctfse       ctfse  0.03724921 0.009534149
-ett           ett -0.13139843 0.006831753
-expse_x0 expse_x0  0.01684047 0.001207810
-expse_x1 expse_x1 -0.03331364 0.002440835
-nde           nde -0.03042546 0.011378097
-nie           nie  0.08806808 0.007254499
-te             te -0.11849353 0.011704603
-tv             tv -0.16864764 0.012047903
-</code></pre>
+<section id="inspecting-the-compas-dataset" class="level2">
+<h2 class="anchored" data-anchor-id="inspecting-the-compas-dataset">Inspecting the COMPAS dataset</h2>
+<p>We first inspect the COMPAS dataset.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(data), <span class="at">caption =</span> <span class="st">"COMPAS dataset."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>COMPAS dataset.</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 11%">
+<col style="width: 12%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 18%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">sex</th>
+<th style="text-align: right;">age</th>
+<th style="text-align: right;">race</th>
+<th style="text-align: right;">juv_fel</th>
+<th style="text-align: right;">juv_misd</th>
+<th style="text-align: right;">juv_other</th>
+<th style="text-align: right;">priors</th>
+<th style="text-align: right;">charge</th>
+<th style="text-align: right;">two_year_recid</th>
+<th style="text-align: right;">northpointe</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">69</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">44</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="constructing-the-sfm" class="level2">
+<h2 class="anchored" data-anchor-id="constructing-the-sfm">Constructing the SFM</h2>
+<p>We next construct the Standard Fairness Model:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># constructing the SFM</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="st">"race"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"age"</span>, <span class="st">"sex"</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>W <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"juv_fel"</span>, <span class="st">"juv_misd"</span>, <span class="st">"juv_other"</span>, <span class="st">"priors"</span>, <span class="st">"charge"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"two_year_recid"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="obtaining-fair-predictions" class="level2">
+<h2 class="anchored" data-anchor-id="obtaining-fair-predictions">Obtaining Fair Predictions</h2>
+<p>Fair Predictions can be obtained by passing the data, SFM, and the choice of the business necessity set (<code>BN</code>) to the <code>fair_predictions()</code> function:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build our own predictor and decompose the true one</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>fair_pred <span class="ot">&lt;-</span> <span class="fu">fair_predictions</span>(data, X, Z, W, Y, <span class="at">x0 =</span> <span class="dv">0</span>, <span class="at">x1 =</span> <span class="dv">1</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                              <span class="at">BN =</span> <span class="fu">c</span>(<span class="st">"IE"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Note that in <code>faircause 0.2.0</code> the columns of the input data to functions <code>fair_predictions()</code> and <code>fair_decisions()</code> need to be either <code>numeric</code> or <code>integer</code>. Use one-hot encoding wherever appropriate.</p>
+<p>When fitting the fair predictor, <code>pytorch</code> is used under the hood to optimize the function of the form: <span class="math display">\[\begin{align}
+L(y, \hat{y}) + \lambda \Big( | \text{NDE}_{x_0, x_1}(\hat{y}) - \eta_1 | + | \text{NIE}_{x_1, x_0}(\hat{y}) - \eta_2 | + | \text{Exp-SE}_{x_1}(\hat{y}) - \eta_3 | + | \text{Exp-SE}_{x_0}(\hat{y}) - \eta_4 | \Big)
+\end{align}\]</span> where the values <span class="math inline">\(\eta_1, \eta_2, \eta_3, \eta_4\)</span> are either 0 if effect is not in the business necessity set, or equal the effect estimate for the true outcome <span class="math inline">\(Y\)</span> (if the effect is BN). Multiple values of the tuning parameter <span class="math inline">\(\lambda\)</span> are used at the same time (this choice can also be adjusted using the <code>lmbd_seq</code> parameter, to which an arbitrary sequence of values can be passed). For binary classification the loss <span class="math inline">\(L(y, \hat{y})\)</span> is the cross-entropy, whereas for regression the loss is the mean squared error (MSE).</p>
+<p>In the above, <code>fair_pred</code> is S3-class object of type <code>fair_prediction</code>. We can use the <code>predict()</code> function to obtain its predictions on new data.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>preds <span class="ot">&lt;-</span> <span class="fu">predict</span>(fair_pred, data)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># appending the in-sample predictions to the dataset</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>faircause_preds <span class="ot">&lt;-</span> preds<span class="sc">$</span>predictions[[<span class="dv">5</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Further generics can be applied to <code>fair_prediction</code> objects, such as <code>autoplot()</code>, which allows us to visualize the loss function and the causal fairness measures on held-out evaluation data:</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>cowplot<span class="sc">::</span><span class="fu">plot_grid</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autoplot</span>(fair_pred, <span class="at">type =</span> <span class="st">"causal"</span>),</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autoplot</span>(fair_pred, <span class="at">type =</span> <span class="st">"accuracy"</span>), <span class="at">ncol =</span> 1L</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="t2-compas-neural-inproc_files/figure-html/autoplot-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="decomposing-the-disparity-on-evaluation-data" class="level2">
+<h2 class="anchored" data-anchor-id="decomposing-the-disparity-on-evaluation-data">Decomposing the Disparity on Evaluation Data</h2>
+<p>The function <code>fair_prediction()</code> takes an <code>eval_prop</code> argument which determines the proportion of data that is used as an evaluation fold (for early stopping when fitting the neural network). We now extract this fold of the data, and decompose the disparity manually:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># decompose the predictions on the eval set</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>train_idx <span class="ot">&lt;-</span> <span class="fu">seq_len</span>(<span class="fu">round</span>(<span class="fl">0.75</span> <span class="sc">*</span> <span class="fu">nrow</span>(data)))</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>faircause_decomp <span class="ot">&lt;-</span> <span class="fu">fairness_cookbook</span>(data[<span class="sc">-</span>train_idx,], <span class="at">X =</span> X, <span class="at">W =</span> W, <span class="at">Z =</span> Z,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">Y =</span> <span class="st">"faircause_preds"</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">x0 =</span> <span class="dv">0</span>, <span class="at">x1 =</span> <span class="dv">1</span>, <span class="at">nboot1 =</span> <span class="dv">20</span>, <span class="at">nboot2=</span><span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Finally, we can plot the two decompositions, of the true outcome <span class="math inline">\(Y\)</span> and the newly constructed causally fair predictor <span class="math inline">\(\widehat{Y}^{FC}\)</span>, together:</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="t2-compas-neural-inproc_files/figure-html/plot-both-decomps-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
 </div>
 </div>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

@@ -1,0 +1,47 @@
+---
+title: "Causal Fairness Analysis - from Python"
+output: html_document
+biblio-style: unsrt
+jupyter: python3
+---
+
+```{python}
+#| include: false
+from git import Repo
+import os
+cwd = os.getcwd()
+repo = Repo(cwd, search_parent_directories=True)
+git_root = repo.git.rev_parse("--show-toplevel")
+compas_path = os.path.join(git_root, "scripts", "fair-prediction",
+                           "compas-preprocessed.csv")
+```
+
+```{python}
+import pandas as pd
+import rpy2.robjects as ro
+from rpy2.robjects.packages import importr
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.vectors import StrVector
+from rpy2.robjects.conversion import localconverter
+compas_path = os.path.join(git_root, "scripts", "fair-prediction",
+                           "compas-preprocessed.csv")
+
+compas = pd.read_csv(compas_path)
+compas.drop(compas.columns[0], axis=1, inplace=True)
+
+with localconverter(ro.default_converter + pandas2ri.converter):
+  r_compas = ro.conversion.py2rpy(compas)
+
+faircause = importr('faircause')
+
+fc_compas = faircause.fairness_cookbook(
+  r_compas, X = "race",
+  W = StrVector(["juv_fel", "juv_misd", "juv_other", "priors", "charge"]),
+  Z = StrVector(["age", "sex"]),
+  Y = "two_year_recid",
+  x0 = 0,
+  x1 = 1
+)
+
+print(ro.r.summary(fc_compas).rx2("measures"))
+```

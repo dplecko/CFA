@@ -1,0 +1,167 @@
+---
+title: "Task 2: Neural In-Processing on COMPAS"
+output: html_document
+date: "2024-02-16"
+---
+
+```{r setup, include=FALSE}
+library(faircause)
+library(ggplot2)
+library(latex2exp)
+root <- rprojroot::find_root(rprojroot::is_git_root)
+
+# loading the COMPAS dataset
+set.seed(23)
+data <- read.csv(file.path(root, "inst", "extdata", "compas-scores-two-years.csv"))
+col.keep <- which(
+  names(data) %in% c("age", "sex", "juv_fel_count",
+                     "juv_misd_count", "juv_other_count", "priors_count",
+                     "c_charge_degree", "race", "two_year_recid", "decile_score")
+)
+data <- data[, col.keep]
+data$race <- factor(data$race)
+levels(data$race) <- c("Minority", "Minority", "Majority", "Minority",
+                       "Minority", "Minority")
+data$race <- relevel(data$race, "Majority")
+cumsum(table(data$decile_score)) / sum(table(data$decile_score))
+## decile_score > 4 represents high risk (approximately)
+data$northpointe <- as.integer(data$decile_score > 4)
+data$decile_score <- NULL
+names(data) <- gsub("_count", "", names(data))
+names(data)[which(names(data) == "c_charge_degree")] <- "charge"
+
+# remove any factors
+data$sex <- ifelse(data$sex == "Male", 0, 1)
+data$charge <- ifelse(data$sex == "M", 0, 1)
+data$race <- ifelse(data$race == "Majority", 0, 1)
+```
+
+## Inspecting the COMPAS dataset
+
+We first inspect the COMPAS dataset.
+
+```{r compas-inspect}
+knitr::kable(head(data), caption = "COMPAS dataset.")
+```
+
+## Constructing the SFM
+
+We next construct the Standard Fairness Model:
+
+```{r construct-sfm}
+# constructing the SFM
+X <- "race"
+Z <- c("age", "sex")
+W <- c("juv_fel", "juv_misd", "juv_other", "priors", "charge")
+Y <- c("two_year_recid")
+```
+
+## Obtaining Fair Predictions
+
+Fair Predictions can be obtained by passing the data, SFM, and the choice of the business necessity set (`BN`) to the `fair_predictions()` function:
+
+```{r construct-fair-preds}
+# build our own predictor and decompose the true one
+fair_pred <- fair_predictions(data, X, Z, W, Y, x0 = 0, x1 = 1,
+                              BN = c("IE"))
+```
+
+Note that in `faircause 0.2.0` the columns of the input data to functions `fair_predictions()` and `fair_decisions()` need to be either `numeric` or `integer`. Use one-hot encoding wherever appropriate.
+
+When fitting the fair predictor, `pytorch` is used under the hood to optimize the function of the form:
+\begin{align}
+L(y, \hat{y}) + \lambda \Big( | \text{NDE}_{x_0, x_1}(\hat{y}) - \eta_1 | + | \text{NIE}_{x_1, x_0}(\hat{y}) - \eta_2 | + | \text{Exp-SE}_{x_1}(\hat{y}) - \eta_3 | + | \text{Exp-SE}_{x_0}(\hat{y}) - \eta_4 | \Big)
+\end{align}
+where the values $\eta_1, \eta_2, \eta_3, \eta_4$ are either 0 if effect is not in the business necessity set, or equal the effect estimate for the true outcome $Y$ (if the effect is BN). Multiple values of the tuning parameter $\lambda$ are used at the same time (this choice can also be adjusted using the `lmbd_seq` parameter, to which an arbitrary sequence of values can be passed). For binary classification the loss $L(y, \hat{y})$ is the cross-entropy, whereas for regression the loss is the mean squared error (MSE). 
+
+In the above, `fair_pred` is S3-class object of type `fair_prediction`. 
+We can use the `predict()` function to obtain its predictions on new data.
+
+```{r new-preds}
+preds <- predict(fair_pred, data)
+# appending the in-sample predictions to the dataset
+data$faircause_preds <- preds$predictions[[5]]
+```
+
+Further generics can be applied to `fair_prediction` objects, such as `autoplot()`, which allows us to visualize the loss function and the causal fairness measures on held-out evaluation data:
+
+```{r autoplot, fig.align='center', fig.width=10, fig.height=6}
+cowplot::plot_grid(
+  autoplot(fair_pred, type = "causal"),
+  autoplot(fair_pred, type = "accuracy"), ncol = 1L
+)
+```
+
+## Decomposing the Disparity on Evaluation Data
+
+The function `fair_prediction()` takes an `eval_prop` argument which determines the proportion of data that is used as an evaluation fold (for early stopping when fitting the neural network). We now extract this fold of the data, and decompose the disparity manually:
+
+```{r decomp-eval}
+# decompose the predictions on the eval set
+train_idx <- seq_len(round(0.75 * nrow(data)))
+faircause_decomp <- fairness_cookbook(data[-train_idx,], X = X, W = W, Z = Z,
+                                      Y = "faircause_preds",
+                                      x0 = 0, x1 = 1, nboot1 = 20, nboot2=100)
+```
+
+Finally, we can plot the two decompositions, of the true outcome $Y$ and the newly constructed causally fair predictor $\widehat{Y}^{FC}$, together:
+
+```{r plot-both-decomps, echo=FALSE, fig.align='center', fig.height=6, fig.width=10}
+res <- rbind(
+  cbind(fair_pred$y_meas, Outcome = "truth"),
+  cbind(summary(faircause_decomp)$measures, Outcome = "faircause")
+)
+
+xlabz <- c(
+  tv = TeX("$TV_{x_0, x_1}(y)$"),
+  ctfde = TeX("$Ctf$-$DE_{x_0, x_1}(y | x_0)$"),
+  ctfie = TeX("$Ctf$-$IE_{x_1, x_0}(y | x_0)$"),
+  ctfse = TeX("$Ctf$-$SE_{x_1, x_0}(y)$")
+)
+
+# xlabz <- c(
+#   tv = TeX("$TV_{x_0, x_1}(y)$"),
+#   nde = TeX("$NDE_{x_0, x_1}(y | x_0)$"),
+#   nie = TeX("$NIE_{x_1, x_0}(y | x_0)$"),
+#   expse_x1 = TeX("$Exp$-$SE_{x_1}(y)$"),
+#   expse_x0 = TeX("$Exp$-$SE_{x_0}(y)$")
+# )
+
+# res <- res[res$measure %in% c("ne", "nie", "expse_x1", "expse_x0", "tv"), ]
+res <- res[res$measure %in% c("tv", "ctfde", "ctfse", "ctfie"), ]
+res$measure <- as.factor(res$measure)
+
+ggplot(res, aes(x = measure, y = value, fill = measure,
+               color = Outcome, ymin = value - 2.58*sd, ymax = value + 2.58*sd)) +
+  geom_bar(position="dodge", stat = "identity", linewidth = 1.5) +
+  theme_minimal() +
+  geom_errorbar(
+    aes(group = Outcome),
+    position = position_dodge(0.9),
+    color = "black", width = 0.25
+  ) +
+  theme(
+    legend.position = c(0.15, 0.8),
+    legend.box.background = element_rect(),
+    legend.text = element_text(size = 12),
+    axis.text = element_text(size = 16),
+    axis.title.x = element_text(size = 18),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+    title = element_text(size = 16)
+  ) + scale_x_discrete(labels = xlabz) +
+  xlab("Causal Fairness Measure") +
+  guides(fill="none") +
+  scale_color_manual(values = c("red", "black")) +
+  ggtitle("COMPAS: Neural In-Processing vs. True Outcome") +
+  geom_rect(aes(xmin = 0.5, xmax = 1.5, ymin = -0.1, ymax = 0.2),
+            fill = "red", alpha = 0.01, linewidth = 0.05,
+            linetype = "dotted") +
+  geom_rect(aes(xmin = 1.5, xmax = 2.5, ymin = -0.1, ymax = 0.2),
+            fill = "green", alpha = 0.01, linewidth = 0.05,
+            linetype = "dotted") +
+  geom_rect(aes(xmin = 2.5, xmax = 3.5, ymin = -0.1, ymax = 0.2),
+            fill = "green", alpha = 0.01, linewidth = 0.05,
+            linetype = "dotted")
+
+# ggsave("~/Desktop/compas-in-processing.png", width = 10, height = 6)
+```

@@ -3,30 +3,42 @@ project:
   output-dir: ../docs
 
 website:
-  title: "Causal Fairness Analysis - Software"
+  title: "CFA Software"
   navbar:
     left:
       - href: index.qmd
         text: Home
     right:
-      - href: pages/census-t1.Rmd
-        text: Census Task 1
-      - href: pages/college-admissions-t1.Rmd
-        text: College Admissions Task 1
-      - href: pages/compas-t1.Rmd
-        text: COMPAS Task 1
-      - href: pages/compas-t1-extended.Rmd
-        text: COMPAS Task 1 (Extended)
-      - href: pages/compas-t2.Rmd
-        text: COMPAS Task 2
-      - href: pages/shai-challenge.Rmd
-        text: COMPAS TV/EO
-      - href: pages/compas-t2.Rmd
-        text: Fairadapt
-      - href: pages/ci-tests.Rmd
-        text: CI Tests
-      - href: pages/outcome-control.qmd
-        text: Outcome Control
+      - text: Task 1
+        menu:
+          - href: pages/t1-census.Rmd
+            text: Census T1
+          - href: pages/t1-admissions-over-time.Rmd
+            text: Admissions T1 Over Time
+          - href: pages/t1-compas-y-yhat.Rmd
+            text: COMPAS T1
+          - href: pages/t1-compas-beyond-sfm.Rmd
+            text: COMPAS T1 (Beyond SFM)
+          - href: pages/t1-icu-mortality.Rmd
+            text: MIMIC-IV T1 Mortality Disparities
+      - text: Task 2
+        menu:
+          - href: pages/t2-compas-fpt-inthe-wild.Rmd
+            text: COMPAS T2 - FPT in the Wild
+          - href: pages/t2-compas-neural-inproc.Rmd
+            text: COMPAS T2 - Neural In-Processing
+      - text: Task 3
+        menu:
+          - href: pages/t3-mimic-respirators.Rmd
+            text: MIMIC-IV Respirators
+          - href: pages/t3-surgeries.qmd
+            text: Surgeries T3
+      - text: Other Examples
+        menu:
+          - href: pages/python-use.qmd
+            text: Using Python
+          - href: pages/ci-tests.Rmd
+            text: Cond. Independence Tests
 
 format:
   html:
@@ -35,4 +47,3 @@ format:
     toc: true
 
 editor: visual
-

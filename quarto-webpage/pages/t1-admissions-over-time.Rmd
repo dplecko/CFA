@@ -9,6 +9,7 @@ biblio-style: unsrt
 knitr::opts_chunk$set(echo = TRUE)
 library(faircause)
 library(ggplot2)
+set.seed(2024)
 ```
 
 ## College Admissions: Bias Detection over Time

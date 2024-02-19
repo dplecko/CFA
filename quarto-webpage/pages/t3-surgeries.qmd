@@ -7,7 +7,7 @@ link-citations: true
 editor: visual
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(data.table)
 library(ggplot2)

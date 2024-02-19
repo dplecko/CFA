@@ -6,7 +6,7 @@ biblio-style: unsrt
 jupyter: python3
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 root <- rprojroot::find_root(rprojroot::is_git_root)
 r_dir <- file.path(root, "r")
@@ -16,6 +16,74 @@ dataset <- "compas"
 library(fairadapt)
 library(faircause)
 library(reticulate)
+library(ranger)
+library(ggplot2)
+library(latex2exp)
+
+RejectOption <- function(prob, cl) {
+
+  rate_cl <- tapply(prob, cl, function(x) mean(x > 0.5))
+  fav_cl <- names(rate_cl)[which.max(rate_cl)]
+
+  theta <- 0.5 + seq(0, 0.5, 0.005)
+  tv <- vapply(
+    theta,
+    function(th) {
+      mean(prob[cl == fav_cl] > th) - mean(prob[cl != fav_cl] > 1 - th)
+    }, numeric(1L)
+  )
+
+  theta_min <- theta[which.min(abs(tv))]
+
+  prob[cl == fav_cl] <- prob[cl == fav_cl] > theta_min
+  prob[cl != fav_cl] <- prob[cl != fav_cl] > 1 - theta_min
+
+  prob
+
+}
+
+
+get_mat <- function(src = "compas") {
+  
+  mat <- switch(src, adult = get_mat_adult(),
+                compas = get_mat_compas(),
+                census = get_mat_census(),
+                berkeley = get_mat_berkeley())
+  
+  mat
+  
+}
+
+get_mat_compas <- function() {
+  
+  
+  vars <- c("age", "sex", "juv_fel_count","juv_misd_count",
+            "juv_other_count", "priors_count",
+            "c_charge_degree", "race", "two_year_recid")
+  
+  adj.mat <- array(0, dim = c(length(vars), length(vars)))
+  colnames(adj.mat) <- vars
+  rownames(adj.mat) <- colnames(adj.mat)
+  
+  # adding the edges to the matrix
+  adj.mat[
+    c("race", "sex", "age"), c("juv_fel_count", "juv_misd_count",
+                               "juv_other_count", "priors_count",
+                               "c_charge_degree", "two_year_recid")] <- 1
+  adj.mat[c("juv_fel_count", "juv_misd_count", "juv_other_count"),
+          c("priors_count", "c_charge_degree", "two_year_recid")] <- 1
+  adj.mat["priors_count", c("c_charge_degree", "two_year_recid")] <- 1
+  adj.mat["c_charge_degree", "two_year_recid"] <- 1
+  
+  cfd.mat <- adj.mat
+  cfd.mat[, ] <- 0L
+  cfd.mat[c("sex", "age"), "race"] <- cfd.mat["race", c("sex", "age")] <- 1L
+  
+  list(adj.mat, cfd.mat)
+  
+}
+
+set.seed(2024)
 ```
 
 In this vignette, we focus on Task 2 (Fair Prediction), and specifically focus on the limitation of the currently found methods in the literature to provide causally meaningful fair predictions. 
@@ -50,7 +118,7 @@ org_plt <- autoplot(org_tvd, decompose = "xspec", dataaset = dataset) +
 
 #### **(ii)** Logistic regression trained with _reweighing_ [@kamiran2012data]
 
-```{python}
+```{python, message=FALSE}
 #| warning: false
 import os
 
@@ -118,6 +186,19 @@ The fair prediction algorithms used above are intended to set the TV measure to 
 #| fig-width: 16
 #| fig-height: 12
 #| echo: false
+multi_plot <- function(..., labels = NULL, ncol = 1L) {
+
+  plotlist <- list(...)
+  y_range <- lapply(plotlist, function(obj) layer_scales(obj)$y$range$range)
+  y_range <- Reduce(rbind, y_range)
+  ylims <- c(min(y_range[, 1]), max(y_range[, 2]))
+
+  plotlist <- lapply(plotlist, function(obj) obj + ylim(ylims))
+
+  cowplot::plot_grid(plotlist = plotlist, labels = labels, ncol = ncol,
+                     label_size = 20)
+
+}
 multi_plot(
   org_plt +
     ggtitle(TeX("$TV_{x_0, x_1}(\\hat{y})$ decomposition: Random Forest on COMPAS")),
@@ -145,7 +226,19 @@ adj.mat <- mats[[1L]]
 cfd.mat <- mats[[2L]]
 
 causal_graph <- fairadapt::graphModel(adj.mat, cfd.mat)
-plot(causal_graph, size = 50)
+layout_matrix <- matrix(c(
+  1, 2,  # age
+  -1, 2,  # sex
+  -2, -2,  # juv_fel_count
+  -1, -2, # juv_misd_count
+  0, -2, # juv_other_count
+  1, -2,  # priors_count
+  2, -2,  # c_charge_degree
+  -3, 0,  # race
+  3, 0    # two_year_recid
+), ncol = 2, byrow = TRUE)
+
+plot(causal_graph, layout=layout_matrix, vertex.size = 30)
 ```
 
 After loading the causal diagram, we perform fair data adaptation:

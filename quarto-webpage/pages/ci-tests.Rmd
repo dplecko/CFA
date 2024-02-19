@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(latex2exp)
 library(scales)
+set.seed(2024)
 ```
 
 ## Standard Fairness Model

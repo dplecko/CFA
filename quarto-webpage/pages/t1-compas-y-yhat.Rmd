@@ -3,7 +3,7 @@ title: "COMPAS - Task 1"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message=FALSE}
 library(faircause)
 library(ggplot2)
 library(ranger)
