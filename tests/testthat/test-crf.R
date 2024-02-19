@@ -10,7 +10,7 @@ test_that("fairness_cookbook works with causal_forest", {
   expect_setequal(colnames(data), vars)
 
   fc.nms <- c("measures", "x0", "x1", "model", "X", "Z", "W", "Y", "cl",
-              "eo", "method", "params")
+              "method", "params")
 
 
   expect_message(
@@ -60,7 +60,7 @@ test_that("fairness_cookbook works with causal_forest", {
   expect_setequal(colnames(data), vars)
 
   fc.nms <- c("measures", "x0", "x1", "model", "X", "W", "Z", "Y", "cl",
-              "eo", "method", "params")
+              "method", "params")
 
 
   expect_message(
