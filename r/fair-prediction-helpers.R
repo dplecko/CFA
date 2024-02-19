@@ -15,9 +15,32 @@ verify_numeric_input <- function(data) {
   }
 }
 
-acc_measure <- function(y, p, loss = c("bce", "acc", "auc")) {
 
-  loss <- match.arg(loss, c("bce", "acc", "auc"))
+compute_auc <- function(out, pred) {
+
+  if(!all(out %in% c(0, 1))) return(0)
+  if(any(pred < 0 | pred > 1)) return(0)
+
+  # Combine and sort by predicted probabilities in descending order
+  data <- data.frame(out, pred)
+  data <- data[order(data$pred, decreasing = TRUE),]
+
+  # Calculate TPR and FPR
+  n_pos <- sum(data$out == 1)
+  n_neg <- sum(data$out == 0)
+  cum_pos_rate <- cumsum(data$out == 1) / n_pos
+  cum_neg_rate <- (1:nrow(data) - cumsum(data$out == 1)) / n_neg
+
+  # Calculate AUC using trapezoidal rule
+  auc <- sum((cum_neg_rate[-1] - cum_neg_rate[-nrow(data)]) *
+               (cum_pos_rate[-1] + cum_pos_rate[-nrow(data)]) / 2)
+
+  return(auc)
+}
+
+acc_measure <- function(y, p, loss = c("bce", "acc", "auc", "mse")) {
+
+  loss <- match.arg(loss, c("bce", "acc", "auc", "mse"))
 
   if (loss == "bce") {
     p <- pmin(pmax(p, 1e-15), 1 - 1e-15)
@@ -27,7 +50,10 @@ acc_measure <- function(y, p, loss = c("bce", "acc", "auc")) {
     ret <- mean(round(p) == y)
   } else if (loss == "auc") {
 
-    ret <- PRROC::roc.curve(scores.class0 = p, weights.class0 = y)$auc
+    ret <- compute_auc(y, p)
+  } else if (loss == "mse") {
+
+    ret <- mean((y - p)^2)
   }
 
   ret
@@ -54,5 +80,7 @@ lambda_performance <- function(meas, y, p, lmbd) {
         acc_sd = acc_measure_boot(y, p, "acc"),
         auc = acc_measure(y, p, "auc"),
         auc_sd = acc_measure_boot(y, p, "auc"),
+        mse = acc_measure(y, p, "mse"),
+        mse_sd = acc_measure_boot(y, p, "mse"),
         lmbd = lmbd)
 }

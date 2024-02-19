@@ -19,11 +19,11 @@ Imports:
     assertthat,
     ggplot2,
     latex2exp,
+    reticulate,
     grf
 Suggests:
     testthat (>= 3.0.3),
     knitr,
-    reticulate,
     rmarkdown,
     markdown,
     data.table,

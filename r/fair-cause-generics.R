@@ -66,18 +66,18 @@ print.summary.faircause <- function(x,
 #' @importFrom ggplot2 element_text scale_x_discrete
 #' @importFrom latex2exp TeX
 #' @export
-autoplot.faircause <- function(x, decompose = c("xspec", "general", "both"),
+autoplot.faircause <- function(object, decompose = c("xspec", "general", "both"),
                                dataset = "", signed = TRUE, var_name = "y", ...) {
 
   decompose <- match.arg(decompose, c("xspec", "general", "both"))
-  df <- summarize_measures(x$measures)
+  df <- summarize_measures(object$measures)
   names(df) <- c("Measure", "Value", "StdDev")
 
   rename <- list(
     tv = TeX(sprintf("$TV_{x_0, x_1}(%s)$", var_name)),
     te = TeX(sprintf("$TE_{x_0, x_1}(%s)$", var_name)),
-    expse_x1 = TeX(sprintf("Exp-SE$_{x_1}(%s)$", var_name)),
-    expse_x0 = TeX(sprintf("Exp-SE$_{x_0}(%s)$", var_name)),
+    expse_x1 = TeX(sprintf("$Exp$-$SE_{x_1}(%s)$", var_name)),
+    expse_x0 = TeX(sprintf("$Exp$-$SE_{x_0}(%s)$", var_name)),
     nde = TeX(sprintf("$NDE_{x_0, x_1}(%s)$", var_name)),
     nie = TeX(sprintf("$NIE_{x_1, x_0}(%s)$", var_name)),
     ett = TeX(sprintf("$ETT_{x_0, x_1}(%s | x_0)$", var_name)),

@@ -7,7 +7,7 @@
 #' @importFrom latex2exp TeX
 #' @export
 autoplot.fair_decision <- function(
-    x, type = c("decision", "delta", "benefit_fairness"), n_bins = 10L,
+    object, type = c("decision", "delta", "benefit_fairness"), n_bins = 10L,
     break_ties = TRUE, ...
 ) {
 
@@ -15,13 +15,13 @@ autoplot.fair_decision <- function(
 
   if (type == "decision") {
 
-    ret <- autoplot(x$d_fcb, var_name = "d")
+    ret <- autoplot(object$d_fcb, var_name = "d")
   } else if (type == "delta") {
 
-    ret <- autoplot(x$delta_fcb, var_name = "\\Delta")
+    ret <- autoplot(object$delta_fcb, var_name = "\\Delta")
   } else if (type == "benefit_fairness") {
 
-    res <- x$data[, c(x$X, x$D, "delta")]
+    res <- object$data[, c(object$X, object$D, "delta")]
     names(res) <- c("X", "D", "delta")
     if (break_ties) {
 
@@ -53,8 +53,8 @@ autoplot.fair_decision <- function(
       ) +
       scale_x_continuous(breaks = 1:n_bins, labels = paste0("B", 1:n_bins)) +
       ylab("P(D = 1)") + xlab("Bin") +
-      scale_color_discrete(name = x$X) +
-      scale_fill_discrete(name = x$X) +
+      scale_color_discrete(name = object$X) +
+      scale_fill_discrete(name = object$X) +
       ggtitle(paste("Benefit Fairness")) +
       theme(legend.position = "bottom", legend.box.background = element_rect())
   }
@@ -63,11 +63,11 @@ autoplot.fair_decision <- function(
 }
 
 #' @export
-predict.fair_decision <- function(x, newdata, budget = NULL, ...) {
+predict.fair_decision <- function(object, newdata, budget = NULL, ...) {
 
   # predict delta on newdata
-  delta <- predict_delta(x$xgb_mod, newdata, x$X, x$Z, x$W, x$D, x$delta_sign,
-                         x$delta_transform)
+  delta <- predict_delta(object$xgb_mod, newdata, object$X, object$Z, object$W,
+                         object$D, object$delta_sign, object$delta_transform)
 
   if (is.null(budget)) {
 
@@ -83,7 +83,8 @@ predict.fair_decision <- function(x, newdata, budget = NULL, ...) {
       delta = delta,
       decision = decision,
       test_data = newdata,
-      X = x$X, Z = x$Z, W = x$W, Y = x$Y, D = x$D, x0 = x$x0, x1 = x$x1
+      X = object$X, Z = object$Z, W = object$W, Y = object$Y, D = object$D,
+      x0 = object$x0, x1 = object$x1
     ), class = "fair_decision_test"
   )
 }
@@ -96,31 +97,32 @@ predict.fair_decision <- function(x, newdata, budget = NULL, ...) {
 #' @importFrom latex2exp TeX
 #' @export
 autoplot.fair_decision_test <- function(
-    x, type = c("decision", "delta", "benefit_fairness"), n_bins = 10L,
+    object, type = c("decision", "delta", "benefit_fairness"), n_bins = 10L,
     break_ties = TRUE, ...
 ) {
 
   type <- match.arg(type, c("decision", "delta", "benefit_fairness"))
 
-  x$test_data[[x$D]] <- x$decision
-  x$test_data[["delta"]] <- x$delta
+  object$test_data[[object$D]] <- object$decision
+  object$test_data[["delta"]] <- object$delta
   if (type == "decision") {
 
     test_d_fcb <- fairness_cookbook(
-      x$test_data, X = x$X, Z = x$Z, W = x$W, Y = x$D, x0 = x$x0, x1 = x$x1,
-      ...
+      object$test_data, X = object$X, Z = object$Z, W = object$W, Y = object$D,
+      x0 = object$x0, x1 = object$x1, ...
     )
     ret <- autoplot(test_d_fcb, var_name = "d")
   } else if (type == "delta") {
 
     test_delta_fcb <- fairness_cookbook(
-      x$test_data, X = x$X, Z = x$Z, W = x$W, Y = "delta", x0 = x$x0, x1 = x$x1,
+      object$test_data, X = object$X, Z = object$Z, W = object$W, Y = "delta",
+      x0 = object$x0, x1 = object$x1,
       ...
     )
     ret <- autoplot(test_delta_fcb, var_name = "\\Delta")
   } else if (type == "benefit_fairness") {
 
-    res <- x$test_data[, c(x$X, x$D, "delta")]
+    res <- object$test_data[, c(object$X, object$D, "delta")]
     names(res) <- c("X", "D", "delta")
     if (break_ties) {
 
@@ -152,8 +154,8 @@ autoplot.fair_decision_test <- function(
       ) +
       scale_x_continuous(breaks = 1:n_bins, labels = paste0("B", 1:n_bins)) +
       ylab("P(D = 1)") + xlab("Bin") +
-      scale_color_discrete(name = x$X) +
-      scale_fill_discrete(name = x$X) +
+      scale_color_discrete(name = object$X) +
+      scale_fill_discrete(name = object$X) +
       ggtitle(paste("Benefit Fairness")) +
       theme(legend.position = "bottom", legend.box.background = element_rect())
   }

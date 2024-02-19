@@ -12,3 +12,5 @@ README.Rmd
 ^quarto-webpage$
 .nojekyll
 .Rapp.history
+^.idea
+^data-raw$
