@@ -15,8 +15,8 @@ fair_decisions(
   x1,
   xgb_params = list(eta = 0.1),
   xgb_nrounds = 100,
-  delta_transform = function(x) x,
-  delta_sign = 0,
+  po_transform = function(x) x,
+  po_diff_sign = 0,
   method = c("medDML", "causal_forest"),
   model = c("ranger", "linear"),
   tune_params = FALSE,
@@ -46,13 +46,16 @@ attribute.}
 
 \item{xgb_nrounds}{Number of boosting rounds in \code{xgboost}.}
 
-\item{delta_transform}{An arbitrary transformation function that can be
-applied to the outcome \eqn{Y} when computing the benefit \eqn{\Delta}.}
+\item{po_transform}{An arbitrary transformation function that can be
+applied to the potential outcomes \eqn{Y_{d}} when computing the benefit
+\eqn{\Delta}, meaning that \eqn{E[f(Y_{d_1}) - f(Y_{d_0}) \mid x, z, w]} is
+used for \eqn{\Delta}.}
 
-\item{delta_sign}{Sometimes perhaps the \eqn{\Delta} parameter is assumed
-to have a specific sign (-1 or 1). When this argument is specified, the sign
-is enforced. Default value is 0, which (in principle) allows for both
-positive and negative \eqn{\Delta} values.}
+\item{po_diff_sign}{The difference of potential outcomes
+\eqn{Y_{d_1} - Y_{d_0}} sometimes may have a specific sign (-1 or 1). When
+this argument is specified, the sign is enforced.
+Default value is 0, which (in principle) allows for both
+positive and negative differences (i.e., there is no monotonicity).}
 
 \item{method}{A \code{character} scalar with two options: \code{"medDML"} for
 mediation double-machine learning, \code{"causal_forest"} for the
@@ -83,7 +86,7 @@ An object of class \code{fair_decision} with elements:
 \item{\code{d_fcb}, \code{delta_fcb}}{Fairness Cookbook objects for the
 decision \eqn{D} and the benefit \eqn{\Delta}.}
 \item{\code{delta}}{Estimated values of the benefit \eqn{\Delta}.}
-\item{\code{data}, \code{delta_sign}, \code{delta_transform},
+\item{\code{data}, \code{po_diff_sign}, \code{po_transform},
 \code{xgb_params}}{See input definitions.}
 \item{\code{xgb_mod}}{\code{xgboost} model for estimating the benefit
 \eqn{\Delta}.}

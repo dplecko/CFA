@@ -27,7 +27,7 @@ autoplot.fair_decision <- function(
 
       min_diff <- min(diff(sort(res$delta))[diff(sort(res$delta)) > 0],
                       10^(-15), na.rm = TRUE)
-      res$delta <- runif(seq_along(res$delta), max = min_diff / 10)
+      res$delta <- res$delta + runif(seq_along(res$delta), max = min_diff / 10)
     }
 
     # group into bins
@@ -67,7 +67,7 @@ predict.fair_decision <- function(object, newdata, budget = NULL, ...) {
 
   # predict delta on newdata
   delta <- predict_delta(object$xgb_mod, newdata, object$X, object$Z, object$W,
-                         object$D, object$delta_sign, object$delta_transform)
+                         object$D, object$po_diff_sign, object$po_transform)
 
   if (is.null(budget)) {
 
@@ -164,8 +164,8 @@ autoplot.fair_decision_test <- function(
 }
 
 # helpers
-predict_delta <- function(xgb_mod, data, X, Z, W, D, delta_sign,
-                          delta_transform) {
+predict_delta <- function(xgb_mod, data, X, Z, W, D, po_diff_sign,
+                          po_transform) {
 
   data0 <- data1 <- data
   data0[[D]] <- 0
@@ -174,13 +174,13 @@ predict_delta <- function(xgb_mod, data, X, Z, W, D, delta_sign,
   yd0 <- predict(xgb_mod, as.matrix(data0[, c(X, Z, W, D)]))
   yd1 <- predict(xgb_mod, as.matrix(data1[, c(X, Z, W, D)]))
 
-  if (delta_sign == 1) {
+  if (po_diff_sign == 1) {
 
     yd1[yd1 < yd0] <- yd0[yd1 < yd0]
-  } else if (delta_sign == -1) {
+  } else if (po_diff_sign == -1) {
 
     yd1[yd1 > yd0] <- yd0[yd1 > yd0]
   }
 
-  delta_transform(yd1) - delta_transform(yd0)
+  po_transform(yd1) - po_transform(yd0)
 }
