@@ -1,0 +1,158 @@
+---
+title: "Task 3: Respirator Allocation on MIMIC-IV"
+output: html_document
+date: "2024-02-16"
+---
+
+```{r setup, include=FALSE}
+library(faircause)
+library(ricu)
+library(ggplot2)
+set.seed(2024)
+
+load_resp_data <- function(src) {
+
+  dat <- load_concepts(
+    c("vent_ind", "resp", "po2", "sofa", "o2sat", "sex", "age"), src,
+    verbose = FALSE
+  )
+
+  dat <- dat[get(index_var(dat)) <= hours(48L) &
+               get(index_var(dat)) >= hours(0L)]
+  dat[is.na(vent_ind), vent_ind := FALSE]
+
+  dat[, is_vent := cummax(vent_ind), by = c(id_vars(dat))]
+
+  cand <- unique(id_col(dat[o2sat <= 96 & is_vent == 0]))
+  cdat <- dat[id_col(dat) %in% cand]
+  cdat <- replace_na(cdat, type = "locf", vars = c("o2sat", "po2", "resp"))
+  cdat[is.na(po2), po2 := median(po2, na.rm = TRUE)]
+  cdat[is.na(resp), resp := median(resp, na.rm = TRUE)]
+
+  # lag by 3 hours both ways
+  cdat[, is_vent_lag3 := data.table::shift(is_vent, -3L)]
+  cdat[, is_vent_lagrev3 := data.table::shift(is_vent, 3L)]
+
+  # the actioned cohort
+  act <- merge(
+    cdat[is_vent == 0 & is_vent_lag3 == 1,
+         list(o2prior = mean(o2sat, na.rm = TRUE), sofa = max(sofa),
+              resp = mean(resp, na.rm = TRUE), po2 = mean(po2, na.rm = TRUE),
+              sex = unique(sex), age = unique(age)),
+         by = c(id_vars(dat))],
+    cdat[is_vent == 1 & is_vent_lagrev3 == 0,
+         list(o2post = mean(o2sat, na.rm = TRUE)),
+         by = c(id_vars(dat))]
+  )
+
+  act[, respirator := 1]
+
+  # take complete cases
+  act <- act[complete.cases(act)]
+
+  # the non-actioned cohort
+  ctrls <- id_col(cdat[, max(is_vent), by = c(id_vars(cdat))][V1 == 0])
+  ndat <- cdat[(id_col(cdat) %in% ctrls)]
+
+  skp <- merge(
+    ndat[get(index_var(ndat)) %in% hours(10, 11, 12),
+         list(o2prior = mean(o2sat, na.rm = TRUE), sofa = max(sofa),
+              resp = mean(resp, na.rm = TRUE), po2 = mean(po2, na.rm = TRUE),
+              sex = unique(sex), age = unique(age)),
+         by = c(id_vars(dat))],
+    ndat[get(index_var(ndat)) %in% hours(13, 14, 15),
+         list(o2post = mean(o2sat, na.rm = TRUE)),
+         by = c(id_vars(dat))]
+  )
+  skp <- skp[, respirator  := 0]
+  skp <- skp[complete.cases(skp)]
+
+  res <- rbind(act, skp)
+  res[, sex := ifelse(sex == "Male", 1, 0)]
+  res
+}
+```
+
+## Inspecting the Respiration Data from MIMIC-IV dataset
+
+We begin by loading and inspecting the data from MIMIC-IV:
+
+```{r compas-inspect}
+src <- "miiv"
+data <- as.data.frame(load_resp_data(src))
+knitr::kable(head(data), caption = "MIMIC-IV Respiration data.")
+```
+
+We consider the cohort of all patients in the database admitted to the ICU. Patients who are mechanically ventilated immediately upon entering the ICU are subsequently removed. By focusing on the time window of the first 48 hours from admission to ICU, for each patient we determine the earliest time of mechanical ventilation, labeled $t_{MV}$. Since mechanical ventilation is used to stabilize the respiratory profile of patients, for each patient we determine the average oxygen saturation in the three-hour period $[t_{MV}-3, t_{MV}]$ prior to mechanical ventilation, labeled O$_2$-pre. We also determine the oxygen saturation in the three-hour period following ventilation $[t_{MV}, t_{MV}+3]$, labeled O$_2$-post. For controls (patient not ventilated at any point in the first 48 hours), we take the reference point as 12 hours after ICU admission, and calculate the values in three hours before and after this time. Patients' respiratory stability, which represents the outcome of interest $Y$, is measured as follows:
+\begin{align}
+    Y := \begin{cases}
+    0 \text{ if O}_2\text{-post} \geq 97, \\
+    -(\text{O}_2\text{-post}-97)^2 \text{ otherwise}.
+        \end{cases}
+\end{align}
+Values of oxygen saturation above 97 are considered stable, and the larger the distance from this stability value, the higher the risk for the patient. We also collect other important patient characteristics before intervention that are the key predictors of outcome, including the SOFA score, respiratory rate, and partial oxygen pressure (PaO$_2$).
+
+## Constructing the SFM
+
+We next construct the Standard Fairness Model, with also a decision $D$:
+
+```{r construct-sfm}
+# constructing the SFM
+X <- "sex"
+Z <- "age"
+W <- c("sofa", "po2", "o2prior")
+D <- "respirator"
+Y <- "o2post"
+```
+
+## Obtaining Fair Decisions
+
+Fair Decisions can be obtained by passing the data, SFM, and any transform functions of the benefit $\Delta$ (`delta_transform` argument) to the `fair_decisions()` function:
+
+```{r construct-fair-decisions, message=FALSE}
+# fit the outcome control model
+resp_oc <- fair_decisions(
+  data, X = X, Z = Z, W = W, Y = Y, D = D, x0 = 0, x1 = 1,
+  delta_transform = function(x) ifelse(x < 97, -(x-97)^2, 0),
+  delta_sign = 1
+)
+```
+
+Note that in `faircause 0.2.0` the columns of the input data to functions `fair_decisions()` and `fair_predictions()` need to be either `numeric` or `integer`. Use one-hot encoding wherever appropriate.
+
+When constructing fair decisions, `xgboost` is first used to estimate the conditional average treatment effect (CATE) of $D$ on $Y$, labeled $\Delta$, also referred to as benefit:
+\begin{align}
+\Delta = E[Y_{d_1} - Y_{d_0} \mid x, z, w].
+\end{align}
+
+In the above, `resp_oc` is S3-class object of type `fair_decision`. 
+We can use the `autoplot()` generic to analyze various important aspects of the decision making process:
+
+```{r decompose-decision, fig.align='center'}
+# inspect the decomposition of D
+autoplot(resp_oc, type = "decision")
+```
+
+```{r decompose-delta, fig.align='center'}
+# inspect the decomposition of Delta
+autoplot(resp_oc, type = "delta")
+```
+
+```{r inspect-BF, fig.align='center'}
+# inspect benefit fairness
+autoplot(resp_oc, type = "benefit_fairness")
+```
+
+Further generics can be applied to `fair_decision` objects, such as `predict()`, which allows us to get estimates of the benefit $\Delta$ on some test data, and also find the optimal policy that satisfies benefit fairness:
+
+```{r autoplot}
+# make predictions on test
+test_data <- data
+fair_dec <- predict(resp_oc, newdata = test_data, budget = 0.2)
+
+# inspect the estimate benefit \Delta
+head(fair_dec$delta, n = 100L)
+
+# inspect the allocated decisions
+head(fair_dec$decision, n = 100L)
+```
