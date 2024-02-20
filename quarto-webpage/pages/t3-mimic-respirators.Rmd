@@ -84,12 +84,16 @@ knitr::kable(head(data), caption = "MIMIC-IV Respiration data.")
 ```
 
 We consider the cohort of all patients in the database admitted to the ICU. Patients who are mechanically ventilated immediately upon entering the ICU are subsequently removed. By focusing on the time window of the first 48 hours from admission to ICU, for each patient we determine the earliest time of mechanical ventilation, labeled $t_{MV}$. Since mechanical ventilation is used to stabilize the respiratory profile of patients, for each patient we determine the average oxygen saturation in the three-hour period $[t_{MV}-3, t_{MV}]$ prior to mechanical ventilation, labeled O$_2$-pre. We also determine the oxygen saturation in the three-hour period following ventilation $[t_{MV}, t_{MV}+3]$, labeled O$_2$-post. For controls (patient not ventilated at any point in the first 48 hours), we take the reference point as 12 hours after ICU admission, and calculate the values in three hours before and after this time. Patients' respiratory stability, which represents the outcome of interest $Y$, is measured as follows:
+
+$$
 \begin{align}
     Y := \begin{cases}
     0 \text{ if O}_2\text{-post} \geq 97, \\
     -(\text{O}_2\text{-post}-97)^2 \text{ otherwise}.
         \end{cases}
 \end{align}
+$$
+
 Values of oxygen saturation above 97 are considered stable, and the larger the distance from this stability value, the higher the risk for the patient. We also collect other important patient characteristics before intervention that are the key predictors of outcome, including the SOFA score, respiratory rate, and partial oxygen pressure (PaO$_2$).
 
 ## Constructing the SFM
@@ -113,20 +117,19 @@ Fair Decisions can be obtained by passing the data, SFM, and any transform funct
 # fit the outcome control model
 resp_oc <- fair_decisions(
   data, X = X, Z = Z, W = W, Y = Y, D = D, x0 = 0, x1 = 1,
-  delta_transform = function(x) ifelse(x < 97, -(x-97)^2, 0),
-  delta_sign = 1
+  delta_transform = function(x) ifelse(x < 97, -(x-97)^2, 0), delta_sign = 1
 )
 ```
 
 Note that in `faircause 0.2.0` the columns of the input data to functions `fair_decisions()` and `fair_predictions()` need to be either `numeric` or `integer`. Use one-hot encoding wherever appropriate.
 
 When constructing fair decisions, `xgboost` is first used to estimate the conditional average treatment effect (CATE) of $D$ on $Y$, labeled $\Delta$, also referred to as benefit:
+
+``` $$
 \begin{align}
 \Delta = E[Y_{d_1} - Y_{d_0} \mid x, z, w].
 \end{align}
-
-In the above, `resp_oc` is S3-class object of type `fair_decision`. 
-We can use the `autoplot()` generic to analyze various important aspects of the decision making process:
+$$ e above, `resp_oc` is S3-class object of type `fair_decision`. We can use the `autoplot()` generic to analyze various important aspects of the decision making process:
 
 ```{r decompose-decision, fig.align='center'}
 # inspect the decomposition of D

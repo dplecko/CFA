@@ -8,7 +8,7 @@
 
 <meta name="dcterms.date" content="2024-02-16">
 
-<title>CFA Software - Task 2: Neural In-Processing on COMPAS</title>
+<title>CFA Software - Task 3: Respirator Allocation on MIMIC-IV</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -212,10 +212,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#inspecting-the-compas-dataset" id="toc-inspecting-the-compas-dataset" class="nav-link active" data-scroll-target="#inspecting-the-compas-dataset">Inspecting the COMPAS dataset</a></li>
+  <li><a href="#inspecting-the-respiration-data-from-mimic-iv-dataset" id="toc-inspecting-the-respiration-data-from-mimic-iv-dataset" class="nav-link active" data-scroll-target="#inspecting-the-respiration-data-from-mimic-iv-dataset">Inspecting the Respiration Data from MIMIC-IV dataset</a></li>
   <li><a href="#constructing-the-sfm" id="toc-constructing-the-sfm" class="nav-link" data-scroll-target="#constructing-the-sfm">Constructing the SFM</a></li>
-  <li><a href="#obtaining-fair-predictions" id="toc-obtaining-fair-predictions" class="nav-link" data-scroll-target="#obtaining-fair-predictions">Obtaining Fair Predictions</a></li>
-  <li><a href="#decomposing-the-disparity-on-evaluation-data" id="toc-decomposing-the-disparity-on-evaluation-data" class="nav-link" data-scroll-target="#decomposing-the-disparity-on-evaluation-data">Decomposing the Disparity on Evaluation Data</a></li>
+  <li><a href="#obtaining-fair-decisions" id="toc-obtaining-fair-decisions" class="nav-link" data-scroll-target="#obtaining-fair-decisions">Obtaining Fair Decisions</a></li>
   </ul>
 </nav>
     </div>
@@ -224,7 +223,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Task 2: Neural In-Processing on COMPAS</h1>
+<h1 class="title">Task 3: Respirator Allocation on MIMIC-IV</h1>
 </div>
 
 
@@ -245,182 +244,217 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<section id="inspecting-the-compas-dataset" class="level2">
-<h2 class="anchored" data-anchor-id="inspecting-the-compas-dataset">Inspecting the COMPAS dataset</h2>
-<p>We first inspect the COMPAS dataset.</p>
+<section id="inspecting-the-respiration-data-from-mimic-iv-dataset" class="level2">
+<h2 class="anchored" data-anchor-id="inspecting-the-respiration-data-from-mimic-iv-dataset">Inspecting the Respiration Data from MIMIC-IV dataset</h2>
+<p>We begin by loading and inspecting the data from MIMIC-IV:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(data), <span class="at">caption =</span> <span class="st">"COMPAS dataset."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>src <span class="ot">&lt;-</span> <span class="st">"miiv"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">load_resp_data</span>(src))</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(data), <span class="at">caption =</span> <span class="st">"MIMIC-IV Respiration data."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
-<caption>COMPAS dataset.</caption>
+<caption>MIMIC-IV Respiration data.</caption>
 <colgroup>
-<col style="width: 4%">
-<col style="width: 4%">
-<col style="width: 6%">
-<col style="width: 9%">
-<col style="width: 11%">
-<col style="width: 12%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 18%">
 <col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 7%">
+<col style="width: 14%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 14%">
+<col style="width: 17%">
 </colgroup>
 <thead>
 <tr class="header">
+<th style="text-align: right;">stay_id</th>
+<th style="text-align: right;">o2prior</th>
+<th style="text-align: right;">sofa</th>
+<th style="text-align: right;">resp</th>
+<th style="text-align: right;">po2</th>
 <th style="text-align: right;">sex</th>
 <th style="text-align: right;">age</th>
-<th style="text-align: right;">race</th>
-<th style="text-align: right;">juv_fel</th>
-<th style="text-align: right;">juv_misd</th>
-<th style="text-align: right;">juv_other</th>
-<th style="text-align: right;">priors</th>
-<th style="text-align: right;">charge</th>
-<th style="text-align: right;">two_year_recid</th>
-<th style="text-align: right;">northpointe</th>
+<th style="text-align: right;">o2post</th>
+<th style="text-align: right;">respirator</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">69</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">34</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">24</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">4</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">23</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">1</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">43</td>
-<td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">30000646</td>
+<td style="text-align: right;">96.16667</td>
 <td style="text-align: right;">2</td>
+<td style="text-align: right;">17.66667</td>
+<td style="text-align: right;">71</td>
 <td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">96.50000</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">44</td>
+<td style="text-align: right;">30001336</td>
+<td style="text-align: right;">97.00000</td>
 <td style="text-align: right;">1</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">26.66667</td>
+<td style="text-align: right;">71</td>
 <td style="text-align: right;">1</td>
+<td style="text-align: right;">77</td>
+<td style="text-align: right;">96.00000</td>
 <td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">30001396</td>
+<td style="text-align: right;">87.66667</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">25.66667</td>
+<td style="text-align: right;">76</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">80.66667</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">30001446</td>
+<td style="text-align: right;">99.33333</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">19.66667</td>
+<td style="text-align: right;">98</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">56</td>
+<td style="text-align: right;">99.00000</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">30001471</td>
+<td style="text-align: right;">94.00000</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">15.66667</td>
+<td style="text-align: right;">98</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">86</td>
+<td style="text-align: right;">92.16667</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">30001555</td>
+<td style="text-align: right;">94.33333</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">16.00000</td>
+<td style="text-align: right;">98</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+<td style="text-align: right;">96.66667</td>
 <td style="text-align: right;">0</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
+<p>We consider the cohort of all patients in the database admitted to the ICU. Patients who are mechanically ventilated immediately upon entering the ICU are subsequently removed. By focusing on the time window of the first 48 hours from admission to ICU, for each patient we determine the earliest time of mechanical ventilation, labeled <span class="math inline">\(t_{MV}\)</span>. Since mechanical ventilation is used to stabilize the respiratory profile of patients, for each patient we determine the average oxygen saturation in the three-hour period <span class="math inline">\([t_{MV}-3, t_{MV}]\)</span> prior to mechanical ventilation, labeled O<span class="math inline">\(_2\)</span>-pre. We also determine the oxygen saturation in the three-hour period following ventilation <span class="math inline">\([t_{MV}, t_{MV}+3]\)</span>, labeled O<span class="math inline">\(_2\)</span>-post. For controls (patient not ventilated at any point in the first 48 hours), we take the reference point as 12 hours after ICU admission, and calculate the values in three hours before and after this time. Patients’ respiratory stability, which represents the outcome of interest <span class="math inline">\(Y\)</span>, is measured as follows:</p>
+<span class="math display">\[\begin{align}
+    Y := \begin{cases}
+    0 \text{ if O}_2\text{-post} \geq 97, \\
+    -(\text{O}_2\text{-post}-97)^2 \text{ otherwise}.
+        \end{cases}
+\end{align}\]</span>
+<p>Values of oxygen saturation above 97 are considered stable, and the larger the distance from this stability value, the higher the risk for the patient. We also collect other important patient characteristics before intervention that are the key predictors of outcome, including the SOFA score, respiratory rate, and partial oxygen pressure (PaO<span class="math inline">\(_2\)</span>).</p>
 </section>
 <section id="constructing-the-sfm" class="level2">
 <h2 class="anchored" data-anchor-id="constructing-the-sfm">Constructing the SFM</h2>
-<p>We next construct the Standard Fairness Model:</p>
+<p>We next construct the Standard Fairness Model, with also a decision <span class="math inline">\(D\)</span>:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># constructing the SFM</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="st">"race"</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"age"</span>, <span class="st">"sex"</span>)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>W <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"juv_fel"</span>, <span class="st">"juv_misd"</span>, <span class="st">"juv_other"</span>, <span class="st">"priors"</span>, <span class="st">"charge"</span>)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"two_year_recid"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="st">"sex"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="st">"age"</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>W <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"sofa"</span>, <span class="st">"po2"</span>, <span class="st">"o2prior"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>D <span class="ot">&lt;-</span> <span class="st">"respirator"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="st">"o2post"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="obtaining-fair-predictions" class="level2">
-<h2 class="anchored" data-anchor-id="obtaining-fair-predictions">Obtaining Fair Predictions</h2>
-<p>Fair Predictions can be obtained by passing the data, SFM, and the choice of the business necessity set (<code>BN</code>) to the <code>fair_predictions()</code> function:</p>
+<section id="obtaining-fair-decisions" class="level2">
+<h2 class="anchored" data-anchor-id="obtaining-fair-decisions">Obtaining Fair Decisions</h2>
+<p>Fair Decisions can be obtained by passing the data, SFM, and any transform functions of the potential outcome <span class="math inline">\(Y_{d}\)</span> (<code>po_transform</code> argument) to the <code>fair_decisions()</code> function:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># build our own predictor and decompose the true one</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>fair_pred <span class="ot">&lt;-</span> <span class="fu">fair_predictions</span>(data, X, Z, W, Y, <span class="at">x0 =</span> <span class="dv">0</span>, <span class="at">x1 =</span> <span class="dv">1</span>,</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                              <span class="at">BN =</span> <span class="fu">c</span>(<span class="st">"IE"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># fit the outcome control model</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>resp_oc <span class="ot">&lt;-</span> <span class="fu">fair_decisions</span>(</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  data, <span class="at">X =</span> X, <span class="at">Z =</span> Z, <span class="at">W =</span> W, <span class="at">Y =</span> Y, <span class="at">D =</span> D, <span class="at">x0 =</span> <span class="dv">0</span>, <span class="at">x1 =</span> <span class="dv">1</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">po_transform =</span> <span class="cf">function</span>(x) <span class="fu">ifelse</span>(x <span class="sc">&lt;</span> <span class="dv">97</span>, <span class="sc">-</span>(x<span class="dv">-97</span>)<span class="sc">^</span><span class="dv">2</span>, <span class="dv">0</span>), <span class="at">po_diff_sign =</span> <span class="dv">1</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Note that in <code>faircause 0.2.0</code> the columns of the input data to functions <code>fair_predictions()</code> and <code>fair_decisions()</code> need to be either <code>numeric</code> or <code>integer</code>. Use one-hot encoding wherever appropriate.</p>
-<p>When fitting the fair predictor, <code>pytorch</code> is used under the hood to optimize the function of the form: <span class="math display">\[
-\begin{align}
-L(y, \hat{y}) + \lambda \Big( | \text{NDE}_{x_0, x_1}(\hat{y}) - \eta_1 | + | \text{NIE}_{x_1, x_0}(\hat{y}) - \eta_2 | + | \text{Exp-SE}_{x_1}(\hat{y}) - \eta_3 | + | \text{Exp-SE}_{x_0}(\hat{y}) - \eta_4 | \Big)
-\end{align}
-\]</span> where the values <span class="math inline">\(\eta_1, \eta_2, \eta_3, \eta_4\)</span> are either 0 if effect is not in the business necessity set, or equal the effect estimate for the true outcome <span class="math inline">\(Y\)</span> (if the effect is BN). Multiple values of the tuning parameter <span class="math inline">\(\lambda\)</span> are used at the same time (this choice can also be adjusted using the <code>lmbd_seq</code> parameter, to which an arbitrary sequence of values can be passed). For binary classification the loss <span class="math inline">\(L(y, \hat{y})\)</span> is the cross-entropy, whereas for regression the loss is the mean squared error (MSE).</p>
-<p>In the above, <code>fair_pred</code> is S3-class object of type <code>fair_prediction</code>. We can use the <code>predict()</code> function to obtain its predictions on new data.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>preds <span class="ot">&lt;-</span> <span class="fu">predict</span>(fair_pred, data)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># appending the in-sample predictions to the dataset</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>faircause_preds <span class="ot">&lt;-</span> preds<span class="sc">$</span>predictions[[<span class="dv">5</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Further generics can be applied to <code>fair_prediction</code> objects, such as <code>autoplot()</code>, which allows us to visualize the loss function and the causal fairness measures on held-out evaluation data:</p>
+<p>Note that in <code>faircause 0.2.0</code> the columns of the input data to functions <code>fair_decisions()</code> and <code>fair_predictions()</code> need to be either <code>numeric</code> or <code>integer</code>. Use one-hot encoding wherever appropriate.</p>
+<p>When constructing fair decisions, <code>xgboost</code> is first used to estimate the conditional average treatment effect (CATE) of <span class="math inline">\(D\)</span> on <span class="math inline">\(Y\)</span>, labeled <span class="math inline">\(\Delta\)</span>, also referred to as benefit:</p>
+<span class="math display">\[\begin{align}
+\Delta = E[Y_{d_1} - Y_{d_0} \mid x, z, w].
+\end{align}\]</span>
+<p>In the above, <code>resp_oc</code> is S3-class object of type <code>fair_decision</code>. We can use the <code>autoplot()</code> generic to analyze various important aspects of the decision making process:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>cowplot<span class="sc">::</span><span class="fu">plot_grid</span>(</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autoplot</span>(fair_pred, <span class="at">type =</span> <span class="st">"causal"</span>),</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">autoplot</span>(fair_pred, <span class="at">type =</span> <span class="st">"accuracy"</span>), <span class="at">ncol =</span> 1L</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># inspect the decomposition of D</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(resp_oc, <span class="at">type =</span> <span class="st">"decision"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="t2-compas-neural-inproc_files/figure-html/autoplot-1.png" class="img-fluid figure-img" width="1440"></p>
+<p><img src="t3-mimic-respirators_files/figure-html/decompose-decision-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-</section>
-<section id="decomposing-the-disparity-on-evaluation-data" class="level2">
-<h2 class="anchored" data-anchor-id="decomposing-the-disparity-on-evaluation-data">Decomposing the Disparity on Evaluation Data</h2>
-<p>The function <code>fair_prediction()</code> takes an <code>eval_prop</code> argument which determines the proportion of data that is used as an evaluation fold (for early stopping when fitting the neural network). We now extract this fold of the data, and decompose the disparity manually:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># decompose the predictions on the eval set</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>train_idx <span class="ot">&lt;-</span> <span class="fu">seq_len</span>(<span class="fu">round</span>(<span class="fl">0.75</span> <span class="sc">*</span> <span class="fu">nrow</span>(data)))</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>faircause_decomp <span class="ot">&lt;-</span> <span class="fu">fairness_cookbook</span>(data[<span class="sc">-</span>train_idx,], <span class="at">X =</span> X, <span class="at">W =</span> W, <span class="at">Z =</span> Z,</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">Y =</span> <span class="st">"faircause_preds"</span>,</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">x0 =</span> <span class="dv">0</span>, <span class="at">x1 =</span> <span class="dv">1</span>, <span class="at">nboot1 =</span> <span class="dv">20</span>, <span class="at">nboot2=</span><span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>Finally, we can plot the two decompositions, of the true outcome <span class="math inline">\(Y\)</span> and the newly constructed causally fair predictor <span class="math inline">\(\widehat{Y}^{FC}\)</span>, together:</p>
 <div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># inspect the decomposition of Delta</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(resp_oc, <span class="at">type =</span> <span class="st">"delta"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="t2-compas-neural-inproc_files/figure-html/plot-both-decomps-1.png" class="img-fluid figure-img" width="960"></p>
+<p><img src="t3-mimic-respirators_files/figure-html/decompose-delta-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># inspect benefit fairness</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(resp_oc, <span class="at">type =</span> <span class="st">"benefit_fairness"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="t3-mimic-respirators_files/figure-html/inspect-BF-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Further generics can be applied to <code>fair_decision</code> objects, such as <code>predict()</code>, which allows us to get estimates of the benefit <span class="math inline">\(\Delta\)</span> on some test data, and also find the optimal policy that satisfies benefit fairness:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># make predictions on test</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>test_data <span class="ot">&lt;-</span> data</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>fair_dec <span class="ot">&lt;-</span> <span class="fu">predict</span>(resp_oc, <span class="at">newdata =</span> test_data, <span class="at">budget =</span> <span class="fl">0.2</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># inspect the estimate benefit \Delta</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(fair_dec<span class="sc">$</span>delta, <span class="at">n =</span> 100L)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  [1] 8.017566e-01 3.724638e-01 5.191853e+01 0.000000e+00 6.212983e+00
+  [6] 4.203570e+00 1.008966e+01 1.269065e-01 0.000000e+00 3.286853e-01
+ [11] 1.251144e+00 5.440242e+00 2.653410e+00 0.000000e+00 3.287728e-01
+ [16] 6.071516e-01 4.757139e-01 0.000000e+00 1.529186e+00 2.971644e-01
+ [21] 8.352732e-01 3.049420e-01 0.000000e+00 1.316464e-01 9.029436e-01
+ [26] 2.170649e-02 2.222031e+00 6.038357e+00 1.162410e+00 9.170604e+00
+ [31] 1.005439e+01 1.413266e+01 3.665277e-01 0.000000e+00 0.000000e+00
+ [36] 3.129165e+00 4.450426e+00 1.166478e-01 0.000000e+00 2.907858e-01
+ [41] 7.480980e-04 0.000000e+00 1.167838e+00 1.495915e+00 0.000000e+00
+ [46] 0.000000e+00 0.000000e+00 8.373803e-01 1.013286e+01 0.000000e+00
+ [51] 6.888062e-06 9.781933e-01 5.623761e+00 4.914779e+00 1.095073e+01
+ [56] 2.950802e-05 1.074799e+01 2.525700e-01 4.529369e+00 2.937705e+01
+ [61] 5.786662e-04 0.000000e+00 0.000000e+00 4.605885e+00 4.780608e+00
+ [66] 6.791864e+00 1.930003e+01 0.000000e+00 5.194264e+00 2.610412e+00
+ [71] 0.000000e+00 0.000000e+00 4.935268e-03 1.658654e+00 8.200450e-01
+ [76] 9.657683e-02 6.761817e+00 1.841890e+00 2.859673e+00 0.000000e+00
+ [81] 9.752755e-02 0.000000e+00 4.548055e-01 1.569106e+00 1.290448e+00
+ [86] 2.937638e-01 1.533631e+01 5.638602e+00 1.379101e+01 0.000000e+00
+ [91] 0.000000e+00 0.000000e+00 6.255346e+00 9.792346e-02 0.000000e+00
+ [96] 1.116764e+00 9.761857e+00 2.054724e+00 3.707430e-01 4.080177e+00</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># inspect the allocated decisions</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(fair_dec<span class="sc">$</span>decision, <span class="at">n =</span> 100L)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  [1] 0 0 1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 1 1 0 0 0 0 0
+ [38] 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0 1 0 0 1 0 0 0 0 0 1 1 0 0 0 0 0 0 0
+ [75] 0 0 1 0 0 0 0 0 0 0 0 0 1 0 1 0 0 0 1 0 0 0 1 0 0 0</code></pre>
 </div>
 </div>
 

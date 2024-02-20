@@ -69,13 +69,14 @@ fair_pred <- fair_predictions(data, X, Z, W, Y, x0 = 0, x1 = 1,
 Note that in `faircause 0.2.0` the columns of the input data to functions `fair_predictions()` and `fair_decisions()` need to be either `numeric` or `integer`. Use one-hot encoding wherever appropriate.
 
 When fitting the fair predictor, `pytorch` is used under the hood to optimize the function of the form:
+$$
 \begin{align}
 L(y, \hat{y}) + \lambda \Big( | \text{NDE}_{x_0, x_1}(\hat{y}) - \eta_1 | + | \text{NIE}_{x_1, x_0}(\hat{y}) - \eta_2 | + | \text{Exp-SE}_{x_1}(\hat{y}) - \eta_3 | + | \text{Exp-SE}_{x_0}(\hat{y}) - \eta_4 | \Big)
 \end{align}
-where the values $\eta_1, \eta_2, \eta_3, \eta_4$ are either 0 if effect is not in the business necessity set, or equal the effect estimate for the true outcome $Y$ (if the effect is BN). Multiple values of the tuning parameter $\lambda$ are used at the same time (this choice can also be adjusted using the `lmbd_seq` parameter, to which an arbitrary sequence of values can be passed). For binary classification the loss $L(y, \hat{y})$ is the cross-entropy, whereas for regression the loss is the mean squared error (MSE). 
+$$ 
+where the values $\eta_1, \eta_2, \eta_3, \eta_4$ are either 0 if effect is not in the business necessity set, or equal the effect estimate for the true outcome $Y$ (if the effect is BN). Multiple values of the tuning parameter $\lambda$ are used at the same time (this choice can also be adjusted using the `lmbd_seq` parameter, to which an arbitrary sequence of values can be passed). For binary classification the loss $L(y, \hat{y})$ is the cross-entropy, whereas for regression the loss is the mean squared error (MSE).
 
-In the above, `fair_pred` is S3-class object of type `fair_prediction`. 
-We can use the `predict()` function to obtain its predictions on new data.
+In the above, `fair_pred` is S3-class object of type `fair_prediction`. We can use the `predict()` function to obtain its predictions on new data.
 
 ```{r new-preds}
 preds <- predict(fair_pred, data)
@@ -85,7 +86,7 @@ data$faircause_preds <- preds$predictions[[5]]
 
 Further generics can be applied to `fair_prediction` objects, such as `autoplot()`, which allows us to visualize the loss function and the causal fairness measures on held-out evaluation data:
 
-```{r autoplot, fig.align='center', fig.width=10, fig.height=6}
+```{r autoplot, fig.align='center', fig.width=15, fig.height=6}
 cowplot::plot_grid(
   autoplot(fair_pred, type = "causal"),
   autoplot(fair_pred, type = "accuracy"), ncol = 1L
@@ -119,15 +120,6 @@ xlabz <- c(
   ctfse = TeX("$Ctf$-$SE_{x_1, x_0}(y)$")
 )
 
-# xlabz <- c(
-#   tv = TeX("$TV_{x_0, x_1}(y)$"),
-#   nde = TeX("$NDE_{x_0, x_1}(y | x_0)$"),
-#   nie = TeX("$NIE_{x_1, x_0}(y | x_0)$"),
-#   expse_x1 = TeX("$Exp$-$SE_{x_1}(y)$"),
-#   expse_x0 = TeX("$Exp$-$SE_{x_0}(y)$")
-# )
-
-# res <- res[res$measure %in% c("ne", "nie", "expse_x1", "expse_x0", "tv"), ]
 res <- res[res$measure %in% c("tv", "ctfde", "ctfse", "ctfie"), ]
 res$measure <- as.factor(res$measure)
 
@@ -163,5 +155,5 @@ ggplot(res, aes(x = measure, y = value, fill = measure,
             fill = "green", alpha = 0.01, linewidth = 0.05,
             linetype = "dotted")
 
-# ggsave("~/Desktop/compas-in-processing.png", width = 10, height = 6)
+# ggsave("compas-in-processing.png", width = 10, height = 6)
 ```

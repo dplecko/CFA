@@ -53,8 +53,7 @@ for (i in seq_len(ncol(dat))) {
 knitr::kable(head(dat), caption = "MIMIC-IV Mortality data.")
 ```
 
-We consider the cohort of all patients in the database admitted to the ICU (and we only consider the first admission of each patient). We also load information on the SOFA score, admission diagnosis, age, sex, Charlson comorbidity index, worst values of lactate, PaO2/FiO2, and AST in first 24 hours. We further load the race information (protected attribute $X$) and the death indicator (outcome $Y$).
-We want to investigate the disparities in outcome between `"Caucasian"` and `"African American"` groups.
+We consider the cohort of all patients in the database admitted to the ICU (and we only consider the first admission of each patient). We also load information on the SOFA score, admission diagnosis, age, sex, Charlson comorbidity index, worst values of lactate, PaO2/FiO2, and AST in first 24 hours. We further load the race information (protected attribute $X$) and the death indicator (outcome $Y$). We want to investigate the disparities in outcome between `"Caucasian"` and `"African American"` groups.
 
 ## Constructing the SFM
 
@@ -73,7 +72,7 @@ Y <- "death"
 ```{r decompose-difference}
 fcb <- fairness_cookbook(
   data = dat, X = X, Z = Z, W = W, Y = Y,
-  x1 = "Caucasian", x0 = "African American", nboot2 = 5
+  x1 = "Caucasian", x0 = "African American"
 )
 ```
 
@@ -105,6 +104,5 @@ ggplot(age_dat[race %in% c("Caucasian", "African American")],
   scale_fill_discrete(name = "Race") +
   theme_minimal()
  
-# ggsave("~/Desktop/mortality.png", width = 7, height = 4, bg = "white",
-#        dpi = 500)
+# ggsave("icu-mortality.png", width = 7, height = 4, bg = "white", dpi = 500)
 ```

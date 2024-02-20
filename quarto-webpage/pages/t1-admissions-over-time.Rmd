@@ -88,7 +88,6 @@ The following code generates the data, obtains the ground truth causal fairness 
 #| fig-width: 8
 #| fig-height: 6
 #| fig-cap: "Tracking bias over time in the synthetic College Admissions dataset from Example 5.2, between years 2010 and 2020. Both the estimated values from simulated samples (solid line) and the true population values (dashed lines) are shown, for direct (red), indirect (green), and spurious (blue) effects."
-#| cache: true
 
 col_adm_tim <- function(n, cfs) {
 

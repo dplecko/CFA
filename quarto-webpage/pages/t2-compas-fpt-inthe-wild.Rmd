@@ -120,6 +120,7 @@ org_plt <- autoplot(org_tvd, decompose = "xspec", dataaset = dataset) +
 
 ```{python, message=FALSE}
 #| warning: false
+#| message: false
 import os
 
 exec(open(os.path.join(r.root, "py", "reweighing_compas.py")).read())
@@ -183,7 +184,7 @@ The fair prediction algorithms used above are intended to set the TV measure to 
 ```{r}
 #| label: fig-compas-fairpred
 #| fig-cap: Fair Predictions on the COMPAS dataset.
-#| fig-width: 16
+#| fig-width: 18
 #| fig-height: 12
 #| echo: false
 multi_plot <- function(..., labels = NULL, ncol = 1L) {
@@ -201,13 +202,13 @@ multi_plot <- function(..., labels = NULL, ncol = 1L) {
 }
 multi_plot(
   org_plt +
-    ggtitle(TeX("$TV_{x_0, x_1}(\\hat{y})$ decomposition: Random Forest on COMPAS")),
+    ggtitle(TeX("Random Forest")),
   rew_plt +
-    ggtitle(TeX("$TV_{x_0, x_1}(\\hat{y})$ decomposition: Reweighing on COMPAS")),
+    ggtitle(TeX("Reweighing")),
   red_plt +
-    ggtitle(TeX("$TV_{x_0, x_1}(\\hat{y})$ decomposition: Reductions on COMPAS")),
+    ggtitle(TeX("Reductions")),
   rjo_plt +
-    ggtitle(TeX("$TV_{x_0, x_1}(\\hat{y})$ decomposition: Reject-option on COMPAS")),
+    ggtitle(TeX("Reject-Option")),
   labels = c("(i)", "(ii)", "(iii)", "(iv)"), ncol = 2L
 )
 ```
