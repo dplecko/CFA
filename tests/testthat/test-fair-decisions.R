@@ -11,8 +11,8 @@ test_that("fair_decisions works", {
 
   expect_setequal(colnames(data), vars)
 
-  fd.nms <- c("d_fcb", "delta_fcb", "data", "delta", "delta_sign",
-              "delta_transform",
+  fd.nms <- c("d_fcb", "delta_fcb", "data", "delta", "po_diff_sign",
+              "po_transform",
               "xgb_mod", "xgb_params", "x0", "x1", "model", "X", "W", "Z",
               "Y", "D", "cl", "method", "tune_params", "nboot1", "nboot2")
 
