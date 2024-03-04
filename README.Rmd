@@ -50,7 +50,7 @@ To cite the paper, please use the following:
 You can install `faircause` from this Github repository by using the [devtools](https://cran.r-project.org/web/packages/devtools/index.html) package:
 
 ```{r, eval = FALSE}
-devtools::install_github("dplecko/faircause")
+devtools::install_github("dplecko/CFA")
 ```
 
 Please note that `faircause` is still under development (currently in version `0.2.0`) and any debug reports or suggested fixes are welcome.
