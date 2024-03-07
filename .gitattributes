@@ -1,7 +1,9 @@
 *.tex linguist-detectable=false
 *.qmd linguist-detectable=false
 *.Rmd linguist-detectable=false
-*.html linguist-detectable=false
 *.html linguist-language=HTML
 *.js linguist-language=JavaScript
 *.css linguist-language=CSS
+*.png linguist-vendored
+*.jpg linguist-vendored
+*.pdf linguist-vendored
