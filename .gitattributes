@@ -7,3 +7,5 @@
 *.png linguist-vendored
 *.jpg linguist-vendored
 *.pdf linguist-vendored
+docs/* linguist-vendored
+quarto-webpage/* linguist-vendored
