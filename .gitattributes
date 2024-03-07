@@ -9,3 +9,6 @@
 *.pdf linguist-vendored
 docs/* linguist-vendored
 quarto-webpage/* linguist-vendored
+man/* linguist-vendored
+data/* linguist-vendored
+
