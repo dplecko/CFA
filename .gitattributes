@@ -1,3 +1,14 @@
 *.tex linguist-detectable=false
 *.qmd linguist-detectable=false
 *.Rmd linguist-detectable=false
+*.html linguist-language=HTML
+*.js linguist-language=JavaScript
+*.css linguist-language=CSS
+*.png linguist-vendored
+*.jpg linguist-vendored
+*.pdf linguist-vendored
+docs/* linguist-vendored
+quarto-webpage/* linguist-vendored
+man/* linguist-vendored
+data/* linguist-vendored
+
