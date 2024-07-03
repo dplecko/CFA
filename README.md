@@ -42,7 +42,7 @@ You can install `faircause` from this Github repository by using the
 package:
 
 ``` r
-devtools::install_github("dplecko/CFA")
+devtools::install_github("CausalAILab/CFA")
 ```
 
 Please note that `faircause` is still under development (currently in
