@@ -1,4 +1,39 @@
 
+gi_bleeding_cb <- function(x, ...) {
+
+  gib_codes <- read.csv(file.path(root, "scripts", "fair-decision",
+                                  "gi_bleed_codes.csv"), sep = ";",
+                       colClasses = rep("character", 3))
+  names(gib_codes) <- c("diagnosis", "icd9", "icd10")
+  gib_codes$icd9 <- as.character(gib_codes$icd9)
+  x <- rbind(
+    x[icd_version == 9 & (icd_code %in% gsub("\\.", "", gib_codes$icd9))],
+    x[icd_version == 10 & (icd_code %in% gsub("\\.", "", gib_codes$icd10))]
+  )
+  x[, icd_code := TRUE]
+  x[, c("stay_id", "icd_code"), with=FALSE]
+}
+
+anzics_binary <- function(x, val_var, ...) {
+
+  x[, c(val_var) := ifelse(get(val_var) == 1, 1, 0)]
+  x
+}
+
+anzics_death <- function(x, ...) {
+
+  x[, DIED := ifelse(DIED == 1, TRUE, FALSE)]
+
+  x
+}
+
+anzics_sex <- function(x, ...) {
+
+  x[, SEX := ifelse(SEX == "M", "Male", "Female")]
+
+  x
+}
+
 eth_mim_callback <- function(x, val_var, env) {
 
   groups <- list(
@@ -58,8 +93,6 @@ eth_miiv_callback <- function(x, val_var, env) {
   names(map) <- rep(names(groups), times = lapply(groups, length))
 
   x[, race := names(map)[match(race, map)]]
-
-
 }
 
 eth_eicu_cb <- function(x, val_var, env) {

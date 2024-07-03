@@ -40,7 +40,7 @@ autoplot.fair_prediction <- function(object, type = c("causal", "accuracy"),
       ret <- cowplot::plot_grid(p_ent, p_acc, p_auc, ncol = 3L)
     } else {
 
-      ret <- ggplot(eval_meas, aes(x = lmbd, y = bce)) +
+      ret <- ggplot(eval_meas, aes(x = lmbd, y = mse)) +
         geom_point() + geom_line() + theme_minimal() +
         geom_ribbon(aes(ymin = mse - mse_sd, ymax = mse + mse_sd), alpha = 0.3) +
         ggtitle("Mean Squared Error")
@@ -78,7 +78,7 @@ predict.fair_prediction <- function(object, newdata, ...) {
                                   nboot1 = object$nboot1,
                                   nboot2 = object$nboot2, ...)
 
-    y_test <- newdata[[Y]]
+    y_test <- newdata[[object$Y]]
     p_test <- newdata[["preds"]]
     meas <- summary(test_fcb)$measures
     test_meas <- rbind(

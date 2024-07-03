@@ -62,14 +62,14 @@ We next construct the Standard Fairness Model, with also a decision $D$:
 ```{r construct-sfm}
 # constructing the SFM
 X <- "race"
-Z <- c("age", "sex")
+Z <- c("age")
 W <- c("acu_24", "diag", "charlson", "lact_24", "pafi_24", "ast_24")
 Y <- "death"
 ```
 
 ## Decomposing the Disparity
 
-```{r decompose-difference}
+```{r decompose-difference, warning=FALSE}
 fcb <- fairness_cookbook(
   data = dat, X = X, Z = Z, W = W, Y = Y,
   x1 = "Caucasian", x0 = "African American"

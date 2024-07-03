@@ -1,0 +1,157 @@
+---
+title: "Task 1: MIMIC-IV Hospitality Mortality after ICU Admission (DE Heterogeneity)"
+output: html_document
+date: "2024-07-01"
+---
+
+```{r setup, include=FALSE}
+root <- rprojroot::find_root(rprojroot::has_dir(".git"))
+Sys.setenv("RICU_CONFIG_PATH" = file.path(root, "scripts", "fair-decision"))
+Sys.setenv("RICU_SRC_LOAD" =
+             "mimic,miiv,aumc,hirid,eicu,eicu_demo,mimic_demo,anzics,sic")
+
+library(ricu)
+library(ggplot2)
+library(icd)
+library(data.table)
+library(faircause)
+library(matrixStats)
+r_dir <- file.path(root, "scripts", "fair-decision", "helpers")
+invisible(lapply(list.files(r_dir, full.names = TRUE), source))
+```
+
+## Loading the data from the MIMIC-IV dataset
+
+We begin by loading and inspecting the required data from MIMIC-IV:
+
+```{r icu-mortality-inspect}
+sel_coh <- load_concepts(c("adm_episode", "age"), "miiv", verbose = FALSE)
+patient_ids <- id_col(sel_coh[adm_episode == 1 & age >= 18])
+
+dat <- load_concepts(c("death", "age", "acu_24", "charlson", "diag", 
+                       "sex", "race"), 
+                     "miiv", patient_ids = patient_ids, verbose = FALSE)
+dat[, sex := as.integer(sex == "Male")]
+dat[, c(index_var(dat)) := NULL]
+dat <- dat[race %in% c("Caucasian", "African American")]
+dat[, race := as.integer(race == "African American")]
+imp_lst <- list(
+  age = 65,
+  acu_24 = median(dat$acu_24, na.rm = TRUE),
+  death = FALSE,
+  adm_diag = 0,
+  race = NA
+)
+
+# diagnoses grouping
+diag_dt <- structure(
+  list(diag_index = 0:17, 
+       diag = c("MED", "CMED",  "NMED", "OMED", "PSYCH", "GU", "TRAUM", 
+                    "ENT", "CSURG", "NSURG", "ORTHO", "PSURG", "SURG", 
+                    "TSURG", "VSURG", "GYN", "OBS", "DENT")
+  ), 
+  row.names = c(NA, -18L), class = c("data.table", "data.frame")
+)
+
+dat <- merge(dat, diag_dt, by = "diag", all.x = TRUE)
+dat[, diag := NULL]
+dat <- rename_cols(dat, "diag", "diag_index")
+diag_dt <- setnames(diag_dt, c("diag_group", "group_name"))
+
+for (i in seq_len(ncol(dat))) {
+  
+  var <- names(dat)[i]
+  if (any(is.na(dat[[var]])) & !is.null(imp_lst[[var]]))
+    dat[is.na(get(var)), c(var) := imp_lst[[var]]]
+}
+
+dat <- dat[complete.cases(dat)]
+
+knitr::kable(head(dat), caption = "MIMIC-IV Mortality data.")
+```
+
+
+## Determining the adjustment covariates
+
+```{r}
+X <- c("acu_24", "charlson", "age", "diag", "sex")
+W <- "race"
+Y <- "death"
+```
+
+## Estimating the direct effects
+
+```{r}
+nboot <- 5
+data_path <- tempfile(fileext = ".csv")
+fwrite(dat, data_path)
+
+n <- nrow(dat)
+de_crf <- matrix(NA, nrow = n, ncol = nboot)
+
+for (i in seq_len(nboot)) {
+  cat("Repetition", i, ": Start")
+  
+  # Define the output path for the current iteration
+  output_path <- tempfile(fileext = ".csv")
+  
+  # Build the system call to run the worker script
+  script_path <- file.path(root, "scripts/fair-cause/boot-crf.R") 
+  cmd <- sprintf(
+    "Rscript %s %d %s '%s' %s %s %s",
+    script_path, i, data_path, paste(X, collapse = ","), W, Y, output_path
+  )
+  
+  # Run the worker script
+  system(cmd, wait = TRUE)
+  
+  # Read the output predictions
+  preds_dt <- fread(output_path)
+  
+  # Fill the preds matrix
+  de_crf[preds_dt$id, i] <- preds_dt$pred
+  
+  cat(", End\n")
+}
+
+# Clean up temporary files
+unlink(data_path)
+
+# Put the estimates back in
+dat <- dat[, de_mean := rowMeans(de_crf, na.rm = TRUE)]
+dat <- dat[, de_var := rowVars(de_crf, na.rm = TRUE)]
+```
+
+## Visualize effects along age and diagnosis
+
+```{r, fig.align='center', fig.width=14, fig.height=10}
+trim_ends <- function(x, eps) {
+  
+  x[x > eps] <- eps
+  x[x < -eps] <- -eps
+  x
+}
+
+dat <- rename_cols(dat, "diag_group", "diag")
+dat <- merge(dat, diag_dt, by = "diag_group", all.x = TRUE, 
+             allow.cartesian = TRUE)
+
+mean_dt <- dat[, list(mean_X = mean(de_mean), var_X = mean(de_var)), 
+               by = c("age", "diag_group")]
+mean_dt[, mean_X := trim_ends(mean_X, 0.02)]
+mean_dt[, p_val := pnorm(abs(mean_X/sqrt(var_X)), lower.tail = FALSE)]
+ggplot(
+  mean_dt, aes(x = diag_group, y = age, fill = mean_X, alpha = 1 - p_val)
+) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, name = "DE") +
+  theme_minimal() + 
+  geom_text(aes(label = paste0(round(mean_X * 100, 1), "%")), 
+            color = "black", size = 3) +
+  guides(alpha = "none") +
+  scale_x_continuous(breaks = diag_dt$diag_group, 
+                     labels = diag_dt$group_name) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  geom_vline(xintercept = 6.5, color = "red")
+```

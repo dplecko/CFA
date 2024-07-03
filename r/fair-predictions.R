@@ -69,7 +69,7 @@
 fair_predictions <- function(data, X, Z, W, Y, x0, x1, BN = "",
                              eval_prop = 0.25, lr = 0.001,
                              lmbd_seq = c(0.1, 0.5, 1, 2, 5, 10),
-                             relu_eps = FALSE, patience = 100,
+                             relu_eps = FALSE, patience = 100, py_seed = 123,
                              method = c("medDML", "causal_forest"),
                              model = c("ranger", "linear"), tune_params = FALSE,
                              nboot1 = 1L, nboot2 = 100L, ...) {
@@ -127,7 +127,7 @@ fair_predictions <- function(data, X, Z, W, Y, x0, x1, BN = "",
       eta_ie = y_meas[y_meas$measure == "nie",]$value,
       eta_se_x1 = y_meas[y_meas$measure == "expse_x1",]$value,
       eta_se_x0 = y_meas[y_meas$measure == "expse_x0",]$value,
-      relu_eps = relu_eps, verbose = FALSE, patience = patience
+      relu_eps = relu_eps, verbose = FALSE, patience = patience, seed = py_seed
     )
 
     # get the predictions on the

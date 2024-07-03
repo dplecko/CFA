@@ -118,6 +118,11 @@ org_plt <- autoplot(org_tvd, decompose = "xspec", dataaset = dataset) +
 
 #### **(ii)** Logistic regression trained with _reweighing_ [@kamiran2012data]
 
+```{python}
+#| echo: false
+import warnings
+warnings.filterwarnings("ignore")
+```
 ```{python, message=FALSE}
 #| warning: false
 #| message: false
@@ -219,7 +224,7 @@ The ProPublica team notes that all methods substantially reduce the $\text{TV}_{
 
 To produce causally meaningful fair predictions, we suggest using the `fairadapt` package [@plevcko2020fair; @plevcko2021fairadapt]. In particular, the package offers a way of removing discrimination which is based on the causal diagram. In this application, we are interested in constructing fair predictions that remove both the direct and the indirect effect. Firstly, we obtain the adjacency matrix representing the causal diagram associated with the COMPAS dataset:
 
-```{r}
+```{r, fig.width=12, fig.height=8}
 set.seed(2022)
 # load the causal diagram
 mats <- get_mat(dataset)

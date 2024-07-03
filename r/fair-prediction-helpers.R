@@ -15,7 +15,6 @@ verify_numeric_input <- function(data) {
   }
 }
 
-
 compute_auc <- function(out, pred) {
 
   if(!all(out %in% c(0, 1))) return(0)

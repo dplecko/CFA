@@ -271,6 +271,20 @@
       ]
     }
   },
+  "gi_bleed": {
+    "target": "id_tbl",
+    "sources": {
+      "miiv": [
+        {
+          "ids": [9, 10],
+          "table": "diagnoses_icd",
+          "val_var": "icd_code",
+          "sub_var": "icd_version",
+          "callback": "gi_bleeding_cb"
+        }
+      ]
+    }
+  },
   "COPD": {
     "description": "No. comorbidities",
     "category": "Misc.",
@@ -760,8 +774,29 @@
       ]
     }
   },
+  "indig": {
+    "target": "id_tbl",
+    "sources": {
+      "anzics": [
+        {
+          "table": "main",
+          "val_var": "INDIGENOUS",
+          "class": "col_itm",
+          "callback": "anzics_binary"
+        }
+      ]
+    }
+  },
   "sex": {
     "sources": {
+      "anzics": [
+        {
+          "table": "main",
+          "val_var": "SEX",
+          "callback": "anzics_sex",
+          "class": "col_itm"
+        }
+      ],
       "sic": [
         {
           "table": "cases",
@@ -775,6 +810,13 @@
   "adm_episode": {
     "target": "id_tbl",
     "sources": {
+      "anzics": [
+        {
+          "table": "main",
+          "val_var": "AdmEpisode",
+          "class": "col_itm"
+        }
+      ],
       "sic": [
         {
           "table": "cases",
@@ -795,8 +837,39 @@
       ]
     }
   },
+  "apache_iii_diag": {
+    "target": "id_tbl",
+    "sources": {
+      "anzics": [
+        {
+          "table": "main",
+          "val_var": "AP3DIAG",
+          "class": "col_itm"
+        }
+      ]
+    }
+  },
+  "apache_iii_risk": {
+    "target": "id_tbl",
+    "sources": {
+      "anzics": [
+        {
+          "table": "main",
+          "val_var": "Apache3RiskOfDeath",
+          "class": "col_itm"
+        }
+      ]
+    }
+  },
   "age": {
     "sources": {
+      "anzics": [
+        {
+          "table": "main",
+          "val_var": "AGE",
+          "class": "col_itm"
+        }
+      ],
       "sic": [
         {
           "table": "cases",
@@ -982,6 +1055,15 @@
   },
   "death": {
     "sources": {
+      "anzics": [
+        {
+          "table": "main",
+          "val_var": "DIED",
+          "callback": "anzics_death",
+          "index_var": "HOSP_DS_DTM",
+          "class": "col_itm"
+        }
+      ],
       "sic": [
         {
           "table": "cases",
