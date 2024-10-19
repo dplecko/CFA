@@ -89,6 +89,7 @@ fairness_cookbook <- function(data, X, Z, W, Y, x0, x1,
 
   if (method == "causal_forest") {
 
+    pw <- NULL
     for (rep in seq_len(nboot1)) {
 
       res[[rep]] <- ci_crf(data, X, Z, W, Y, x0, x1, rep, nboot = nboot2,
@@ -111,6 +112,10 @@ fairness_cookbook <- function(data, X, Z, W, Y, x0, x1,
                             nboot = nboot2, tune_params = tune_params,
                             params = params)
       params <- attr(res[[rep]], "params")
+      if (rep == 1) {
+
+        pw <- attr(res[[rep]], "pw")
+      }
     }
     res <- do.call(rbind, res)
   }
@@ -122,6 +127,7 @@ fairness_cookbook <- function(data, X, Z, W, Y, x0, x1,
       x0 = x0, x1 = x1, model = model, X = X, W = W, Z = Z, Y = Y,
       cl = match.call(),
       method = method,
+      pw = pw,
       params = params),
     class = "faircause"
   )

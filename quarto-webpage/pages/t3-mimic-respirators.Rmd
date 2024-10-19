@@ -8,6 +8,7 @@ date: "2024-02-16"
 library(faircause)
 library(ricu)
 library(ggplot2)
+library(data.table)
 set.seed(2024)
 
 load_resp_data <- function(src) {
@@ -116,7 +117,7 @@ Fair Decisions can be obtained by passing the data, SFM, and any transform funct
 ```{r construct-fair-decisions, message=FALSE}
 # fit the outcome control model
 resp_oc <- fair_decisions(
-  data, X = X, Z = Z, W = W, Y = Y, D = D, x0 = 0, x1 = 1,
+  as.data.table(data), X = X, Z = Z, W = W, Y = Y, D = D, x0 = 0, x1 = 1,
   delta_transform = function(x) ifelse(x < 97, -(x-97)^2, 0), delta_sign = 1
 )
 ```
@@ -124,12 +125,12 @@ resp_oc <- fair_decisions(
 Note that in `faircause 0.2.0` the columns of the input data to functions `fair_decisions()` and `fair_predictions()` need to be either `numeric` or `integer`. Use one-hot encoding wherever appropriate.
 
 When constructing fair decisions, `xgboost` is first used to estimate the conditional average treatment effect (CATE) of $D$ on $Y$, labeled $\Delta$, also referred to as benefit:
-
-``` $$
+$$
 \begin{align}
 \Delta = E[Y_{d_1} - Y_{d_0} \mid x, z, w].
 \end{align}
-$$ e above, `resp_oc` is S3-class object of type `fair_decision`. We can use the `autoplot()` generic to analyze various important aspects of the decision making process:
+$$
+In the above, `resp_oc` is S3-class object of type `fair_decision`. We can use the `autoplot()` generic to analyze various important aspects of the decision making process:
 
 ```{r decompose-decision, fig.align='center'}
 # inspect the decomposition of D

@@ -223,16 +223,18 @@ doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger", tune_params,
   extrm_pxz <- (px_z < extrm_prob) | (1 - px_z < extrm_prob)
   extrm_pxzw <-  (px_zw < extrm_prob) | (1 - px_zw < extrm_prob)
   extrm_idx <- extrm_pxz | extrm_pxzw
+  pw <- list(px_z = px_z, px_zw = px_zw)
 
   y0[extrm_idx] <- y1[extrm_idx] <- y0w1[extrm_idx] <- y1w0[extrm_idx] <- NA
 
   if (mean(extrm_idx) > 0.02) {
-    message(100 * mean(extrm_idx),
+    message(round(100 * mean(extrm_idx), 2),
             "% of extreme P(x | z) or P(x | z, w) probabilities.\n",
-            "Estimates likely biased.")
+            "Reported results are for the overlap population. ",
+            "Consider investigating overlap issues.")
   }
 
-  return(list(y0, y1, y0w1, y1w0, params = params))
+  return(list(y0, y1, y0w1, y1w0, params = params, pw = pw))
 }
 
 ci_mdml <- function(data, X, Z, W, Y, x0, x1, model, rep, nboot,
@@ -264,6 +266,7 @@ ci_mdml <- function(data, X, Z, W, Y, x0, x1, model, rep, nboot,
     yx0 <- est_med[[1]]
     yx1 <- est_med[[2]]
     yx1wx0 <- est_med[[4]]
+    pw <- if (rep == 1) est_med[["pw"]] else NULL
   }
 
   if (length(Z) == 0) {
@@ -308,5 +311,6 @@ ci_mdml <- function(data, X, Z, W, Y, x0, x1, model, rep, nboot,
   )
   res <- data.frame(res, rep = rep)
   attr(res, "params") <- params
+  attr(res, "pw") <- pw
   res
 }

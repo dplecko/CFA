@@ -76,7 +76,10 @@ def causal_loss(pred, pred0, pred1, X, Z, W, Y, px_z, eta_de, eta_ie, eta_se_x1,
 def train_w_es(train_data, eval_data, x_col, z_cols, w_cols, y_col, lmbd, lr=0.001, 
                epochs=500, patience=20, max_restarts=5, eval_size=1000, 
                nde=True, nie=True, nse=True, eta_de=0, eta_ie=0, eta_se_x1=0, eta_se_x0=0,
-               verbose=False, loss=False, relu_eps=False, eps = 0.005, batch_size=512):
+               verbose=False, loss=False, relu_eps=False, eps = 0.005, batch_size=512, seed = 123):
+
+    np.random.seed(int(seed))
+    torch.manual_seed(int(seed))
 
     # decide which effects are nullified based on the BN set
     if nde:
@@ -85,6 +88,12 @@ def train_w_es(train_data, eval_data, x_col, z_cols, w_cols, y_col, lmbd, lr=0.0
       eta_ie = 0
     if nse:
       eta_se_x0 = eta_se_x1 = 0
+
+    # Ensure z_cols and w_cols are lists
+    if isinstance(z_cols, str):
+        z_cols = [z_cols]
+    if isinstance(w_cols, str):
+        w_cols = [w_cols]
 
     # Initial partition of data
     X_train = train_data[x_col].values.reshape(-1, 1)
