@@ -19,7 +19,7 @@ summary.faircause <- function(object, decompose = "xspec", ...) {
       Y = object$Y,
       x0 = object$x0,
       x1 = object$x1,
-      measures = summarize_measures(object$measures),
+      measures = summarize_measures(object$measures, object$method),
       decompose = decompose
     ),
     class = "summary.faircause"
@@ -70,8 +70,10 @@ autoplot.faircause <- function(object, decompose = c("xspec", "general", "both")
                                dataset = "", signed = TRUE, var_name = "y", ...) {
 
   decompose <- match.arg(decompose, c("xspec", "general", "both"))
-  df <- summarize_measures(object$measures)
-  names(df) <- c("Measure", "Value", "StdDev")
+  df <- summarize_measures(object$measures, object$method)
+
+  names(df)[match(c("measure", "value", "sd"), names(df))] <-
+    c("Measure", "Value", "StdDev")
 
   rename <- list(
     tv = TeX(sprintf("$TV_{x_0, x_1}(%s)$", var_name)),
@@ -135,8 +137,13 @@ autoplot.faircause <- function(object, decompose = c("xspec", "general", "both")
 }
 
 # helpers
-summarize_measures <- function(meas) {
+summarize_measures <- function(meas, method) {
 
+  if (method == "debiasing") {
+
+    meas$scale <- NULL
+    return(meas)
+  }
   data.frame(
     measure = sort(unique(meas$measure)),
     value = tapply(meas$value, meas$measure, mean),

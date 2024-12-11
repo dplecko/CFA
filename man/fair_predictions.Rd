@@ -18,6 +18,7 @@ fair_predictions(
   lmbd_seq = c(0.1, 0.5, 1, 2, 5, 10),
   relu_eps = FALSE,
   patience = 100,
+  py_seed = 123,
   method = c("medDML", "causal_forest"),
   model = c("ranger", "linear"),
   tune_params = FALSE,
@@ -62,9 +63,11 @@ a different value of the \eqn{\lambda} may be more appropriate.}
 \item{patience}{Number of epochs of patience before triggering early
 stopping.}
 
-\item{method}{A \code{character} scalar with two options: \code{"medDML"} for
-mediation double-machine learning, \code{"causal_forest"} for the
-\code{\link[grf:causal_forest]{grf::causal_forest()}} method from the \code{grf} package.}
+\item{method}{A \code{character} scalar with three options:
+\code{"debiasing"} for a one-step debiasing approach with underlying
+\code{xgboost} learners, \code{"causal_forest"} for the
+\code{\link[grf:causal_forest]{grf::causal_forest()}} method from the \code{grf} package, and
+\code{"medDML"} for mediation double-machine learning.}
 
 \item{model}{A \code{character} scalar taking values in
 \code{c("ranger", "linear")}, indicating whether a tree-based learner is used
@@ -77,12 +80,14 @@ parameter is tuned). Defaults to \code{FALSE}.}
 
 \item{nboot1}{An \code{integer} scalar determining the number of outer
 bootstrap repetitions, that is, how many times the fitting procedure is
-repeated. Default is \code{1L}.}
+repeated. Default is \code{1L}. This parameter is ignored if
+\code{method == "debiasing"}.}
 
 \item{nboot2}{An \code{integer} scalar determining the number of inner
 bootstrap repetitions, that is, how many bootstrap samples are taken after
 the potential outcomes are obtained from the estimation procedure.
-Default is \code{100L}.}
+Default is \code{100L}. This parameter is ignored if
+\code{method == "debiasing"}.}
 
 \item{...}{Further arguments passed to downstream model fitting functions.}
 }

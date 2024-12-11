@@ -10,9 +10,9 @@ test_that("fairness_cookbook input types", {
   expect_setequal(colnames(data), vars)
 
   fc.nms <- c("measures", "x0", "x1", "model", "X", "W", "Z", "Y", "cl",
-              "method", "params")
+              "method", "params", "pw")
 
-  for (method in c("medDML", "causal_forest")) {
+  for (method in c("medDML", "causal_forest", "debiasing")) {
 
     # apply cookbook to various data types of Y
     ran <- with_seed(
@@ -22,7 +22,6 @@ test_that("fairness_cookbook input types", {
     )
 
     # both print() and str() throw
-
     expect_type(ran, "list")
     expect_named(ran, fc.nms, ignore.order = TRUE)
 
@@ -31,20 +30,29 @@ test_that("fairness_cookbook input types", {
     expect_identical(ran[["X"]], "x")
     expect_identical(ran[["method"]], method)
 
+
     ran.meas <- ran[["measures"]]
-    meas.nms <- c("tv", "ctfde", "ctfse", "ett", "ctfie", "te", "nde", "nie",
-                  "expse_x1", "expse_x0")
-    col.nms <- c("value", "boot", "measure", "rep")
-    expect_named(ran.meas, col.nms, ignore.order = TRUE)
-    expect_setequal(unique(ran.meas$measure), meas.nms)
 
-    if (method == "causal_forest") {
-      expect_true(all(is.na(ran.meas[ran.meas$measure == "expse_x1", ]$value)))
-      expect_true(all(is.na(ran.meas[ran.meas$measure == "expse_x0", ]$value)))
+    if (method == "debiasing") {
+
+      meas.nms <- c("tv", "ctfde", "ctfse", "ett", "ctfie")
+      col.nms <- c("value", "measure", "sd", "scale")
+      expect_named(ran.meas, col.nms, ignore.order = TRUE)
+      expect_setequal(unique(ran.meas$measure), meas.nms)
+    } else {
+
+      meas.nms <- c("tv", "ctfde", "ctfse", "ett", "ctfie", "te", "nde", "nie",
+                    "expse_x1", "expse_x0")
+      col.nms <- c("value", "boot", "measure", "rep")
+      expect_named(ran.meas, col.nms, ignore.order = TRUE)
+      expect_setequal(unique(ran.meas$measure), meas.nms)
+
+      if (method == "causal_forest") {
+        expect_true(all(is.na(ran.meas[ran.meas$measure == "expse_x1", ]$value)))
+        expect_true(all(is.na(ran.meas[ran.meas$measure == "expse_x0", ]$value)))
+      }
     }
-
   }
-
 })
 
 

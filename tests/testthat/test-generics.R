@@ -1,5 +1,4 @@
 
-
 with_seed(301, {
   data <- data_gen(100, add_z = TRUE)
 })
@@ -8,50 +7,60 @@ vars <- c("x", "y", "w", "z")
 
 expect_setequal(colnames(data), vars)
 
-test_that("generics, ranger", {
+test_that("test generics for combinations of method, model", {
 
-  fc.ranger <- with_seed(
-    302,
-    fairness_cookbook(data, X = "x", Y = "y", Z = "z", W = "w", x0 = 0, x1 = 1)
-  )
+  methods <- c("medDML", "causal_forest", "debiasing")
+  models <- c("ranger", "linear")
 
-  announce_snapshot_file(name = "auto_ranger.png")
-  announce_snapshot_file(name = "unsigned_ranger.png")
-  announce_snapshot_file(name = "both_ranger.png")
+  for (method in methods) {
+    for (model in models) {
 
-  expect_snapshot(print(fc.ranger))
-  expect_snapshot(summary(fc.ranger))
-  expect_snapshot(summary(fc.ranger, decompose = "general"))
+      if (method != "medDML" & model == "linear") next
+      cat(method, model, "\n")
+       # Use local scope to avoid variable overwriting issues in loops
+      local({
+        method_inner <- method
+        model_inner <- model
 
-  aut.plt <- autoplot(fc.ranger)
+        fc <- with_seed(
+          302,
+          fairness_cookbook(data, X = "x", Y = "y", Z = "z", W = "w",
+                            x0 = 0, x1 = 1, method = method_inner, model = model_inner)
+        )
 
-  expect_s3_class(aut.plt, "ggplot")
+        auto_plot_name <- paste0("auto_", model_inner, "_", method_inner)
+        unsigned_plot_name <- paste0("unsigned_", model_inner, "_", method_inner)
+        both_plot_name <- paste0("both_", model_inner, "_", method_inner)
 
-  expect_snapshot_plot("auto_ranger", print(aut.plt))
+        # Announce snapshot files
+        announce_snapshot_file(name = paste0(auto_plot_name, ".png"))
 
-  unsign.plt <- autoplot(fc.ranger, signed = FALSE)
-  expect_snapshot_plot("unsigned_ranger", print(unsign.plt))
+        # Expectations
+        expect_snapshot(print(fc))
+        expect_snapshot(summary(fc))
+        expect_snapshot(summary(fc, decompose = "general"))
 
-  both.plt <- autoplot(fc.ranger, decompose = "both")
-  expect_snapshot_plot("both_ranger", print(both.plt))
+        # Autoplot
+        aut.plt <- autoplot(fc)
+        expect_s3_class(aut.plt, "ggplot")
+        expect_snapshot_plot(auto_plot_name, print(aut.plt))
+
+        # For ranger model, include unsigned and both plots
+        if (model_inner == "ranger") {
+          announce_snapshot_file(name = paste0(unsigned_plot_name, ".png"))
+          announce_snapshot_file(name = paste0(both_plot_name, ".png"))
+
+          unsign.plt <- autoplot(fc, signed = FALSE)
+          expect_snapshot_plot(unsigned_plot_name, print(unsign.plt))
+
+          if (method == "medDML") {
+
+            both.plt <- autoplot(fc, decompose = "both")
+            expect_snapshot_plot(both_plot_name, print(both.plt))
+          }
+        }
+      })
+    }
+  }
 })
 
-test_that("generics, linear", {
-
-  fc.lin <- with_seed(
-    302,
-    fairness_cookbook(data, X = "x", Y = "y", Z = "z", W = "w", x0 = 0, x1 = 1,
-                      model = "linear")
-  )
-
-  announce_snapshot_file(name = "auto_lin.png")
-
-  expect_snapshot(print(fc.lin))
-  expect_snapshot(summary(fc.lin))
-
-  aut.plt <- autoplot(fc.lin, decompose = "general")
-
-  expect_s3_class(aut.plt, "ggplot")
-
-  expect_snapshot_plot("auto_lin", print(aut.plt))
-})

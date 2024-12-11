@@ -4,7 +4,6 @@ test_that("Z, W sets empty", {
   with_seed(201, {
     data <- data_gen(100, add_z = TRUE)
   })
-  data$y <- as.integer(data$y) - 1L
 
   for (method in c("medDML", "causal_forest")) {
 

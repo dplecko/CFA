@@ -13,7 +13,7 @@ data_gen <- function(n, add_z = FALSE, seed = NULL) {
   w <-  -x * coeff + coeff / 2 + rnorm(n, sd = dev)
   y <- rbinom(n, size = 1, prob = expit(x))
 
-  res <- data.frame(y = factor(y), x, w)
+  res <- data.frame(y, x, w)
 
   if (add_z) {
     res <- cbind(res, z = rnorm(n))

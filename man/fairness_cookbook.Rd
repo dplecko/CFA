@@ -12,7 +12,7 @@ fairness_cookbook(
   Y,
   x0,
   x1,
-  method = c("medDML", "causal_forest"),
+  method = c("debiasing", "causal_forest", "medDML"),
   model = c("ranger", "linear"),
   tune_params = FALSE,
   nboot1 = 1L,
@@ -35,9 +35,11 @@ protected attribute. Must be one of the entries of \code{names(data)}.}
 \item{x0, x1}{Scalar values giving the two levels of the binary protected
 attribute.}
 
-\item{method}{A \code{character} scalar with two options: \code{"medDML"} for
-mediation double-machine learning, \code{"causal_forest"} for the
-\code{\link[grf:causal_forest]{grf::causal_forest()}} method from the \code{grf} package.}
+\item{method}{A \code{character} scalar with three options:
+\code{"debiasing"} for a one-step debiasing approach with underlying
+\code{xgboost} learners, \code{"causal_forest"} for the
+\code{\link[grf:causal_forest]{grf::causal_forest()}} method from the \code{grf} package, and
+\code{"medDML"} for mediation double-machine learning.}
 
 \item{model}{A \code{character} scalar taking values in
 \code{c("ranger", "linear")}, indicating whether a tree-based learner is used
@@ -50,12 +52,14 @@ parameter is tuned). Defaults to \code{FALSE}.}
 
 \item{nboot1}{An \code{integer} scalar determining the number of outer
 bootstrap repetitions, that is, how many times the fitting procedure is
-repeated. Default is \code{1L}.}
+repeated. Default is \code{1L}. This parameter is ignored if
+\code{method == "debiasing"}.}
 
 \item{nboot2}{An \code{integer} scalar determining the number of inner
 bootstrap repetitions, that is, how many bootstrap samples are taken after
 the potential outcomes are obtained from the estimation procedure.
-Default is \code{100L}.}
+Default is \code{100L}. This parameter is ignored if
+\code{method == "debiasing"}.}
 
 \item{...}{Further arguments passed to downstream model fitting functions.}
 }
@@ -78,7 +82,7 @@ in the estimation procedure. See \code{faircause:::doubly_robust_med()} and
 }
 \description{
 Implementation of Fairness Cookbook in Causal Fairness Analysis
-(Plecko & Bareinboim 2022). Uses only plain \code{R}.
+(Plecko & Bareinboim 2024). Uses only plain \code{R}.
 }
 \details{
 The procedure takes the data as an input, together with

@@ -18,9 +18,9 @@ test_that("fairness_cookbook reports non-overlap", {
     with_seed(
       203,
       fairness_cookbook(data, X = "X", Z = Z, Y = "Y", W = W,
-                        x0 = 0, x1 = 1)
+                        x0 = 0, x1 = 1, eps_trim = 0.5, method = "medDML")
     ),
-    regexp = "Estimates likely biased."
+    regexp = "Reported results are for the overlap population."
   )
 
 })

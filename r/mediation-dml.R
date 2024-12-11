@@ -98,7 +98,7 @@ pred <- function(mod, x, ...) {
 }
 
 doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger", tune_params,
-                              params, extrm_prob = 0.01, ...) {
+                              params, eps_trim = 0.01, ...) {
 
   if (is.factor(x)) x <- as.integer(x) - 1L
   if (is.factor(y)) {
@@ -220,8 +220,8 @@ doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger", tune_params,
   }
 
   # trim the extreme probabilities
-  extrm_pxz <- (px_z < extrm_prob) | (1 - px_z < extrm_prob)
-  extrm_pxzw <-  (px_zw < extrm_prob) | (1 - px_zw < extrm_prob)
+  extrm_pxz <- (px_z < eps_trim) | (1 - px_z < eps_trim)
+  extrm_pxzw <-  (px_zw < eps_trim) | (1 - px_zw < eps_trim)
   extrm_idx <- extrm_pxz | extrm_pxzw
   pw <- list(px_z = px_z, px_zw = px_zw)
 
@@ -267,7 +267,7 @@ ci_mdml <- function(data, X, Z, W, Y, x0, x1, model, rep, nboot,
     yx1 <- est_med[[2]]
     yx1wx0 <- est_med[[4]]
     pw <- if (rep == 1) est_med[["pw"]] else NULL
-  }
+  } else pw <- NULL
 
   if (length(Z) == 0) {
 

@@ -1,7 +1,7 @@
 #' fairness_cookbook
 #'
 #' Implementation of Fairness Cookbook in Causal Fairness Analysis
-#' (Plecko & Bareinboim 2022). Uses only plain \code{R}.
+#' (Plecko & Bareinboim 2024). Uses only plain \code{R}.
 #'
 #' The procedure takes the data as an input, together with
 #' the causal graph given by the Standard Fairness Model, and outputs a causal
@@ -15,9 +15,11 @@
 #' @param Y A \code{character} scalar giving the name of the outcome.
 #' @param x0,x1 Scalar values giving the two levels of the binary protected
 #' attribute.
-#' @param method A \code{character} scalar with two options: \code{"medDML"} for
-#' mediation double-machine learning, \code{"causal_forest"} for the
-#' [grf::causal_forest()] method from the \code{grf} package.
+#' @param method A \code{character} scalar with three options:
+#' \code{"debiasing"} for a one-step debiasing approach with underlying
+#' \code{xgboost} learners, \code{"causal_forest"} for the
+#' [grf::causal_forest()] method from the \code{grf} package, and
+#' \code{"medDML"} for mediation double-machine learning.
 #' @param model A \code{character} scalar taking values in
 #' \code{c("ranger", "linear")}, indicating whether a tree-based learner is used
 #' [ranger::ranger()], or if the fitted model should be linear. This parameter
@@ -27,11 +29,13 @@
 #' parameter is tuned). Defaults to \code{FALSE}.
 #' @param nboot1 An \code{integer} scalar determining the number of outer
 #' bootstrap repetitions, that is, how many times the fitting procedure is
-#' repeated. Default is \code{1L}.
+#' repeated. Default is \code{1L}. This parameter is ignored if
+#' \code{method == "debiasing"}.
 #' @param nboot2 An \code{integer} scalar determining the number of inner
 #' bootstrap repetitions, that is, how many bootstrap samples are taken after
 #' the potential outcomes are obtained from the estimation procedure.
-#' Default is \code{100L}.
+#' Default is \code{100L}. This parameter is ignored if
+#' \code{method == "debiasing"}.
 #' @param ... Further arguments passed to downstream model fitting functions.
 #'
 #' @return An object of class \code{faircause}, containing the following
@@ -68,11 +72,11 @@
 #' @importFrom grf causal_forest
 #' @export
 fairness_cookbook <- function(data, X, Z, W, Y, x0, x1,
-                              method = c("medDML", "causal_forest"),
+                              method = c("debiasing", "causal_forest", "medDML"),
                               model = c("ranger", "linear"), tune_params = FALSE,
                               nboot1 = 1L, nboot2 = 100L, ...) {
 
-  method <- match.arg(method, c("medDML", "causal_forest"))
+  method <- match.arg(method, c("debiasing", "causal_forest", "medDML"))
   model <- match.arg(model, c("ranger", "linear"))
 
   y <- as.numeric(data[[Y]]) - is.factor(data[[Y]]) # need to check (!)
@@ -102,6 +106,22 @@ fairness_cookbook <- function(data, X, Z, W, Y, x0, x1,
       params <- attr(res[[rep]], "params")
     }
     res <- do.call(rbind, res)
+  } else if (method == "debiasing") {
+
+    # update the data and SFM so it has only numeric columns
+    data[[X]] <- as.integer(data[[X]] == x1)
+    dat_and_sfm <- preproc_data(data, X, Z, W, Y)
+    data <- dat_and_sfm[[1]]
+    sfm <- dat_and_sfm[[2]]
+    X <- sfm$X
+    Z <- sfm$Z
+    W <- sfm$W
+    Y <- sfm$Y
+
+    # compute the effect estimates
+    res <- one_step_debias(data, X, Z, W, Y, ...)
+    res <- res[res$measure %in% c("tv", "ett", "ctfde", "ctfie", "ctfse"), ]
+    pw <- attr(res, "pw")
   }
 
   if (method == "medDML") {
