@@ -26,7 +26,7 @@
       Total Variation (TV): 0.282415 
       TV decomposition(s) :
       
-      TV_x0x1(y) (0.282415) = CtfDE_x0x1(y | x0) (0.1428479) - CtfIE_x1x0(y | x0) (-0.2193592) - CtfSE_x1x0(y | x0) (0.07979211)
+      TV_x0x1(y) (0.282415) = CtfDE_x0x1(y | x0) (0.2465689) - CtfIE_x1x0(y | x0) (-0.1156382) - CtfSE_x1x0(y | x0) (0.07979211)
 
 ---
 
@@ -44,7 +44,7 @@
       Total Variation (TV): 0.282415 
       TV decomposition(s) :
       
-      TV_x0x1(y) (0.282415) = NDE_x0x1(y) (-0.1107859) - NIE_x1x0(y) (-0.2465106) + ExpSE_x0(y) (-0.1841516) - ExpSE_x1(y) (-0.0374613)
+      TV_x0x1(y) (0.282415) = NDE_x0x1(y) (-0.06347852) - NIE_x1x0(y) (-0.1992033) + ExpSE_x0(y) (-0.1841516) - ExpSE_x1(y) (-0.0374613)
 
 ---
 
@@ -74,7 +74,7 @@
       Total Variation (TV): 0.282415 
       TV decomposition(s) :
       
-      TV_x0x1(y) (0.282415) = CtfDE_x0x1(y | x0) (0.347797) - CtfIE_x1x0(y | x0) (0.01535178) - CtfSE_x1x0(y | x0) (0.05003016)
+      TV_x0x1(y) (0.282415) = CtfDE_x0x1(y | x0) (0.3521946) - CtfIE_x1x0(y | x0) (0.01974941) - CtfSE_x1x0(y | x0) (0.05003016)
 
 ---
 
@@ -92,7 +92,7 @@
       Total Variation (TV): 0.282415 
       TV decomposition(s) :
       
-      TV_x0x1(y) (0.282415) = NDE_x0x1(y) (0.3161745) - NIE_x1x0(y) (-0.01638061) + ExpSE_x0(y) (0.02247164) - ExpSE_x1(y) (-0.02766845)
+      TV_x0x1(y) (0.282415) = NDE_x0x1(y) (0.318212) - NIE_x1x0(y) (-0.01434307) + ExpSE_x0(y) (0.02247164) - ExpSE_x1(y) (-0.02766845)
 
 ---
 

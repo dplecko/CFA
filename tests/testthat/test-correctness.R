@@ -23,7 +23,7 @@ test_that("fairness_cookbook correctness", {
     Z <- grep("Z", names(data), value = TRUE)
     W <- grep("W", names(data), value = TRUE)
 
-    for (method in c("medDML", "causal_forest")) {
+    for (method in c("debiasing", "causal_forest", "medDML")) {
 
       mod <- with_seed(
         203,

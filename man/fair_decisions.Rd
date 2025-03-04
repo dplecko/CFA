@@ -17,7 +17,7 @@ fair_decisions(
   xgb_nrounds = 100,
   po_transform = function(x) x,
   po_diff_sign = 0,
-  method = c("medDML", "causal_forest"),
+  method = c("debiasing", "causal_forest", "medDML"),
   model = c("ranger", "linear"),
   tune_params = FALSE,
   nboot1 = 1L,

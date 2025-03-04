@@ -5,7 +5,7 @@ test_that("Z, W sets empty", {
     data <- data_gen(100, add_z = TRUE)
   })
 
-  for (method in c("medDML", "causal_forest")) {
+  for (method in c("causal_forest", "medDML")) {
 
     # test empty Z and W sets
     ran_z <- with_seed(

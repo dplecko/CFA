@@ -65,13 +65,13 @@
 fair_decisions <- function(data, X, Z, W, Y, D, x0, x1,
                            xgb_params = list(eta = 0.1), xgb_nrounds = 100,
                            po_transform = function(x) x, po_diff_sign = 0,
-                           method = c("medDML", "causal_forest"),
+                           method = c("debiasing", "causal_forest", "medDML"),
                            model = c("ranger", "linear"), tune_params = FALSE,
                            nboot1 = 1L, nboot2 = 100L, ...) {
 
   verify_numeric_input(data)
 
-  method <- match.arg(method, c("medDML", "causal_forest"))
+  method <- match.arg(method, c("debiasing", "causal_forest", "medDML"))
   model <- match.arg(model, c("ranger", "linear"))
 
   # decompose the disparity in resource allocation

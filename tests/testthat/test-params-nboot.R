@@ -6,7 +6,7 @@ test_that("nboot and tune_params work", {
   })
   data$y <- as.numeric(data$y) - 1L
 
-  for (method in c("medDML", "causal_forest")) {
+  for (method in c("causal_forest", "medDML")) {
 
     for (nboot1 in c(1, 2)) {
 
