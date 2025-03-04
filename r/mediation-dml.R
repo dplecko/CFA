@@ -209,13 +209,13 @@ doubly_robust_med <- function(x, z, w, y, K = 5, model = "ranger", tune_params,
     y0w1[ts] <-
       (px_zw_ts) * (x[ts] == 0) / ((1 - px_zw_ts) * px_z_ts) *
       (y[ts] - y_zw0_ts) +
-      (x[ts] == 1) / (1 - px_z_ts) * (y_zw0_ts - ey_zw0_1_ts) +
+      (x[ts] == 1) / (px_z_ts) * (y_zw0_ts - ey_zw0_1_ts) +
       ey_zw0_1_ts
 
     y1w0[ts] <-
       (1 - px_zw_ts) * (x[ts] == 1) / ((px_zw_ts) * (1 - px_z_ts)) *
       (y[ts] - y_zw1_ts) +
-      (x[ts] == 0) / (px_z_ts) * (y_zw1_ts - ey_zw1_0_ts) +
+      (x[ts] == 0) / (1 - px_z_ts) * (y_zw1_ts - ey_zw1_0_ts) +
       ey_zw1_0_ts
   }
 
