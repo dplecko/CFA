@@ -44,7 +44,7 @@
       Total Variation (TV): 0.282415 
       TV decomposition(s) :
       
-      TV_x0x1(y) (0.282415) = NDE_x0x1(y) (-0.06347852) - NIE_x1x0(y) (-0.1992033) + ExpSE_x0(y) (-0.1841516) - ExpSE_x1(y) (-0.0374613)
+      TV_x0x1(y) (0.282415) = NDE_x0x1(y) (-0.06347852) - NIE_x1x0(y) (-0.1992033) + ExpSE_x1(y) (-0.0374613) - ExpSE_x0(y) (-0.1841516)
 
 ---
 
@@ -92,7 +92,7 @@
       Total Variation (TV): 0.282415 
       TV decomposition(s) :
       
-      TV_x0x1(y) (0.282415) = NDE_x0x1(y) (0.318212) - NIE_x1x0(y) (-0.01434307) + ExpSE_x0(y) (0.02247164) - ExpSE_x1(y) (-0.02766845)
+      TV_x0x1(y) (0.282415) = NDE_x0x1(y) (0.318212) - NIE_x1x0(y) (-0.01434307) + ExpSE_x1(y) (-0.02766845) - ExpSE_x0(y) (0.02247164)
 
 ---
 
@@ -140,7 +140,7 @@
       Total Variation (TV): 0.282415 
       TV decomposition(s) :
       
-      TV_x0x1(y) (0.282415) = NDE_x0x1(y) (0.2838739) - NIE_x1x0(y) (-0.0397003) + ExpSE_x0(y) (NA) - ExpSE_x1(y) (NA)
+      TV_x0x1(y) (0.282415) = NDE_x0x1(y) (0.2838739) - NIE_x1x0(y) (-0.0397003) + ExpSE_x1(y) (NA) - ExpSE_x0(y) (NA)
 
 ---
 
@@ -188,5 +188,5 @@
       Total Variation (TV): 0.2809984 
       TV decomposition(s) :
       
-      TV_x0x1(y) (0.2809984) = NDE_x0x1(y) () - NIE_x1x0(y) () + ExpSE_x0(y) () - ExpSE_x1(y) ()
+      TV_x0x1(y) (0.2809984) = NDE_x0x1(y) () - NIE_x1x0(y) () + ExpSE_x1(y) () - ExpSE_x0(y) ()
 

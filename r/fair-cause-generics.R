@@ -48,8 +48,8 @@ print.summary.faircause <- function(x,
   if (x$decompose %in% c("general", "both")) {
     cat("TV_x0x1(y) (", meas_list$tv[1], ") = NDE_x0x1(y) (",
         meas_list$nde[1], ") - NIE_x1x0(y) (", meas_list$nie[1],
-        ") + ExpSE_x0(y) (", meas_list$expse_x0[1], ") - ExpSE_x1(y) (",
-        meas_list$expse_x1[1], ")\n", sep = "")
+        ") + ExpSE_x1(y) (", meas_list$expse_x1[1], ") - ExpSE_x0(y) (",
+        meas_list$expse_x0[1], ")\n", sep = "")
   }
   if (x$decompose %in% c("xspec", "both")) {
     cat("TV_x0x1(y) (", meas_list$tv[1], ") = CtfDE_x0x1(y | x0) (",
