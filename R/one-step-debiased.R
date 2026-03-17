@@ -65,7 +65,7 @@ cv_xgb <- function(df, y, weights = NULL, ...) {
   xgb <- xgb.train(
     params = params,
     data = dtrain,
-    nrounds = cv$best_iteration,
+    nrounds = cv$early_stop$best_iteration,
     verbose = FALSE, ...
   )
   attr(xgb, "binary") <- binary
