@@ -1,43 +1,4 @@
 
-preproc_data <- function(data, X, Z, W, Y) {
-
-  SFM <- list(X = X, Z = Z, W = W, Y = Y)
-  for (cmp in c("X", "Z", "W", "Y")) {
-
-    for (var in SFM[[cmp]]) {
-
-      if (is.numeric(data[[var]]) || is.integer(data[[var]])) next
-      if (is.logical(data[[var]])) {
-
-        data[[var]] <- as.integer(data[[var]])
-        next
-      }
-
-      if (is.character(data[[var]])) data[[var]] <- as.factor(data[[var]])
-
-      # only factors at this point
-      if (length(levels(data[[var]])) == 2) {
-
-        data[[var]] <- as.integer(data[[var]] == levels(data[[var]])[1])
-      } else {
-
-        enc_mat <- model.matrix(~ ., data = data.frame(var = data[[var]]))[, -1]
-        colnames(enc_mat) <- paste0(var, seq_len(ncol(enc_mat)))
-
-        # remove the factor column
-        SFM[[cmp]] <- setdiff(SFM[[cmp]], var)
-        data[[var]] <- NULL
-
-        # add the encoded data
-        SFM[[cmp]] <- c(SFM[[cmp]], colnames(enc_mat))
-        data <- cbind(data, enc_mat)
-      }
-    }
-  }
-
-  list(data = data, sfm = SFM)
-}
-
 #' @importFrom xgboost xgb.DMatrix xgb.cv xgb.train
 cv_xgb <- function(df, y, weights = NULL, ...) {
 
@@ -206,7 +167,7 @@ pso_logr <- function(cfit, data, X, Z, W, Y, ...) {
 
       # if (xz == xw & xz == xy) next
       pso[[xz+1]][[xw+1]][[xy+1]] <-
-        (x == xy) / mean(x == xw) * px_zw[[xw+1]] / px_zw[[xw+1]] *
+        (x == xy) / mean(x == xw) * px_zw[[xw+1]] / px_zw[[xy+1]] *
         (y - y_xzw[[xy+1]]) / y_xzw[[xy+1]] +
         (x == xw) / mean(x == xw) * log(y_xzw[[xy+1]])
     }
@@ -216,7 +177,7 @@ pso_logr <- function(cfit, data, X, Z, W, Y, ...) {
 
       # if (xz == xw & xz == xy) next
       pso[[xz+1]][[xw+1]][[xy+1]] <-
-        (x == xy) / mean(x == xz) * px_zw[[xz+1]] / px_zw[[xz+1]] *
+        (x == xy) / mean(x == xz) * px_z[[xz+1]] / px_z[[xy+1]] *
         (y - y_xzw[[xy+1]]) / y_xzw[[xy+1]] +
         (x == xz) / mean(x == xz) * log(y_xzw[[xy+1]])
     }
@@ -281,7 +242,7 @@ pso_diff <- function(cfit, data, X, Z, W, Y, ...) {
 
       if (xz == xw & xz == xy) next
       pso[[xz+1]][[xw+1]][[xy+1]] <-
-        (x == xy) / mean(x == xw) * px_zw[[xw+1]] / px_zw[[xw+1]] *
+        (x == xy) / mean(x == xw) * px_zw[[xw+1]] / px_zw[[xy+1]] *
         (y - y_xzw[[xy+1]]) +
         (x == xw) / mean(x == xw) * y_xzw[[xy+1]]
     }
@@ -291,7 +252,7 @@ pso_diff <- function(cfit, data, X, Z, W, Y, ...) {
 
       if (xz == xw & xz == xy) next
       pso[[xz+1]][[xw+1]][[xy+1]] <-
-        (x == xy) / mean(x == xz) * px_zw[[xz+1]] / px_zw[[xz+1]] *
+        (x == xy) / mean(x == xz) * px_z[[xz+1]] / px_z[[xy+1]] *
         (y - y_xzw[[xy+1]]) +
         (x == xz) / mean(x == xz) * y_xzw[[xy+1]]
     }
