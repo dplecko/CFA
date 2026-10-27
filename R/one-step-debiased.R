@@ -451,6 +451,16 @@ one_step_debias <- function(data, X, Z, W, Y, nested_mean = c("refit", "wregr"),
   for (xz in c(0, 1)) for (xw in c(0, 1)) for (xy in c(0, 1))
     pso[[xz+1]][[xw+1]][[xy+1]][extrm_idx] <- NA
 
+  # Re-centre for the estimated subgroup probability; preserve each cell mean.
+  # The log-risk branch with no Z or W is already centred.
+  x <- data[[X]]
+  if (!log_risk || length(Z) + length(W) > 0)
+    for (xz in 0:1) for (xw in 0:1) for (xy in 0:1) {
+      r <- if (length(Z) + length(W) == 0) xy else if (length(Z) == 0) xw else xz
+      p <- pso[[xz+1]][[xw+1]][[xy+1]]; ok <- !is.na(p)
+      pso[[xz+1]][[xw+1]][[xy+1]] <- p - ((x == r) / mean(x[ok] == r) - 1) * mean(p[ok])
+    }
+
   # get specification of measures to be reported
   ias <- measure_spec()
 
